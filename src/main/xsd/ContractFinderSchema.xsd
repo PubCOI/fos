@@ -103,17 +103,20 @@
             <xs:element name="WebAddress" type="xs:string" nillable="true"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="LocationType">
         <xs:sequence>
             <xs:element name="Lat" type="xs:float"/>
             <xs:element name="Lon" type="xs:float"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="CpvCodesType">
         <xs:sequence>
             <xs:element name="string" minOccurs="0" maxOccurs="unbounded" type="xs:token"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="AwardDetailParentType">
         <xs:sequence>
             <xs:element name="AwardDetail" minOccurs="0" maxOccurs="unbounded">
@@ -148,14 +151,15 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
-
         </xs:sequence>
     </xs:complexType>
+
     <xs:simpleType name="ReferenceTypeE">
         <xs:restriction base="xs:token">
             <xs:enumeration value="COMPANIES_HOUSE"/>
         </xs:restriction>
     </xs:simpleType>
+
     <xs:simpleType name="AwardedProcedureTypeE">
         <xs:restriction base="xs:token">
             <xs:enumeration value="Other"/>
@@ -167,6 +171,7 @@
             <xs:element name="Name" type="xs:token"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="AdditionalDetailsType">
         <xs:sequence>
             <xs:element name="Id" type="uuid"/>
@@ -185,11 +190,13 @@
             <xs:element name="AwardGuid" type="uuid" nillable="true"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="CpvCodesDetailedType">
         <xs:sequence>
             <xs:element name="CpvCode" type="CpvCodeType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="CpvCodeType">
         <xs:sequence>
             <xs:element name="Code" type="xs:token"/>
@@ -198,6 +205,7 @@
             <xs:element name="HasChildren" type="xs:boolean"/>
         </xs:sequence>
     </xs:complexType>
+
     <xs:complexType name="PublishedVersionDetailsType">
         <xs:sequence>
             <xs:element name="PublishedNoticeVersion">
@@ -213,10 +221,8 @@
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="AdditionalDetailsListType">
-
         <xs:sequence>
             <xs:element name="AdditionalDetail" type="AdditionalDetailsType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-
     </xs:complexType>
 </xs:schema>

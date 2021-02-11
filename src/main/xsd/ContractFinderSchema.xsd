@@ -70,9 +70,9 @@
             <xs:element name="SupplyChain" type="xs:boolean"/>
             <xs:element name="LastNotifiableUpdate" type="xs:dateTime" nillable="true"/>
             <xs:element name="OrganisationName" type="xs:token"/>
-            <xs:element name="Sector" type="xs:anyType" nillable="true"/>
+            <xs:element name="Sector" type="xs:token" nillable="true"/>
             <xs:element name="ProcedureType" type="xs:token" nillable="true"/>
-            <xs:element name="ProcedureTypeOther" nillable="true"/>
+            <xs:element name="ProcedureTypeOther" type="xs:token" nillable="true"/>
             <xs:element name="ProcedureAcceleratedJustification" type="xs:string" nillable="true"/>
             <xs:element name="OjeuContractType" type="xs:token">
                 <xs:annotation>
@@ -143,8 +143,8 @@
                         </xs:element>
                         <xs:element name="AwardedProcedureTypeOther" type="xs:token" nillable="true"/>
                         <xs:element name="AwardedProcedureAcceleratedJustification" type="xs:string" nillable="true"/>
-                        <xs:element name="AnnexDOptionType" nillable="true"/>
-                        <xs:element name="AdditionalDetails" type="AdditionalDetailsListType" nillable="true"/>
+                        <xs:element name="AnnexDOptionType" type="xs:token" nillable="true"/>
+                        <xs:element name="AdditionalDetail" type="xs:string" nillable="true"/>
                         <xs:element name="AwardedToSME" type="xs:boolean"/>
                         <xs:element name="AwardedToVCSO" type="xs:boolean"/>
                         <xs:element name="AwardGuid" type="uuid"/>
@@ -157,6 +157,11 @@
     <xs:simpleType name="ReferenceTypeE">
         <xs:restriction base="xs:token">
             <xs:enumeration value="COMPANIES_HOUSE"/>
+            <xs:enumeration value="NONE"/>
+            <xs:enumeration value="NONE_OTHER"/>
+            <xs:enumeration value="NONE_SOLE_TRADER"/>
+            <xs:enumeration value="NONE_PARTNERSHIP"/>
+            <xs:enumeration value="CHARITY_COMMISSION"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -185,7 +190,7 @@
                 </xs:annotation>
             </xs:element>
             <xs:element name="Link" type="xs:token" minOccurs="0"/>
-            <xs:element name="TextData" nillable="true"/>
+            <xs:element name="TextData" type="xs:string" nillable="true"/>
             <xs:element name="MimeType" type="xs:token" nillable="true"/>
             <xs:element name="AwardGuid" type="uuid" nillable="true"/>
         </xs:sequence>

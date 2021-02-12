@@ -52,6 +52,21 @@
             <artifactId>jtexttime</artifactId>
             <version>1.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.pubcoi.schemas</groupId>
+            <artifactId>openc-schema</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- for resttemplatecustomiser -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4.14</version>
+        </dependency>
     </dependencies>
 
     <parent>

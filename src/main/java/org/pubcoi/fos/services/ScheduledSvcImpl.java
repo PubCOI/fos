@@ -6,6 +6,7 @@ import org.pubcoi.fos.models.cf.AwardDetailParentType;
 import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.models.ch.FOSCompany;
 import org.pubcoi.fos.models.ch.FOSReferenceTypeE;
+import org.pubcoi.fos.models.oc.OCWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,10 +64,10 @@ public class ScheduledSvcImpl implements ScheduledSvc {
             return;
         }
 
-        com.opencorporates.schemas.Company company = restTemplate.getForObject(String.format(companyRequestURL, c.get().getReference()), com.opencorporates.schemas.Company.class);
-        if (null != company) {
-            ocCompaniesRepo.save(company);
-            logger.info("Saved " + company.getCompanyNumber());
+        OCWrapper response = restTemplate.getForObject(String.format(companyRequestURL, c.get().getReference()), OCWrapper.class);
+        if (null != response) {
+            ocCompaniesRepo.save(response.getResults().getCompany());
+            logger.info("Saved " + response.getResults().getCompany().getCompanyNumber());
         }
     }
 }

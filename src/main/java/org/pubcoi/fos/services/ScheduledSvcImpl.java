@@ -1,5 +1,6 @@
 package org.pubcoi.fos.services;
 
+import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.dao.FOSCompaniesRepo;
 import org.pubcoi.fos.dao.OCCompaniesRepo;
 import org.pubcoi.fos.models.cf.AwardDetailParentType;
@@ -66,8 +67,9 @@ public class ScheduledSvcImpl implements ScheduledSvc {
 
         OCWrapper response = restTemplate.getForObject(String.format(companyRequestURL, c.get().getReference()), OCWrapper.class);
         if (null != response) {
-            ocCompaniesRepo.save(response.getResults().getCompany());
-            logger.info("Saved " + response.getResults().getCompany().getCompanyNumber());
+            OCCompanySchema company = response.getResults().getCompany();
+            ocCompaniesRepo.save(company);
+            logger.info(String.format("Saved company with ID %s", company.getId()));
         }
     }
 }

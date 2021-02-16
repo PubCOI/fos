@@ -3,7 +3,7 @@ package org.pubcoi.fos.models.oc;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OCWrapper {
-    @JsonProperty("api_version")
+    @JsonProperty("api_version") // todo add warning if not recognised
     String apiVersion;
     OCResults results;
 

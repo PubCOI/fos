@@ -1,16 +1,16 @@
 package org.pubcoi.fos.models.oc;
 
-import org.pubcoi.fos.models.mdb.OCCompany;
+import com.opencorporates.schemas.OCCompanySchema;
 
 public class OCResults {
 
-    OCCompany company;
+    OCCompanySchema company;
 
-    public OCCompany getCompany() {
+    public OCCompanySchema getCompany() {
         return company;
     }
 
-    public OCResults setCompany(OCCompany company) {
+    public OCResults setCompany(OCCompanySchema company) {
         this.company = company;
         return this;
     }

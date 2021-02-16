@@ -1,9 +1,9 @@
 package org.pubcoi.fos.dao;
 
-import org.pubcoi.fos.models.mdb.OCCompany;
+import com.opencorporates.schemas.OCCompanySchema;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface OCCompaniesRepo extends MongoRepository<OCCompany, String> {
+public interface OCCompaniesRepo extends MongoRepository<OCCompanySchema, String> {
 
     boolean existsByCompanyNumber(String companyNumber);
 

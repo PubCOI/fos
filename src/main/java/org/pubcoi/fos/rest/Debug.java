@@ -1,6 +1,8 @@
 package org.pubcoi.fos.rest;
 
+import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.dao.NoticesRepo;
+import org.pubcoi.fos.dao.OCCompaniesRepo;
 import org.pubcoi.fos.models.cf.ArrayOfFullNotice;
 import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.models.cf.ReferenceTypeE;
@@ -19,12 +21,15 @@ import java.util.Optional;
 @RestController
 public class Debug {
     private static final Logger logger = LoggerFactory.getLogger(Debug.class);
+
     NoticesRepo noticesRepo;
     ScheduledSvc scheduledSvc;
+    OCCompaniesRepo companiesRepo;
 
-    public Debug(NoticesRepo noticesRepo, ScheduledSvc scheduledSvc) {
+    public Debug(NoticesRepo noticesRepo, ScheduledSvc scheduledSvc, OCCompaniesRepo companiesRepo) {
         this.noticesRepo = noticesRepo;
         this.scheduledSvc = scheduledSvc;
+        this.companiesRepo = companiesRepo;
     }
 
     @GetMapping(value = "/api/notices")
@@ -57,5 +62,10 @@ public class Debug {
     public String populateOne() {
         scheduledSvc.populateOne();
         return "ok";
+    }
+
+    @GetMapping("/api/oc-companies")
+    public List<OCCompanySchema> getCompanies() {
+        return companiesRepo.findAll();
     }
 }

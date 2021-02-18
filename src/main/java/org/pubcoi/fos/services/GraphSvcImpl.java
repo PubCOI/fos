@@ -2,38 +2,64 @@ package org.pubcoi.fos.services;
 
 import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.gdb.AwardsGraphRepo;
+import org.pubcoi.fos.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.mdb.FOSOrganisationRepo;
+import org.pubcoi.fos.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.models.core.FOSOCCompany;
 import org.pubcoi.fos.models.core.FOSOrganisation;
 import org.pubcoi.fos.models.neo.nodes.AwardNode;
+import org.pubcoi.fos.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.models.neo.nodes.NoticeNode;
 import org.pubcoi.fos.models.neo.nodes.OrganisationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class GraphSvcImpl implements GraphSvc {
     private static final Logger logger = LoggerFactory.getLogger(GraphSvcImpl.class);
 
     AwardsMDBRepo awardsMDBRepo;
-    AwardsGraphRepo awardsGraphRepo;
     FOSOrganisationRepo fosOrganisationRepo;
-    OrganisationsGraphRepo orgGraphRepo;
     OCCompaniesRepo ocCompaniesRepo;
+    AwardsGraphRepo awardsGraphRepo;
+    NoticesMDBRepo noticesMDBRepo;
+    OrganisationsGraphRepo orgGraphRepo;
+    ClientsGraphRepo clientsGraphRepo;
 
-    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo) {
+    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo, NoticesMDBRepo noticesMDBRepo, ClientsGraphRepo clientsGraphRepo) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
         this.fosOrganisationRepo = fosOrganisationRepo;
         this.orgGraphRepo = orgGraphRepo;
         this.ocCompaniesRepo = ocCompaniesRepo;
+        this.noticesMDBRepo = noticesMDBRepo;
+        this.clientsGraphRepo = clientsGraphRepo;
     }
 
     @Override
     public void populateAwardsGraphFromMDB() {
+        // add all clients
+        clientsGraphRepo.deleteAll();
+        noticesMDBRepo.findAll().forEach(notice -> {
+            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findById(ClientNode.resolveID(notice)));
+            if (nodeOpt.isPresent()) {
+                logger.debug("Using already instantiated client node {}", ClientNode.resolveID(notice));
+            }
+            ClientNode node = (nodeOpt.orElseGet(() -> {
+                logger.debug("Creating new client node");
+                return new ClientNode(notice);
+            }));
+            node.getNotices().add(new NoticeNode(notice));
+            clientsGraphRepo.save(node);
+        });
+
+        // add all awards
         awardsMDBRepo.findAll().forEach(award -> {
             logger.debug("inspecting {}", award.getId());
             if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FOSOCCompany) {
@@ -60,6 +86,9 @@ public class GraphSvcImpl implements GraphSvc {
                 }
             }
         });
+
+        // link notices to awards
+
     }
 
 }

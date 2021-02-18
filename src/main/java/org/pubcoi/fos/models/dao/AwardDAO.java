@@ -1,10 +1,6 @@
 package org.pubcoi.fos.models.dao;
 
-import org.pubcoi.fos.models.cf.AwardDetailParentType;
-import org.pubcoi.fos.models.cf.FullNotice;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.pubcoi.fos.models.core.Award;
 
 /**
  * Used to return list of awards to the user
@@ -12,66 +8,86 @@ import java.util.List;
 public class AwardDAO {
 
     String id;
-    String client;
-    List<SupplierDAO> suppliers = new ArrayList<>();
+    String noticeID;
+    String organisation;
+    String supplierName;
+    Long value;
+    Long valueMin;
+    Long valueMax;
 
     public AwardDAO() {
     }
 
-    public AwardDAO(FullNotice notice) {
-        this.id = notice.getId();
-        this.client = notice.getNotice().getContactDetails().getName();
-        for (AwardDetailParentType.AwardDetail award : notice.getAwards().getAwardDetail()) {
-            suppliers.add(new SupplierDAO()
-                    .setCompanyName(award.getSupplierName())
-                    .setCompanyNumber(award.getReference())
-                    .setValue(award.getValue())
-            );
-        }
+    public AwardDAO(Award award) {
+        this.id = award.getId();
+        this.noticeID = award.getNoticeID();
+        this.organisation = award.getClient();
+        this.supplierName = award.getSupplierName();
+        this.value = (null == award.getValue() ? 0 : award.getValue());
+        this.valueMin = (null == award.getValueMin() ? 0 : award.getValueMin());
+        this.valueMax = (null == award.getValueMax() ? 0 : award.getValueMax());
     }
 
     public String getId() {
         return id;
     }
 
-    public List<SupplierDAO> getSuppliers() {
-        return suppliers;
+    public String getOrganisation() {
+        return organisation;
     }
 
-    public String getClient() {
-        return client;
+    public AwardDAO setId(String id) {
+        this.id = id;
+        return this;
     }
 
-    static class SupplierDAO {
-        String companyName;
-        String companyNumber;
-        Long value;
+    public AwardDAO setOrganisation(String organisation) {
+        this.organisation = organisation;
+        return this;
+    }
 
-        public String getCompanyName() {
-            return companyName;
-        }
+    public String getSupplierName() {
+        return supplierName;
+    }
 
-        public SupplierDAO setCompanyName(String companyName) {
-            this.companyName = companyName;
-            return this;
-        }
+    public AwardDAO setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
+        return this;
+    }
 
-        public String getCompanyNumber() {
-            return companyNumber;
-        }
+    public Long getValue() {
+        return value;
+    }
 
-        public SupplierDAO setCompanyNumber(String companyNumber) {
-            this.companyNumber = companyNumber;
-            return this;
-        }
+    public AwardDAO setValue(Long value) {
+        this.value = value;
+        return this;
+    }
 
-        public Long getValue() {
-            return value;
-        }
+    public Long getValueMin() {
+        return valueMin;
+    }
 
-        public SupplierDAO setValue(Long value) {
-            this.value = value;
-            return this;
-        }
+    public AwardDAO setValueMin(Long valueMin) {
+        this.valueMin = valueMin;
+        return this;
+    }
+
+    public Long getValueMax() {
+        return valueMax;
+    }
+
+    public AwardDAO setValueMax(Long valueMax) {
+        this.valueMax = valueMax;
+        return this;
+    }
+
+    public String getNoticeID() {
+        return noticeID;
+    }
+
+    public AwardDAO setNoticeID(String noticeID) {
+        this.noticeID = noticeID;
+        return this;
     }
 }

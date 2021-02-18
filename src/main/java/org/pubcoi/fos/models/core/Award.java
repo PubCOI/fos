@@ -23,6 +23,7 @@ public class Award {
     Long valueMin;
     Long valueMax;
     Long value;
+    String client;
     OffsetDateTime startDate;
     OffsetDateTime endDate;
     OffsetDateTime awardedDate;
@@ -39,6 +40,7 @@ public class Award {
         this.noticeID = awardDetail.getNoticeId();
         this.valueMin = (null != notice.getNotice().getValueLow()) ? notice.getNotice().getValueLow().longValue() : null;
         this.valueMax = (null != notice.getNotice().getValueHigh()) ? notice.getNotice().getValueHigh().longValue() : null;
+        this.client = notice.getNotice().getOrganisationName();
         this.value = awardDetail.getValue();
         this.startDate = awardDetail.getStartDate();
         this.endDate = awardDetail.getEndDate();
@@ -170,6 +172,15 @@ public class Award {
 
     public Award setFosOrganisation(FOSOrganisation fosOrganisation) {
         this.fosOrganisation = fosOrganisation;
+        return this;
+    }
+
+    public String getClient() {
+        return client;
+    }
+
+    public Award setClient(String client) {
+        this.client = client;
         return this;
     }
 }

@@ -1,4 +1,4 @@
-package org.pubcoi.fos.models.ch;
+package org.pubcoi.fos.models.core;
 
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
@@ -15,9 +15,9 @@ import java.time.ZoneOffset;
 public class FOSCompany {
 
     @MongoId
+    String id;
     String reference;
-    FOSReferenceTypeE referenceType;
-    String referenceName;
+    DataSources source;
 
     @NonNull
     OffsetDateTime created = Instant.now().atOffset(ZoneOffset.UTC);
@@ -29,15 +29,16 @@ public class FOSCompany {
 
     public FOSCompany(AwardDetailParentType.AwardDetail award) {
         if (award.getReferenceType() == org.pubcoi.fos.models.cf.ReferenceTypeE.COMPANIES_HOUSE) {
-            this.referenceType = FOSReferenceTypeE.companies_house;
+            this.source = DataSources.oc_company;
         } else {
-            throw new FOSRuntimeException("Unable to resolve enum");
+            throw new FOSRuntimeException("Unable to resolve source type");
         }
         this.reference = award.getReference();
+        this.id = String.format("%s:%s", this.source, this.reference);
     }
 
-    public FOSCompany(FOSReferenceTypeE referenceType, String reference) {
-        this.referenceType = referenceType;
+    public FOSCompany(DataSources source, String reference) {
+        this.source = source;
         this.reference = reference;
     }
 
@@ -50,21 +51,12 @@ public class FOSCompany {
         return this;
     }
 
-    public String getReferenceName() {
-        return referenceName;
+    public DataSources getSource() {
+        return source;
     }
 
-    public FOSCompany setReferenceName(String referenceName) {
-        this.referenceName = referenceName;
-        return this;
-    }
-
-    public FOSReferenceTypeE getReferenceType() {
-        return referenceType;
-    }
-
-    public FOSCompany setReferenceType(FOSReferenceTypeE referenceType) {
-        this.referenceType = referenceType;
+    public FOSCompany setSource(DataSources source) {
+        this.source = source;
         return this;
     }
 
@@ -87,7 +79,7 @@ public class FOSCompany {
 
         return new org.apache.commons.lang3.builder.EqualsBuilder()
                 .append(reference, FOSCompany.reference)
-                .append(referenceType, FOSCompany.referenceType)
+                .append(source, FOSCompany.source)
                 .isEquals();
     }
 
@@ -95,7 +87,7 @@ public class FOSCompany {
     public int hashCode() {
         return new org.apache.commons.lang3.builder.HashCodeBuilder(17, 37)
                 .append(reference)
-                .append(referenceType)
+                .append(source)
                 .toHashCode();
     }
 
@@ -103,9 +95,28 @@ public class FOSCompany {
     public String toString() {
         return "FOSCompany{" +
                 "reference='" + reference + '\'' +
-                ", referenceTypeE=" + referenceType +
-                ", referenceName='" + referenceName + '\'' +
+                ", referenceTypeE=" + source +
                 ", updated=" + created +
                 '}';
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public FOSCompany setId(String id) {
+        this.id = id;
+        return this;
+    }
+
+    @Nullable
+    public OffsetDateTime getUpdated() {
+        return updated;
+    }
+
+    public FOSCompany setUpdated(@Nullable OffsetDateTime updated) {
+        this.updated = updated;
+        return this;
+    }
 }
+

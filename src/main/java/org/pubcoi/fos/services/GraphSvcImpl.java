@@ -3,6 +3,7 @@ package org.pubcoi.fos.services;
 import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.gdb.NoticesGRepo;
 import org.pubcoi.fos.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.mdb.FOSOrganisationRepo;
@@ -12,7 +13,6 @@ import org.pubcoi.fos.models.core.FOSOCCompany;
 import org.pubcoi.fos.models.core.FOSOrganisation;
 import org.pubcoi.fos.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.models.neo.nodes.NoticeNode;
 import org.pubcoi.fos.models.neo.nodes.OrganisationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +31,10 @@ public class GraphSvcImpl implements GraphSvc {
     NoticesMDBRepo noticesMDBRepo;
     OrganisationsGraphRepo orgGraphRepo;
     ClientsGraphRepo clientsGraphRepo;
+    NoticesGRepo noticesGRepo;
+    ScheduledSvc scheduledSvc;
 
-    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo, NoticesMDBRepo noticesMDBRepo, ClientsGraphRepo clientsGraphRepo) {
+    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo, NoticesMDBRepo noticesMDBRepo, ClientsGraphRepo clientsGraphRepo, NoticesGRepo noticesGRepo, ScheduledSvc scheduledSvc) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
         this.fosOrganisationRepo = fosOrganisationRepo;
@@ -40,12 +42,19 @@ public class GraphSvcImpl implements GraphSvc {
         this.ocCompaniesRepo = ocCompaniesRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.clientsGraphRepo = clientsGraphRepo;
+        this.noticesGRepo = noticesGRepo;
+        this.scheduledSvc = scheduledSvc;
     }
 
     @Override
     public void populateAwardsGraphFromMDB() {
         // add all clients
         clientsGraphRepo.deleteAll();
+        awardsGraphRepo.deleteAll();
+
+        scheduledSvc.populateFOSOrgsMDBFromAwards();
+        scheduledSvc.populateOCCompaniesFromFOSOrgs();
+
         noticesMDBRepo.findAll().forEach(notice -> {
             Optional<ClientNode> nodeOpt = (clientsGraphRepo.findById(ClientNode.resolveID(notice)));
             if (nodeOpt.isPresent()) {
@@ -55,7 +64,7 @@ public class GraphSvcImpl implements GraphSvc {
                 logger.debug("Creating new client node");
                 return new ClientNode(notice);
             }));
-            node.getNotices().add(new NoticeNode(notice));
+            node.addNotice(notice);
             clientsGraphRepo.save(node);
         });
 
@@ -73,6 +82,7 @@ public class GraphSvcImpl implements GraphSvc {
                     awardsGraphRepo.save(new AwardNode()
                             .setId(award.getId())
                             .setValue(award.getValue())
+                            .setNoticeID(award.getNoticeID())
                             .setOrganisation(
                                     orgGraphRepo.findById(org.getId()).orElseThrow(() -> new FOSException()),
                                     award.getAwardedDate().toZonedDateTime(),
@@ -87,8 +97,15 @@ public class GraphSvcImpl implements GraphSvc {
             }
         });
 
-        // link notices to awards
-
+        // only adding 'verified' companies for now
+        awardsGraphRepo.findAll().stream()
+                .filter(award -> award.getOrganisation().isVerified())
+                .forEach(award -> {
+                    logger.debug("Adding notice to award {}", award);
+                    noticesGRepo.findById(award.getNoticeID()).ifPresent(notice -> {
+                        noticesGRepo.save(notice.addAward(award));
+                    });
+                });
     }
 
 }

@@ -1,6 +1,7 @@
 package org.pubcoi.fos.models.neo.nodes;
 
 import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.fos.models.neo.relationships.ClientNoticeLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -29,7 +30,7 @@ public class ClientNode {
     Boolean canonical = false;
 
     @Relationship("PUBLISHED")
-    Set<NoticeNode> notices = new HashSet<>();
+    Set<ClientNoticeLink> notices;
 
     public ClientNode() {
     }
@@ -121,12 +122,8 @@ public class ClientNode {
         return this;
     }
 
-    public Set<NoticeNode> getNotices() {
-        return notices;
-    }
-
-    public ClientNode setNotices(Set<NoticeNode> notices) {
-        this.notices = notices;
-        return this;
+    public void addNotice(FullNotice notice) {
+        if (null == notices) notices = new HashSet<>();
+        notices.add(new ClientNoticeLink(this, notice));
     }
 }

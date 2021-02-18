@@ -2,10 +2,15 @@ package org.pubcoi.fos.models.neo.relationships;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.fos.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.models.neo.nodes.NoticeNode;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
+import org.springframework.util.DigestUtils;
+
+import java.time.ZonedDateTime;
 
 @RelationshipProperties
 public class ClientNoticeLink {
@@ -16,10 +21,14 @@ public class ClientNoticeLink {
     @TargetNode
     NoticeNode notice;
 
+    ZonedDateTime published;
+
     public ClientNoticeLink() {}
 
-    public ClientNoticeLink(NoticeNode noticeNode) {
-        this.notice = noticeNode;
+    public ClientNoticeLink(ClientNode clientNode, FullNotice notice) {
+        this.id = DigestUtils.md5DigestAsHex(String.format("%s:%s", clientNode.getId(), notice.getId()).getBytes());
+        this.published = notice.getCreatedDate().toZonedDateTime();
+        this.notice = new NoticeNode(notice);
     }
 
     @Override

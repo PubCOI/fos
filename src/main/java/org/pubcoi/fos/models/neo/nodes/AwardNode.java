@@ -22,6 +22,7 @@ public class AwardNode {
     Long value;
     @Version
     Long version = 1L;
+    String noticeID;
 
     public OrganisationNode getOrganisation() {
         return (null != organisation) ? organisation.getOrganisationNode() : null;
@@ -60,10 +61,22 @@ public class AwardNode {
         return version;
     }
 
+    public String getNoticeID() {
+        return noticeID;
+    }
+
+    public AwardNode setNoticeID(String noticeID) {
+        this.noticeID = noticeID;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "AwardNode{" +
                 "id='" + id + '\'' +
+                ", value=" + value +
+                ", version=" + version +
+                ", noticeID='" + noticeID + '\'' +
                 '}';
     }
 }

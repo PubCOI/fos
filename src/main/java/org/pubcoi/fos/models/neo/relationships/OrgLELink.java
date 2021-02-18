@@ -1,6 +1,6 @@
 package org.pubcoi.fos.models.neo.relationships;
 
-import org.pubcoi.fos.models.neo.nodes.Organisation;
+import org.pubcoi.fos.models.neo.nodes.OrganisationNode;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -12,13 +12,13 @@ public class OrgLELink {
     String id;
 
     @TargetNode
-    Organisation organisation;
+    OrganisationNode organisationNode;
 
     public OrgLELink() {}
 
-    public OrgLELink(String id, Organisation organisation)  {
+    public OrgLELink(String id, OrganisationNode organisationNode)  {
         this.id = id;
-        this.organisation = organisation;
+        this.organisationNode = organisationNode;
     }
 
 }

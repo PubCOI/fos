@@ -1,6 +1,6 @@
 package org.pubcoi.fos.models.neo.relationships;
 
-import org.pubcoi.fos.models.neo.nodes.Organisation;
+import org.pubcoi.fos.models.neo.nodes.OrganisationNode;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 public class AwardOrgLink {
 
     @TargetNode
-    Organisation organisation;
+    OrganisationNode organisationNode;
 
     ZonedDateTime awardedDate;
     ZonedDateTime startDate;
@@ -18,16 +18,16 @@ public class AwardOrgLink {
 
     public AwardOrgLink(){}
 
-    public AwardOrgLink(Organisation organisation) {
-        this.setOrganisation(organisation);
+    public AwardOrgLink(OrganisationNode organisationNode) {
+        this.setOrganisationNode(organisationNode);
     }
 
-    public Organisation getOrganisation() {
-        return organisation;
+    public OrganisationNode getOrganisationNode() {
+        return organisationNode;
     }
 
-    public AwardOrgLink setOrganisation(Organisation organisation) {
-        this.organisation = organisation;
+    public AwardOrgLink setOrganisationNode(OrganisationNode organisationNode) {
+        this.organisationNode = organisationNode;
         return this;
     }
 

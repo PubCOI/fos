@@ -23,17 +23,17 @@ public class AwardNode {
     @Version
     Long version = 1L;
 
-    public Organisation getOrganisation() {
-        return (null != organisation) ? organisation.getOrganisation() : null;
+    public OrganisationNode getOrganisation() {
+        return (null != organisation) ? organisation.getOrganisationNode() : null;
     }
 
-    public AwardNode setOrganisation(Organisation organisation, ZonedDateTime awardedDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public AwardNode setOrganisation(OrganisationNode organisationNode, ZonedDateTime awardedDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         if (null == this.organisation) {
-            this.organisation = new AwardOrgLink(organisation).setAwardedDate(awardedDate).setStartDate(startDate).setEndDate(endDate);
+            this.organisation = new AwardOrgLink(organisationNode).setAwardedDate(awardedDate).setStartDate(startDate).setEndDate(endDate);
         }
         else {
-            logger.warn("REMOVING relationship between entities {} {}", this, organisation);
-            this.organisation.setOrganisation(organisation);
+            logger.warn("REMOVING relationship between entities {} {}", this, organisationNode);
+            this.organisation.setOrganisationNode(organisationNode);
         }
         return this;
     }
@@ -58,11 +58,6 @@ public class AwardNode {
 
     public Long getVersion() {
         return version;
-    }
-
-    public AwardNode setVersion(Long version) {
-        this.version = version;
-        return this;
     }
 
     @Override

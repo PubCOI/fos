@@ -28,7 +28,7 @@ public class Award {
     OffsetDateTime awardedDate;
     ReferenceTypeE orgReferenceType;
     String orgReference;
-    FOSReference fosReference;
+    FOSOrganisation fosOrganisation;
     String supplierName;
     String supplierAddress;
 
@@ -164,12 +164,12 @@ public class Award {
                 '}';
     }
 
-    public FOSReference getFosReference() {
-        return fosReference;
+    public FOSOrganisation getFosOrganisation() {
+        return fosOrganisation;
     }
 
-    public Award setFosReference(FOSReference fosReference) {
-        this.fosReference = fosReference;
+    public Award setFosOrganisation(FOSOrganisation fosOrganisation) {
+        this.fosOrganisation = fosOrganisation;
         return this;
     }
 }

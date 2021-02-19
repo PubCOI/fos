@@ -8,13 +8,17 @@ import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.exceptions.FOSRuntimeException;
 import org.pubcoi.fos.exceptions.FOSUnauthorisedException;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.mdb.*;
+import org.pubcoi.fos.mdb.AwardsMDBRepo;
+import org.pubcoi.fos.mdb.FOSUserRepo;
+import org.pubcoi.fos.mdb.NoticesMDBRepo;
+import org.pubcoi.fos.mdb.TasksRepo;
 import org.pubcoi.fos.models.core.DRTaskType;
 import org.pubcoi.fos.models.core.FOSUser;
 import org.pubcoi.fos.models.core.RequestWithAuth;
-import org.pubcoi.fos.models.core.transactions.FOSTransaction;
+import org.pubcoi.fos.models.core.transactions.CanonicaliseClientNode;
 import org.pubcoi.fos.models.dao.*;
 import org.pubcoi.fos.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.services.TransactionSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,15 +39,15 @@ public class UI {
     TasksRepo tasksRepo;
     ClientsGraphRepo clientGRepo;
     FOSUserRepo userRepo;
-    TransactionsMDBRepo transactionRepo;
+    TransactionSvc transactionSvc;
 
-    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo, TransactionsMDBRepo transactionRepo) {
+    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo, TransactionSvc transactionSvc) {
         this.noticesMDBRepo = noticesMDBRepo;
         this.awardsMDBRepo = awardsMDBRepo;
         this.tasksRepo = tasksRepo;
         this.clientGRepo = clientGRepo;
         this.userRepo = userRepo;
-        this.transactionRepo = transactionRepo;
+        this.transactionSvc = transactionSvc;
     }
 
     @PostMapping("/api/ui/login")
@@ -102,12 +108,20 @@ public class UI {
 
     @PutMapping(value = "/api/ui/tasks/{taskType}/{refID}", consumes = "application/json")
     public UpdateClientDAO updateClientDAO(
-            @RequestParam("canonical") Boolean canonical,
             @PathVariable String refID,
             @PathVariable String taskType,
             @RequestBody RequestWithAuth authToken
     ) throws FOSUnauthorisedException {
-        checkAuth(authToken.getAuthToken());
+        FOSUser user = userRepo.getByUid(checkAuth(authToken.getAuthToken()).getUid());
+        switch (taskType) {
+            case "mark_canonical_clientNode":
+                clientGRepo.findById(refID).ifPresent(clientNode -> {
+                    transactionSvc.doTransaction(CanonicaliseClientNode.build(clientNode, user, null));
+                });
+                break;
+            default:
+                logger.warn("Did not match action to request");
+        }
         return new UpdateClientDAO().setResponse("updated");
     }
 
@@ -121,9 +135,22 @@ public class UI {
 
     @GetMapping("/api/transactions")
     public List<TransactionDAO> getTransactions() {
-        return transactionRepo.findAll().stream()
-                .sorted(Comparator.comparing(FOSTransaction::getTransactionDT))
-                .map(TransactionDAO::new)
-                .collect(Collectors.toList());
+        return transactionSvc.getTransactions();
+    }
+
+    @PutMapping("/api/transactions")
+    public String playbackTransactions(@RequestBody List<TransactionDAO> transactions) {
+        AtomicBoolean hasErrors = new AtomicBoolean(false);
+        AtomicInteger numErrors = new AtomicInteger(0);
+        transactions.stream()
+                .sorted(Comparator.comparing(TransactionDAO::getTransactionDT))
+                .forEachOrdered(transaction -> {
+                    boolean success = transactionSvc.doTransaction(transaction);
+                    if (!success) {
+                        hasErrors.set(true);
+                        numErrors.getAndIncrement();
+                    }
+                });
+        return String.format("Transaction playback complete with %d errors", numErrors.get());
     }
 }

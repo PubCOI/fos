@@ -11,7 +11,7 @@ public class CanonicaliseClientNode {
         return new FOSTransaction()
                 .setTransactionType(FOSTransactionType.mark_canonical_clientNode)
                 .setTarget(new NodeReference(target))
-                .setUser(user)
+                .setUid(user.getUid())
                 .setNotes(notes);
     }
 

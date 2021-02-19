@@ -2,7 +2,6 @@ package org.pubcoi.fos.models.core.transactions;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.pubcoi.fos.models.core.FOSUser;
 import org.pubcoi.fos.models.core.NodeReference;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -18,7 +17,7 @@ public class FOSTransaction {
     FOSTransactionType transactionType;
     NodeReference source;
     NodeReference target;
-    FOSUser user;
+    String uid;
     OffsetDateTime transactionDT = OffsetDateTime.now();
     String notes;
 
@@ -61,15 +60,6 @@ public class FOSTransaction {
         return this;
     }
 
-    public FOSUser getUser() {
-        return user;
-    }
-
-    public FOSTransaction setUser(FOSUser user) {
-        this.user = user;
-        return this;
-    }
-
     public OffsetDateTime getTransactionDT() {
         return transactionDT;
     }
@@ -106,5 +96,14 @@ public class FOSTransaction {
         return new HashCodeBuilder(17, 37)
                 .append(id)
                 .toHashCode();
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public FOSTransaction setUid(String uid) {
+        this.uid = uid;
+        return this;
     }
 }

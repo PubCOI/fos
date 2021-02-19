@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "client")
-public class ClientNode {
+public class ClientNode implements FOSEntity {
     private static final Logger logger = LoggerFactory.getLogger(ClientNode.class);
 
     @Id
@@ -49,6 +49,7 @@ public class ClientNode {
     public ClientNode(FullNotice notice) {
         this.id = resolveID(notice);
         this.clientName = notice.getNotice().getOrganisationName();
+        this.postCode = getNormalisedPostCode(notice);
         logger.debug("Adding client with normalised ID {} ({})", resolveIDStr(notice), this.id);
     }
 

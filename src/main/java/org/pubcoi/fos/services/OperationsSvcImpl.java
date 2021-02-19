@@ -1,5 +1,6 @@
 package org.pubcoi.fos.services;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.pubcoi.fos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.models.cf.AwardDetailParentType;
@@ -7,6 +8,7 @@ import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.models.core.Award;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +17,9 @@ public class OperationsSvcImpl implements OperationsSvc {
 
     NoticesMDBRepo noticesMDBRepo;
     AwardsMDBRepo awardsMDBRepo;
+
+    @Value("${pubcoi.fos.user.hash-salt}")
+    String hashSalt;
 
     public OperationsSvcImpl(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo) {
         this.noticesMDBRepo = noticesMDBRepo;
@@ -27,5 +32,10 @@ public class OperationsSvcImpl implements OperationsSvc {
         for (AwardDetailParentType.AwardDetail awardDetail : notice.getAwards().getAwardDetail()) {
             logger.debug("Saving award {}", awardsMDBRepo.save(new Award(notice, awardDetail)));
         }
+    }
+
+    @Override
+    public String resolveUserID(String email) {
+        return DigestUtils.sha256Hex(String.format("%s:%s", hashSalt, email));
     }
 }

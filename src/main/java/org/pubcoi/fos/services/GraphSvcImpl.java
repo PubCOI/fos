@@ -5,10 +5,9 @@ import org.pubcoi.fos.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.gdb.NoticesGRepo;
 import org.pubcoi.fos.gdb.OrganisationsGraphRepo;
-import org.pubcoi.fos.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.mdb.FOSOrganisationRepo;
-import org.pubcoi.fos.mdb.NoticesMDBRepo;
-import org.pubcoi.fos.mdb.OCCompaniesRepo;
+import org.pubcoi.fos.mdb.*;
+import org.pubcoi.fos.models.core.DRTask;
+import org.pubcoi.fos.models.core.DRTaskType;
 import org.pubcoi.fos.models.core.FOSOCCompany;
 import org.pubcoi.fos.models.core.FOSOrganisation;
 import org.pubcoi.fos.models.neo.nodes.AwardNode;
@@ -33,8 +32,9 @@ public class GraphSvcImpl implements GraphSvc {
     ClientsGraphRepo clientsGraphRepo;
     NoticesGRepo noticesGRepo;
     ScheduledSvc scheduledSvc;
+    TasksSvc tasksSvc;
 
-    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo, NoticesMDBRepo noticesMDBRepo, ClientsGraphRepo clientsGraphRepo, NoticesGRepo noticesGRepo, ScheduledSvc scheduledSvc) {
+    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo, NoticesMDBRepo noticesMDBRepo, ClientsGraphRepo clientsGraphRepo, NoticesGRepo noticesGRepo, ScheduledSvc scheduledSvc, TasksSvc tasksSvc) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
         this.fosOrganisationRepo = fosOrganisationRepo;
@@ -44,17 +44,18 @@ public class GraphSvcImpl implements GraphSvc {
         this.clientsGraphRepo = clientsGraphRepo;
         this.noticesGRepo = noticesGRepo;
         this.scheduledSvc = scheduledSvc;
+        this.tasksSvc = tasksSvc;
     }
 
     @Override
-    public void populateAwardsGraphFromMDB() {
-        // add all clients
+    public void populateGraphFromMDB() {
         clientsGraphRepo.deleteAll();
         awardsGraphRepo.deleteAll();
 
         scheduledSvc.populateFOSOrgsMDBFromAwards();
         scheduledSvc.populateOCCompaniesFromFOSOrgs();
 
+        // add all clients
         noticesMDBRepo.findAll().forEach(notice -> {
             Optional<ClientNode> nodeOpt = (clientsGraphRepo.findById(ClientNode.resolveID(notice)));
             if (nodeOpt.isPresent()) {
@@ -62,7 +63,9 @@ public class GraphSvcImpl implements GraphSvc {
             }
             ClientNode node = (nodeOpt.orElseGet(() -> {
                 logger.debug("Creating new client node");
-                return new ClientNode(notice);
+                ClientNode clientNode = new ClientNode(notice);
+                tasksSvc.createTask(new DRTask(DRTaskType.resolve_client, clientNode));
+                return clientNode;
             }));
             node.addNotice(notice);
             clientsGraphRepo.save(node);

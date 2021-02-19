@@ -72,6 +72,6 @@ public class Debug {
 
     @GetMapping("/api/debug/populate-graph")
     public void populateGraph() {
-        graphSvc.populateAwardsGraphFromMDB();
+        graphSvc.populateGraphFromMDB();
     }
 }

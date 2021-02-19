@@ -8,13 +8,11 @@ import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.exceptions.FOSRuntimeException;
 import org.pubcoi.fos.exceptions.FOSUnauthorisedException;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.mdb.FOSUserRepo;
-import org.pubcoi.fos.mdb.NoticesMDBRepo;
-import org.pubcoi.fos.mdb.TasksRepo;
+import org.pubcoi.fos.mdb.*;
 import org.pubcoi.fos.models.core.DRTaskType;
 import org.pubcoi.fos.models.core.FOSUser;
 import org.pubcoi.fos.models.core.RequestWithAuth;
+import org.pubcoi.fos.models.core.transactions.FOSTransaction;
 import org.pubcoi.fos.models.dao.*;
 import org.pubcoi.fos.models.neo.nodes.ClientNode;
 import org.slf4j.Logger;
@@ -22,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,13 +33,15 @@ public class UI {
     TasksRepo tasksRepo;
     ClientsGraphRepo clientGRepo;
     FOSUserRepo userRepo;
+    TransactionsMDBRepo transactionRepo;
 
-    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo) {
+    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo, TransactionsMDBRepo transactionRepo) {
         this.noticesMDBRepo = noticesMDBRepo;
         this.awardsMDBRepo = awardsMDBRepo;
         this.tasksRepo = tasksRepo;
         this.clientGRepo = clientGRepo;
         this.userRepo = userRepo;
+        this.transactionRepo = transactionRepo;
     }
 
     @PostMapping("/api/ui/login")
@@ -116,5 +117,13 @@ public class UI {
         } catch (FirebaseAuthException e) {
             throw new FOSUnauthorisedException();
         }
+    }
+
+    @GetMapping("/api/transactions")
+    public List<TransactionDAO> getTransactions() {
+        return transactionRepo.findAll().stream()
+                .sorted(Comparator.comparing(FOSTransaction::getTransactionDT))
+                .map(TransactionDAO::new)
+                .collect(Collectors.toList());
     }
 }

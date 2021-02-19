@@ -46,7 +46,7 @@ public class UI {
     @PostMapping("/api/ui/login")
     public void doLogin(@RequestBody UserLoginDAO loginDAO) throws FOSException {
         // shortcut .. if we already have the UID, we know we've created the user:
-        // if no match, it could be because the UID refers to another provider (ie they initially
+        // if no match, it could be because the UID refers to another provider (eg they initially
         // logged in via GitHub but are now using Google
         if (userRepo.existsByUid(loginDAO.getUid())) {
             userRepo.save(userRepo.getByUid(loginDAO.getUid()).setLastLogin(OffsetDateTime.now()));

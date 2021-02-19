@@ -2,6 +2,7 @@ package org.pubcoi.fos.rest;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
 import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.exceptions.FOSRuntimeException;
@@ -16,7 +17,6 @@ import org.pubcoi.fos.models.core.FOSUser;
 import org.pubcoi.fos.models.core.RequestWithAuth;
 import org.pubcoi.fos.models.dao.*;
 import org.pubcoi.fos.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.services.OperationsSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -34,15 +34,13 @@ public class UI {
     TasksRepo tasksRepo;
     ClientsGraphRepo clientGRepo;
     FOSUserRepo userRepo;
-    OperationsSvc operationsSvc;
 
-    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo, OperationsSvc operationsSvc) {
+    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo) {
         this.noticesMDBRepo = noticesMDBRepo;
         this.awardsMDBRepo = awardsMDBRepo;
         this.tasksRepo = tasksRepo;
         this.clientGRepo = clientGRepo;
         this.userRepo = userRepo;
-        this.operationsSvc = operationsSvc;
     }
 
     @PostMapping("/api/ui/login")
@@ -58,20 +56,11 @@ public class UI {
         // adds user meta if it doesn't exist
         try {
             UserRecord record = FirebaseAuth.getInstance().getUser(loginDAO.getUid());
-            if (null == record.getEmail()) {
-                throw new FOSException("Unable to add user - no email associated with profile");
-            }
-            if (!userRepo.existsById(operationsSvc.resolveUserID(record.getEmail()))) {
-                userRepo.save(new FOSUser()
-                        .setId(operationsSvc.resolveUserID(record.getEmail()))
-                        .setUid(loginDAO.getUid())
-                        .setDisplayName(record.getDisplayName())
-                        .setLastLogin(OffsetDateTime.now())
-                );
-            }
-            else {
-                userRepo.save(userRepo.getById(operationsSvc.resolveUserID(record.getEmail())).setLastLogin(OffsetDateTime.now()));
-            }
+            userRepo.save(new FOSUser()
+                    .setUid(loginDAO.getUid())
+                    .setDisplayName(record.getDisplayName())
+                    .setLastLogin(OffsetDateTime.now())
+            );
         } catch (FirebaseAuthException e) {
             logger.error(e.getMessage(), e);
             throw new FOSException();
@@ -81,6 +70,12 @@ public class UI {
     @GetMapping("/api/ui/awards")
     public List<AwardDAO> getContractAwards() {
         return awardsMDBRepo.findAll().stream().map(AwardDAO::new).collect(Collectors.toList());
+    }
+
+    @PostMapping("/api/ui/user")
+    public UserProfileDAO getUserProfile(@RequestBody RequestWithAuth auth) throws FOSUnauthorisedException {
+        String uid = checkAuth(auth.getAuthToken()).getUid();
+        return new UserProfileDAO(userRepo.getByUid(uid));
     }
 
     @GetMapping("/api/ui/tasks")
@@ -115,9 +110,9 @@ public class UI {
         return new UpdateClientDAO().setResponse("updated");
     }
 
-    private void checkAuth(String authToken) throws FOSUnauthorisedException {
+    private FirebaseToken checkAuth(String authToken) throws FOSUnauthorisedException {
         try {
-            FirebaseAuth.getInstance().verifyIdToken(authToken);
+            return FirebaseAuth.getInstance().verifyIdToken(authToken);
         } catch (FirebaseAuthException e) {
             throw new FOSUnauthorisedException();
         }

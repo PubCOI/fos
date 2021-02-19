@@ -1,6 +1,5 @@
 package org.pubcoi.fos.services;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.pubcoi.fos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.models.cf.AwardDetailParentType;
@@ -32,10 +31,5 @@ public class OperationsSvcImpl implements OperationsSvc {
         for (AwardDetailParentType.AwardDetail awardDetail : notice.getAwards().getAwardDetail()) {
             logger.debug("Saving award {}", awardsMDBRepo.save(new Award(notice, awardDetail)));
         }
-    }
-
-    @Override
-    public String resolveUserID(String email) {
-        return DigestUtils.sha256Hex(String.format("%s:%s", hashSalt, email));
     }
 }

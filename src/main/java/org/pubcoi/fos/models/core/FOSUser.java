@@ -9,7 +9,6 @@ import java.time.OffsetDateTime;
 public class FOSUser {
 
     @Id
-    String id;
     String uid;
     String displayName;
     OffsetDateTime lastLogin;
@@ -32,15 +31,6 @@ public class FOSUser {
 
     public FOSUser setUid(String uid) {
         this.uid = uid;
-        return this;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public FOSUser setId(String id) {
-        this.id = id;
         return this;
     }
 

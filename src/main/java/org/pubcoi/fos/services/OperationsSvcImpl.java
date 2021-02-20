@@ -7,7 +7,6 @@ import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.models.core.Award;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,9 +15,6 @@ public class OperationsSvcImpl implements OperationsSvc {
 
     NoticesMDBRepo noticesMDBRepo;
     AwardsMDBRepo awardsMDBRepo;
-
-    @Value("${pubcoi.fos.user.hash-salt}")
-    String hashSalt;
 
     public OperationsSvcImpl(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo) {
         this.noticesMDBRepo = noticesMDBRepo;

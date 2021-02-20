@@ -31,10 +31,12 @@ public class TransactionSvcImpl implements TransactionSvc {
                 clientsGraphRepo.findById(transaction.getTarget().getId()).ifPresent(client -> {
                     clientsGraphRepo.save(client.setCanonical(true));
                 });
+                transactionRepo.save(transaction);
+                return true;
             default:
                 logger.warn("Unable to process transaction {}", transaction.getId());
         }
-        return true;
+        return false;
     }
 
     @Override

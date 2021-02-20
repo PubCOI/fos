@@ -6,6 +6,8 @@ public class NodeReference {
     String nodeType;
     String id;
 
+    public NodeReference() {}
+
     public NodeReference(FOSEntity node) {
         this.nodeType = node.getClass().getTypeName();
         this.id = node.getId();

@@ -1,11 +1,23 @@
 package org.pubcoi.fos.exceptions;
 
-public class FOSException extends Exception {
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+public class FOSException extends ResponseStatusException {
 
     public FOSException() {
-        super();
+        super(HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
     public FOSException(String message) {
-        super(message);
+        super(HttpStatus.INTERNAL_SERVER_ERROR, message);
+    }
+
+    public FOSException(HttpStatus status, String message) {
+        super(status, message);
+    }
+
+    public FOSException(HttpStatus status) {
+        super(status);
     }
 }

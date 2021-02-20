@@ -4,29 +4,29 @@ import org.pubcoi.fos.models.neo.nodes.FOSEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 
 @Document(collection = "fos_tasks")
 public class DRTask {
 
     @Id
-    String taskID;
+    String id;
     DRTaskType taskType;
     FOSEntity entity;
     Boolean completed;
     FOSUser completedBy;
-    ZonedDateTime completedDT;
+    OffsetDateTime completedDT;
 
     DRTask() {}
 
     public DRTask(DRTaskType type, FOSEntity entity) {
-        this.taskID = String.format("%s_%s", type.toString(), entity.getId());
+        this.id = String.format("%s_%s", type.toString(), entity.getId());
         this.taskType = type;
         this.entity = entity;
     }
 
-    public String getTaskID() {
-        return taskID;
+    public String getId() {
+        return id;
     }
 
     public DRTaskType getTaskType() {
@@ -65,17 +65,17 @@ public class DRTask {
         return this;
     }
 
-    public ZonedDateTime getCompletedDT() {
+    public OffsetDateTime getCompletedDT() {
         return completedDT;
     }
 
-    public DRTask setCompletedDT(ZonedDateTime completedDT) {
+    public DRTask setCompletedDT(OffsetDateTime completedDT) {
         this.completedDT = completedDT;
         return this;
     }
 
-    private DRTask setTaskID(String taskID) {
-        this.taskID = taskID;
+    private DRTask setId(String id) {
+        this.id = id;
         return this;
     }
 }

@@ -13,7 +13,7 @@ public class TaskDAO {
     public TaskDAO() {}
 
     public TaskDAO(DRTask task) {
-        this.taskID = task.getTaskID();
+        this.taskID = task.getId();
         this.taskType = task.getTaskType();
         this.entity = task.getEntity().getId();
     }

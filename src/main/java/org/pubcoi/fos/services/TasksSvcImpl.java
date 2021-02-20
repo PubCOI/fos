@@ -18,7 +18,7 @@ public class TasksSvcImpl implements TasksSvc {
 
     @Override
     public void createTask(DRTask task) {
-        if (tasksRepo.existsById(task.getTaskID())) {
+        if (tasksRepo.existsById(task.getId())) {
             logger.warn("Task already created");
         }
         else {

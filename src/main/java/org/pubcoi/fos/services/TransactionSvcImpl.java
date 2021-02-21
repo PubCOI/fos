@@ -51,16 +51,16 @@ public class TransactionSvcImpl implements TransactionSvc {
                 clientsGraphRepo.save(sourceNode);
 
                 logger.debug("Linking all source notices directly to parent, marking with transaction ID {}", transaction.getId());
-                sourceNode.getNotices().forEach(sourceNotice -> {
+                sourceNode.getTenders().forEach(sourceNotice -> {
                     logger.debug("Transposing TenderNode:{} onto parent ClientNode:{}", sourceNotice.getId(), targetNode.getId());
-                    targetNode.getNotices().add(sourceNotice
+                    targetNode.getTenders().add(sourceNotice
                             .setTransactionID(transaction.getId())
                     );
                 });
                 clientsGraphRepo.save(sourceNode);
 
                 logger.info("Hiding all notices on the original node");
-                sourceNode.getNotices().addAll(sourceNode.getNotices().stream()
+                sourceNode.getTenders().addAll(sourceNode.getTenders().stream()
                         .peek(n -> {
                             n.setHidden(true);
                         })

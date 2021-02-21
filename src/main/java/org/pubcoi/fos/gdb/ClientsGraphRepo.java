@@ -18,7 +18,7 @@ public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, String> {
     @Query("MATCH(n:Client)-[*0..1]-(a) WHERE n.id = $clientID RETURN n")
     Optional<ClientNode> findByIdEqualsIncludeNeighbours(String clientID);
 
-    @Query("MATCH(n:Client) - [r:PUBLISHED] -> (t:Tender) where n.id = $clientID return n")
+    @Query("MATCH paths = (n:Client)-[rel]->(t:Tender) where n.id = $clientID return n, collect(rel) AS PUBLISHED, collect(t) AS TENDERS")
     Optional<ClientNode> findByClientIdIncludeNeighboursIgnoringHidden(String clientID);
 
     default Optional<ClientNode> findById(String id) {

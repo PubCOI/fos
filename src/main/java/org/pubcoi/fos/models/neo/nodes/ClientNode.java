@@ -10,8 +10,8 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.util.DigestUtils;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Node(primaryLabel = "Client")
 public class ClientNode implements FOSEntity {
@@ -33,7 +33,7 @@ public class ClientNode implements FOSEntity {
     Boolean canonical = false;
 
     @Relationship("PUBLISHED")
-    Set<ClientNoticeLink> notices = new HashSet<>();
+    List<ClientNoticeLink> tenders = new ArrayList<>();
 
     public ClientNode() {
     }
@@ -118,17 +118,7 @@ public class ClientNode implements FOSEntity {
     }
 
     public void addNotice(FullNotice notice) {
-        if (null == notices) notices = new HashSet<>();
-        notices.add(new ClientNoticeLink(this, notice));
-    }
-
-    public Set<ClientNoticeLink> getNotices() {
-        return notices;
-    }
-
-    public ClientNode setNotices(Set<ClientNoticeLink> notices) {
-        this.notices = notices;
-        return this;
+        tenders.add(new ClientNoticeLink(this, notice));
     }
 
     public Boolean getHidden() {
@@ -147,6 +137,15 @@ public class ClientNode implements FOSEntity {
 
     public ClientNode setParent(ClientParentClientLink parent) {
         this.parent = parent;
+        return this;
+    }
+
+    public List<ClientNoticeLink> getTenders() {
+        return tenders;
+    }
+
+    public ClientNode setTenders(List<ClientNoticeLink> tenders) {
+        this.tenders = tenders;
         return this;
     }
 }

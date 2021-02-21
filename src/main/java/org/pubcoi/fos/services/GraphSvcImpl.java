@@ -48,21 +48,25 @@ public class GraphSvcImpl implements GraphSvc {
     }
 
     @Override
-    public void populateGraphFromMDB() {
+    public void clearGraphs() {
         clientsGraphRepo.deleteAll();
         awardsGraphRepo.deleteAll();
+        noticesGRepo.deleteAll();
+        orgGraphRepo.deleteAll();
+    }
 
+    @Override
+    public void populateGraphFromMDB() {
         scheduledSvc.populateFOSOrgsMDBFromAwards();
         scheduledSvc.populateOCCompaniesFromFOSOrgs();
 
         // add all clients
         noticesMDBRepo.findAll().forEach(notice -> {
-            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findById(ClientNode.resolveID(notice)));
+            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findByIdEquals(ClientNode.resolveID(notice)));
             if (nodeOpt.isPresent()) {
                 logger.debug("Using already instantiated client node {}", ClientNode.resolveID(notice));
             }
             ClientNode node = (nodeOpt.orElseGet(() -> {
-                logger.debug("Creating new client node");
                 ClientNode clientNode = new ClientNode(notice);
                 tasksSvc.createTask(new DRTask(DRTaskType.resolve_client, clientNode));
                 return clientNode;
@@ -73,7 +77,7 @@ public class GraphSvcImpl implements GraphSvc {
 
         // add all awards
         awardsMDBRepo.findAll().forEach(award -> {
-            logger.debug("inspecting {}", award.getId());
+            logger.debug("Inspecting {}:{}", award.getClass().getName(), award.getId());
             if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FOSOCCompany) {
                 FOSOrganisation org = award.getFosOrganisation();
                 try {
@@ -93,7 +97,7 @@ public class GraphSvcImpl implements GraphSvc {
                                     award.getEndDate().toZonedDateTime()
                             )
                     );
-                    logger.debug("saved award {}", award.getId());
+                    logger.debug("Saved {}:{}", award.getClass().getName(), award.getId());
                 } catch (FOSException e) {
                     logger.error("Unable to insert entry into graph: is source MDB fully populated?");
                 }
@@ -104,7 +108,7 @@ public class GraphSvcImpl implements GraphSvc {
         awardsGraphRepo.findAll().stream()
                 .filter(award -> award.getOrganisation().isVerified())
                 .forEach(award -> {
-                    logger.debug("Adding notice to award {}", award);
+                    logger.debug("Adding notice ID {} to {}:{}", award.getNoticeID(), award.getClass().getName(), award.getId());
                     noticesGRepo.findById(award.getNoticeID()).ifPresent(notice -> {
                         noticesGRepo.save(notice.addAward(award));
                     });

@@ -12,10 +12,10 @@ import java.time.OffsetDateTime;
  * Basically the same as the notice type, except we use the award GUID as the document ID
  */
 @Document(collection = "cf_awards")
-public class Award {
+public class CFAward {
 
     /**
-     * Should be the Award GUID
+     * Should be the CFAward GUID
      */
     @Id
     String id;
@@ -33,9 +33,9 @@ public class Award {
     String supplierName;
     String supplierAddress;
 
-    public Award() {}
+    public CFAward() {}
 
-    public Award(FullNotice notice, AwardDetailParentType.AwardDetail awardDetail) {
+    public CFAward(FullNotice notice, AwardDetailParentType.AwardDetail awardDetail) {
         this.id = awardDetail.getAwardGuid();
         this.noticeID = awardDetail.getNoticeId();
         this.valueMin = (null != notice.getNotice().getValueLow()) ? notice.getNotice().getValueLow().longValue() : null;
@@ -55,7 +55,7 @@ public class Award {
         return id;
     }
 
-    public Award setId(String id) {
+    public CFAward setId(String id) {
         this.id = id;
         return this;
     }
@@ -64,7 +64,7 @@ public class Award {
         return noticeID;
     }
 
-    public Award setNoticeID(String noticeID) {
+    public CFAward setNoticeID(String noticeID) {
         this.noticeID = noticeID;
         return this;
     }
@@ -73,7 +73,7 @@ public class Award {
         return valueMin;
     }
 
-    public Award setValueMin(Long valueMin) {
+    public CFAward setValueMin(Long valueMin) {
         this.valueMin = valueMin;
         return this;
     }
@@ -82,7 +82,7 @@ public class Award {
         return valueMax;
     }
 
-    public Award setValueMax(Long valueMax) {
+    public CFAward setValueMax(Long valueMax) {
         this.valueMax = valueMax;
         return this;
     }
@@ -91,7 +91,7 @@ public class Award {
         return value;
     }
 
-    public Award setValue(Long value) {
+    public CFAward setValue(Long value) {
         this.value = value;
         return this;
     }
@@ -100,7 +100,7 @@ public class Award {
         return startDate;
     }
 
-    public Award setStartDate(OffsetDateTime startDate) {
+    public CFAward setStartDate(OffsetDateTime startDate) {
         this.startDate = startDate;
         return this;
     }
@@ -109,7 +109,7 @@ public class Award {
         return endDate;
     }
 
-    public Award setEndDate(OffsetDateTime endDate) {
+    public CFAward setEndDate(OffsetDateTime endDate) {
         this.endDate = endDate;
         return this;
     }
@@ -118,7 +118,7 @@ public class Award {
         return awardedDate;
     }
 
-    public Award setAwardedDate(OffsetDateTime awardedDate) {
+    public CFAward setAwardedDate(OffsetDateTime awardedDate) {
         this.awardedDate = awardedDate;
         return this;
     }
@@ -127,7 +127,7 @@ public class Award {
         return orgReferenceType;
     }
 
-    public Award setOrgReferenceType(ReferenceTypeE orgReferenceType) {
+    public CFAward setOrgReferenceType(ReferenceTypeE orgReferenceType) {
         this.orgReferenceType = orgReferenceType;
         return this;
     }
@@ -136,7 +136,7 @@ public class Award {
         return orgReference;
     }
 
-    public Award setOrgReference(String orgReference) {
+    public CFAward setOrgReference(String orgReference) {
         this.orgReference = orgReference;
         return this;
     }
@@ -145,7 +145,7 @@ public class Award {
         return supplierName;
     }
 
-    public Award setSupplierName(String supplierName) {
+    public CFAward setSupplierName(String supplierName) {
         this.supplierName = supplierName;
         return this;
     }
@@ -154,14 +154,14 @@ public class Award {
         return supplierAddress;
     }
 
-    public Award setSupplierAddress(String supplierAddress) {
+    public CFAward setSupplierAddress(String supplierAddress) {
         this.supplierAddress = supplierAddress;
         return this;
     }
 
     @Override
     public String toString() {
-        return "Award{" +
+        return "CFAward{" +
                 "id='" + id + '\'' +
                 '}';
     }
@@ -170,7 +170,7 @@ public class Award {
         return fosOrganisation;
     }
 
-    public Award setFosOrganisation(FOSOrganisation fosOrganisation) {
+    public CFAward setFosOrganisation(FOSOrganisation fosOrganisation) {
         this.fosOrganisation = fosOrganisation;
         return this;
     }
@@ -179,7 +179,7 @@ public class Award {
         return client;
     }
 
-    public Award setClient(String client) {
+    public CFAward setClient(String client) {
         this.client = client;
         return this;
     }

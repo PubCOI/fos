@@ -7,6 +7,8 @@ import org.springframework.lang.Nullable;
 
 public class CanonicaliseClientNode {
 
+    private CanonicaliseClientNode() {}
+
     public static FOSTransaction build(ClientNode target, FOSUser user, @Nullable String notes) {
         return new FOSTransaction()
                 .setTransactionType(FOSTransactionType.mark_canonical_clientNode)

@@ -11,4 +11,6 @@ public interface TransactionSvc {
     boolean doTransaction(TransactionDAO transaction);
 
     List<TransactionDAO> getTransactions();
+
+    void clearTransactions();
 }

@@ -1,5 +1,6 @@
 package org.pubcoi.fos.models.core.transactions;
 
 public enum FOSTransactionType {
-    mark_canonical_clientNode
+    link_source_to_parent_clientNode,
+    mark_canonical_clientNode,
 }

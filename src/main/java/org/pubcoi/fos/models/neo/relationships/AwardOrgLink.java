@@ -16,6 +16,8 @@ public class AwardOrgLink {
     ZonedDateTime startDate;
     ZonedDateTime endDate;
 
+    Boolean hidden = false;
+
     public AwardOrgLink(){}
 
     public AwardOrgLink(OrganisationNode organisationNode) {
@@ -55,6 +57,15 @@ public class AwardOrgLink {
 
     public AwardOrgLink setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+        return this;
+    }
+
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    public AwardOrgLink setHidden(Boolean hidden) {
+        this.hidden = hidden;
         return this;
     }
 }

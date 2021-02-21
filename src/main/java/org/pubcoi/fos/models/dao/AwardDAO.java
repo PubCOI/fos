@@ -1,6 +1,6 @@
 package org.pubcoi.fos.models.dao;
 
-import org.pubcoi.fos.models.core.Award;
+import org.pubcoi.fos.models.core.CFAward;
 
 /**
  * Used to return list of awards to the user
@@ -18,14 +18,14 @@ public class AwardDAO {
     public AwardDAO() {
     }
 
-    public AwardDAO(Award award) {
-        this.id = award.getId();
-        this.noticeID = award.getNoticeID();
-        this.organisation = award.getClient();
-        this.supplierName = award.getSupplierName();
-        this.value = (null == award.getValue() ? 0 : award.getValue());
-        this.valueMin = (null == award.getValueMin() ? 0 : award.getValueMin());
-        this.valueMax = (null == award.getValueMax() ? 0 : award.getValueMax());
+    public AwardDAO(CFAward CFAward) {
+        this.id = CFAward.getId();
+        this.noticeID = CFAward.getNoticeID();
+        this.organisation = CFAward.getClient();
+        this.supplierName = CFAward.getSupplierName();
+        this.value = (null == CFAward.getValue() ? 0 : CFAward.getValue());
+        this.valueMin = (null == CFAward.getValueMin() ? 0 : CFAward.getValueMin());
+        this.valueMax = (null == CFAward.getValueMax() ? 0 : CFAward.getValueMax());
     }
 
     public String getId() {

@@ -12,13 +12,23 @@ public class OrgLELink {
     String id;
 
     @TargetNode
-    OrganisationNode organisationNode;
+    OrganisationNode organisation;
+
+    Boolean hidden = false;
 
     public OrgLELink() {}
 
-    public OrgLELink(String id, OrganisationNode organisationNode)  {
+    public OrgLELink(String id, OrganisationNode organisation)  {
         this.id = id;
-        this.organisationNode = organisationNode;
+        this.organisation = organisation;
     }
 
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    public OrgLELink setHidden(Boolean hidden) {
+        this.hidden = hidden;
+        return this;
+    }
 }

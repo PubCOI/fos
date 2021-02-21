@@ -43,11 +43,17 @@ java -Dspring.profiles.active=<your_profile_name> \
 Neo4j index creation:
 
 ```
-CALL db.index.fulltext.createNodeIndex("clients-fts", ["client"], ["clientName", "postCode"])
+CALL db.index.fulltext.createNodeIndex("clients-fts", ["Client"], ["clientName", "postCode"], {analyzer: "english"})
 ```
 
 Verify:
 
 ```
 SHOW INDEXES
+```
+
+Development only: clearing schemas -
+
+```
+CALL apoc.schema.assert({},{})
 ```

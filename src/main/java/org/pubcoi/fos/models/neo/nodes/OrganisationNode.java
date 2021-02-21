@@ -9,13 +9,14 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 import java.util.HashSet;
 import java.util.Set;
 
-@Node(primaryLabel = "organisation")
-public class OrganisationNode {
+@Node(primaryLabel = "Organisation")
+public class OrganisationNode implements FOSEntity {
 
     @Id
     String id;
     String companyName;
     Boolean verified;
+    Boolean hidden = false;
 
     @DynamicLabels
     Set<String> labels = new HashSet<>();
@@ -73,10 +74,21 @@ public class OrganisationNode {
     public OrganisationNode setVerified(Boolean verified) {
         this.verified = verified;
         if (verified) {
-            labels.add("verified");
+            labels.add("Verified");
         } else {
-            labels.remove("verified");
+            labels.remove("Verified");
         }
+        return this;
+    }
+
+    @Override
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    @Override
+    public OrganisationNode setHidden(Boolean hidden) {
+        this.hidden = hidden;
         return this;
     }
 }

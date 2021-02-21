@@ -2,6 +2,7 @@ package org.pubcoi.fos.models.neo.nodes;
 
 import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.models.neo.relationships.ClientNoticeLink;
+import org.pubcoi.fos.models.neo.relationships.ClientParentClientLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -12,7 +13,7 @@ import org.springframework.util.DigestUtils;
 import java.util.HashSet;
 import java.util.Set;
 
-@Node(primaryLabel = "client")
+@Node(primaryLabel = "Client")
 public class ClientNode implements FOSEntity {
     private static final Logger logger = LoggerFactory.getLogger(ClientNode.class);
 
@@ -23,14 +24,16 @@ public class ClientNode implements FOSEntity {
 
     String clientName;
 
+    Boolean hidden = false;
+
     @Relationship("AKA")
-    ClientNode client;
+    ClientParentClientLink parent;
 
     // TRUE
     Boolean canonical = false;
 
     @Relationship("PUBLISHED")
-    Set<ClientNoticeLink> notices;
+    Set<ClientNoticeLink> notices = new HashSet<>();
 
     public ClientNode() {
     }
@@ -50,7 +53,7 @@ public class ClientNode implements FOSEntity {
         this.id = resolveID(notice);
         this.clientName = notice.getNotice().getOrganisationName();
         this.postCode = getNormalisedPostCode(notice);
-        logger.debug("Adding client with normalised ID {} ({})", resolveIDStr(notice), this.id);
+        logger.debug("Adding client {} -> (id:{})", resolveIDStr(notice), this.id);
     }
 
     private static String getNormalisedClientName(String clientName) {
@@ -105,15 +108,6 @@ public class ClientNode implements FOSEntity {
         return this;
     }
 
-    public ClientNode getClient() {
-        return client;
-    }
-
-    public ClientNode setClient(ClientNode client) {
-        this.client = client;
-        return this;
-    }
-
     public Boolean getCanonical() {
         return canonical;
     }
@@ -126,5 +120,33 @@ public class ClientNode implements FOSEntity {
     public void addNotice(FullNotice notice) {
         if (null == notices) notices = new HashSet<>();
         notices.add(new ClientNoticeLink(this, notice));
+    }
+
+    public Set<ClientNoticeLink> getNotices() {
+        return notices;
+    }
+
+    public ClientNode setNotices(Set<ClientNoticeLink> notices) {
+        this.notices = notices;
+        return this;
+    }
+
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    @Override
+    public ClientNode setHidden(Boolean hidden) {
+        this.hidden = hidden;
+        return this;
+    }
+
+    public ClientParentClientLink getParent() {
+        return parent;
+    }
+
+    public ClientNode setParent(ClientParentClientLink parent) {
+        this.parent = parent;
+        return this;
     }
 }

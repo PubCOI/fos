@@ -1,5 +1,11 @@
 package org.pubcoi.fos.models.core;
 
+/**
+ * Any requests from the UI that need authentication will be accompanied by a corresponding Firebase authToken: this
+ * will be checked before any transactions are committed.
+ * Source and target refer to graph entities that are the subject of the request.
+ * Task ID refers to a "fos_task".
+ */
 public class RequestWithAuth {
 
     String authToken;

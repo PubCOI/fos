@@ -1,7 +1,6 @@
 package org.pubcoi.fos.services;
 
 import org.pubcoi.fos.exceptions.FOSBadRequestException;
-import org.pubcoi.fos.exceptions.FOSRuntimeException;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.gdb.NoticesGRepo;
 import org.pubcoi.fos.mdb.TransactionMDBRepo;
@@ -36,10 +35,11 @@ public class TransactionSvcImpl implements TransactionSvc {
     public synchronized boolean doTransaction(FOSTransaction transaction) {
         switch (transaction.getTransactionType()) {
             case link_source_to_parent_clientNode:
-                Optional<ClientNode> source = clientsGraphRepo.findById(transaction.getSource().getId());
-                Optional<ClientNode> target = clientsGraphRepo.findById(transaction.getTarget().getId());
+                // Don't do what I did and forget to hydrate the tenders
+                Optional<ClientNode> source = clientsGraphRepo.findClientsHydratingTenders(transaction.getSource().getId());
+                Optional<ClientNode> target = clientsGraphRepo.findClientsHydratingTenders(transaction.getTarget().getId());
                 if (!source.isPresent() || !target.isPresent())
-                    throw new FOSRuntimeException("Unable to resolve source and/or target");
+                    throw new FOSBadRequestException("Unable to resolve source and/or target");
                 ClientNode sourceNode = source.get();
                 ClientNode targetNode = target.get();
 

@@ -5,6 +5,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Fos site users.
+ * UID refers to a Firebase UID.
+ */
 @Document("fos_users")
 public class FOSUser {
 

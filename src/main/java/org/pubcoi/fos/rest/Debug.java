@@ -12,19 +12,20 @@ import org.pubcoi.fos.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
+@Profile("debug")
 @RestController
 public class Debug {
     private static final Logger logger = LoggerFactory.getLogger(Debug.class);
 
     NoticesMDBRepo noticesMDBRepo;
     OCCompaniesRepo ocCompanies;
-    GraphsOrchestration graphsOrch;
     GraphSvc graphSvc;
     OperationsSvc operations;
     ScheduledSvc scheduledSvc;
@@ -36,7 +37,6 @@ public class Debug {
     public Debug(
             NoticesMDBRepo noticesMDBRepo,
             OCCompaniesRepo ocCompanies,
-            GraphsOrchestration graphsOrch,
             GraphSvc graphSvc,
             OperationsSvc operations,
             ScheduledSvc scheduledSvc,
@@ -46,7 +46,6 @@ public class Debug {
             ClientsGraphRepo clientsGraphRepo) {
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
-        this.graphsOrch = graphsOrch;
         this.graphSvc = graphSvc;
         this.operations = operations;
         this.scheduledSvc = scheduledSvc;
@@ -72,12 +71,6 @@ public class Debug {
     @GetMapping("/api/oc-companies")
     public List<OCCompanySchema> getCompanies() {
         return ocCompanies.findAll();
-    }
-
-    @DeleteMapping("/api/awards")
-    public String deleteAwards() {
-        graphsOrch.deleteAll();
-        return "ok";
     }
 
     @GetMapping("/api/debug/add-companies")
@@ -121,14 +114,8 @@ public class Debug {
     }
 
     @GetMapping("/api/debug/clients/{client}")
-    public Optional<ClientNode> getClients(@PathVariable("client") String client) {
-        logger.info("Requesting client {} and neighbours", client);
-        return clientsGraphRepo.findByIdEqualsIncludeNeighbours(client);
-    }
-
-    @GetMapping("/api/debug/clients/a/{client}")
     public Optional<ClientNode> getClient2(@PathVariable("client") String client) {
-        logger.info("getClient2 w/client {}", client);
-        return clientsGraphRepo.findByClientIdIncludeNeighboursIgnoringHidden(client);
+        logger.info("getClient w/tenders {}", client);
+        return clientsGraphRepo.findClientsHydratingTenders(client);
     }
 }

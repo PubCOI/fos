@@ -70,7 +70,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     }
 
     /**
-     * Performs the call to OpenCorporates
+     * Performs call to OpenCorporates
      * @param companyRef the company number - assumes GB jurisdiction
      */
     void populateFromOC(String companyRef) {

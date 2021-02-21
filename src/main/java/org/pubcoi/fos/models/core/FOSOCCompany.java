@@ -6,6 +6,7 @@ public class FOSOCCompany extends FOSOrganisation {
 
     String jurisdiction;
     String reference;
+    String license;
 
     public FOSOCCompany() {}
 
@@ -14,6 +15,7 @@ public class FOSOCCompany extends FOSOrganisation {
         this.id = String.format("%s:%s:%s", PREFIX, jurisdiction, orgReference);
         this.jurisdiction = jurisdiction;
         this.reference = orgReference;
+        this.license = "OKF ODbL 1.0 via OpenCorporates.com";
     }
 
     public String getJurisdiction() {
@@ -22,5 +24,9 @@ public class FOSOCCompany extends FOSOrganisation {
 
     public String getReference() {
         return reference;
+    }
+
+    public String getLicense() {
+        return license;
     }
 }

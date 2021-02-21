@@ -9,13 +9,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.OffsetDateTime;
 
 /**
- * Basically the same as the notice type, except we use the award GUID as the document ID
+ * CFAward = Contracts Finder Award Entity.
+ * Basically the same as the notice type, except we tidy it up a bit and use the award GUID as the document ID.
+ * Will probably get rid of it as it's a bit disgusting.
  */
 @Document(collection = "cf_awards")
 public class CFAward {
 
     /**
-     * Should be the CFAward GUID
+     * Should be the Award GUID
      */
     @Id
     String id;

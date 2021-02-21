@@ -6,6 +6,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Tasks are bits of work that members of the site can do
+ */
 @Document(collection = "fos_tasks")
 public class DRTask {
 

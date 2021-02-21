@@ -1,0 +1,3 @@
+[submodule "fos-ui"]
+	path = fos-ui
+	url = git@github.com:PubCOI/fos-ui.git

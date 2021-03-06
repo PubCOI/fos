@@ -34,6 +34,7 @@ public class CFAward {
     FOSOrganisation fosOrganisation;
     String supplierName;
     String supplierAddress;
+    Boolean group;
 
     public CFAward() {}
 
@@ -51,6 +52,9 @@ public class CFAward {
         this.orgReference = awardDetail.getReference();
         this.supplierName = awardDetail.getSupplierName();
         this.supplierAddress = awardDetail.getSupplierAddress();
+        // if it's one of a number of awards on the same notice, the data structure will give the cumulative
+        // award total to each AwardDetail node
+        this.group = notice.getAwards().getAwardDetail().size() > 1;
     }
 
     public String getId() {
@@ -183,6 +187,15 @@ public class CFAward {
 
     public CFAward setClient(String client) {
         this.client = client;
+        return this;
+    }
+
+    public Boolean getGroup() {
+        return group;
+    }
+
+    public CFAward setGroup(Boolean group) {
+        this.group = group;
         return this;
     }
 }

@@ -14,7 +14,7 @@ public class OrganisationNode implements FOSEntity {
 
     @Id
     String id;
-    String companyName;
+    String name;
     Boolean verified;
     Boolean hidden = false;
 
@@ -24,12 +24,12 @@ public class OrganisationNode implements FOSEntity {
     @Relationship("LEGAL_ENTITY")
     OrgLELink legalEntity;
 
-    public String getCompanyName() {
-        return companyName;
+    public String getName() {
+        return name;
     }
 
-    public OrganisationNode setCompanyName(String companyName) {
-        this.companyName = companyName;
+    public OrganisationNode setName(String name) {
+        this.name = name;
         return this;
     }
 

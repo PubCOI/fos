@@ -18,7 +18,7 @@ public class ResolveClientDAO {
 
     public ResolveClientDAO(ClientNode clientNode) {
         this.id = clientNode.getId();
-        this.clientName = clientNode.getClientName();
+        this.clientName = clientNode.getName();
         this.isCanonical = clientNode.getCanonical();
         this.postCode = clientNode.getPostCode();
         this.canonicalID = (null != clientNode.getParent() ? clientNode.getParent().getClient().getId() : null);

@@ -1,11 +1,16 @@
 package org.pubcoi.fos.services;
 
+import org.pubcoi.fos.cdm.AttachmentFactory;
+import org.pubcoi.fos.cdm.BatchJobFactory;
+import org.pubcoi.fos.cdm.batch.BatchJob;
+import org.pubcoi.fos.cdm.batch.BatchJobTypeEnum;
 import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.gdb.NoticesGRepo;
 import org.pubcoi.fos.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.mdb.*;
+import org.pubcoi.fos.models.cf.AdditionalDetailsType;
 import org.pubcoi.fos.models.core.DRTask;
 import org.pubcoi.fos.models.core.DRTaskType;
 import org.pubcoi.fos.models.core.FOSOCCompany;
@@ -33,8 +38,23 @@ public class GraphSvcImpl implements GraphSvc {
     NoticesGRepo noticesGRepo;
     ScheduledSvc scheduledSvc;
     TasksSvc tasksSvc;
+    AttachmentMDBRepo attachmentMDBRepo;
+    BatchJobMDBRepo batchJobMDBRepo;
 
-    public GraphSvcImpl(AwardsMDBRepo awardsMDBRepo, AwardsGraphRepo awardsGraphRepo, FOSOrganisationRepo fosOrganisationRepo, OrganisationsGraphRepo orgGraphRepo, OCCompaniesRepo ocCompaniesRepo, NoticesMDBRepo noticesMDBRepo, ClientsGraphRepo clientsGraphRepo, NoticesGRepo noticesGRepo, ScheduledSvc scheduledSvc, TasksSvc tasksSvc) {
+    public GraphSvcImpl(
+            AwardsMDBRepo awardsMDBRepo,
+            AwardsGraphRepo awardsGraphRepo,
+            FOSOrganisationRepo fosOrganisationRepo,
+            OrganisationsGraphRepo orgGraphRepo,
+            OCCompaniesRepo ocCompaniesRepo,
+            NoticesMDBRepo noticesMDBRepo,
+            ClientsGraphRepo clientsGraphRepo,
+            NoticesGRepo noticesGRepo,
+            ScheduledSvc scheduledSvc,
+            TasksSvc tasksSvc,
+            AttachmentMDBRepo attachmentMDBRepo,
+            BatchJobMDBRepo batchJobMDBRepo
+    ) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
         this.fosOrganisationRepo = fosOrganisationRepo;
@@ -45,6 +65,8 @@ public class GraphSvcImpl implements GraphSvc {
         this.noticesGRepo = noticesGRepo;
         this.scheduledSvc = scheduledSvc;
         this.tasksSvc = tasksSvc;
+        this.attachmentMDBRepo = attachmentMDBRepo;
+        this.batchJobMDBRepo = batchJobMDBRepo;
     }
 
     @Override
@@ -55,6 +77,9 @@ public class GraphSvcImpl implements GraphSvc {
         orgGraphRepo.deleteAll();
     }
 
+    /**
+     * This is just a convenience function for now ...
+     */
     @Override
     public void populateGraphFromMDB() {
         scheduledSvc.populateFOSOrgsMDBFromAwards();
@@ -84,7 +109,7 @@ public class GraphSvcImpl implements GraphSvc {
                     orgGraphRepo.save(new OrganisationNode()
                             .setId(org.getId())
                             .setVerified(true)
-                            .setCompanyName(ocCompaniesRepo.findById(org.getId()).orElseThrow(() -> new FOSException()).getName())
+                            .setName(ocCompaniesRepo.findById(org.getId()).orElseThrow(() -> new FOSException()).getName())
                     );
                     awardsGraphRepo.save(new AwardNode()
                             .setId(award.getId())
@@ -104,6 +129,31 @@ public class GraphSvcImpl implements GraphSvc {
             }
         });
 
+        // for every notice in the mongo db, put the attachments onto the attachments DB
+        noticesMDBRepo.findAll().forEach(notice -> {
+            for (AdditionalDetailsType additionalDetailsType : notice.getAdditionalDetails().getAdditionalDetail()) {
+                // note that each notice will have an "additional details" object that is exactly the
+                // same as the description on the notice
+                // helpfully, the ID and notice ID on these objects is the same
+                if (additionalDetailsType.getId().equals(additionalDetailsType.getNoticeId())) continue;
+                if (!attachmentMDBRepo.existsById(additionalDetailsType.getId())) {
+                    attachmentMDBRepo.save(AttachmentFactory.build(additionalDetailsType));
+                }
+            }
+        });
+
+        // for every attachment, create a job
+        attachmentMDBRepo.findAll().forEach(attachment -> {
+            BatchJob dl = null;
+            if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.DOWNLOAD)) {
+                dl = batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.DOWNLOAD));
+            }
+            if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.PROCESS_OCR)) {
+                batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.PROCESS_OCR).withDepends((null != dl ? dl.getId() : null)));
+            }
+        });
+
+        // for every award on the graph, put the associated notice
         // only adding 'verified' companies for now
         awardsGraphRepo.findAll().stream()
                 .filter(award -> award.getOrganisation().isVerified())

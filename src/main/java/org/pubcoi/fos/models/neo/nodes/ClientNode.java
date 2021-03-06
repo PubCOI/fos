@@ -22,7 +22,7 @@ public class ClientNode implements FOSEntity {
 
     String postCode;
 
-    String clientName;
+    String name;
 
     Boolean hidden = false;
 
@@ -51,7 +51,7 @@ public class ClientNode implements FOSEntity {
 
     public ClientNode(FullNotice notice) {
         this.id = resolveID(notice);
-        this.clientName = notice.getNotice().getOrganisationName();
+        this.name = notice.getNotice().getOrganisationName();
         this.postCode = getNormalisedPostCode(notice);
         logger.debug("Adding client {} -> (id:{})", resolveIDStr(notice), this.id);
     }
@@ -99,12 +99,12 @@ public class ClientNode implements FOSEntity {
         return this;
     }
 
-    public String getClientName() {
-        return clientName;
+    public String getName() {
+        return name;
     }
 
-    public ClientNode setClientName(String clientName) {
-        this.clientName = clientName;
+    public ClientNode setName(String name) {
+        this.name = name;
         return this;
     }
 

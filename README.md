@@ -43,7 +43,9 @@ java -Dspring.profiles.active=<your_profile_name> \
 Neo4j index creation:
 
 ```
-CALL db.index.fulltext.createNodeIndex("clients-fts", ["Client"], ["clientName", "postCode"], {analyzer: "english"})
+CALL db.index.fulltext.createNodeIndex("clients-fts", ["Client"], ["name", "postCode"], {analyzer: "english"})
+
+# clear via CALL db.index.fulltext.drop("clients-fts")
 ```
 
 Verify:

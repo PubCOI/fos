@@ -3,5 +3,5 @@
 *.iml
 target/
 application-local.properties
-/src/test/resources/test-resources/*.xml
+/src/test/resources/test-resources
 /src/main/resources/credentials/*

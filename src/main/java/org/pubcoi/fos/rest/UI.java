@@ -4,6 +4,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.pubcoi.fos.exceptions.FOSBadRequestException;
 import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.exceptions.FOSUnauthorisedException;
@@ -36,10 +45,7 @@ import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -48,15 +54,23 @@ import java.util.stream.Collectors;
 public class UI {
     private static final Logger logger = LoggerFactory.getLogger(UI.class);
 
-    NoticesMDBRepo noticesMDBRepo;
-    AwardsMDBRepo awardsMDBRepo;
-    TasksRepo tasksRepo;
-    ClientsGraphRepo clientGRepo;
-    FOSUserRepo userRepo;
-    TransactionSvc transactionSvc;
-    ClientNodeFTS clientNodeFTS;
+    final NoticesMDBRepo noticesMDBRepo;
+    final AwardsMDBRepo awardsMDBRepo;
+    final TasksRepo tasksRepo;
+    final ClientsGraphRepo clientGRepo;
+    final FOSUserRepo userRepo;
+    final TransactionSvc transactionSvc;
+    final ClientNodeFTS clientNodeFTS;
+    final RestHighLevelClient esClient;
 
-    public UI(NoticesMDBRepo noticesMDBRepo, AwardsMDBRepo awardsMDBRepo, TasksRepo tasksRepo, ClientsGraphRepo clientGRepo, FOSUserRepo userRepo, TransactionSvc transactionSvc, ClientNodeFTS clientNodeFTS) {
+    public UI(NoticesMDBRepo noticesMDBRepo,
+              AwardsMDBRepo awardsMDBRepo,
+              TasksRepo tasksRepo,
+              ClientsGraphRepo clientGRepo,
+              FOSUserRepo userRepo,
+              TransactionSvc transactionSvc,
+              ClientNodeFTS clientNodeFTS,
+              RestHighLevelClient esClient) {
         this.noticesMDBRepo = noticesMDBRepo;
         this.awardsMDBRepo = awardsMDBRepo;
         this.tasksRepo = tasksRepo;
@@ -64,6 +78,7 @@ public class UI {
         this.userRepo = userRepo;
         this.transactionSvc = transactionSvc;
         this.clientNodeFTS = clientNodeFTS;
+        this.esClient = esClient;
     }
 
     @PostMapping("/api/ui/login")
@@ -113,7 +128,7 @@ public class UI {
                             logger.error("Unable to find ClientNode {}", t.getEntity());
                         } else {
                             t.setDescription(String.format(
-                                    "Verify details for entity: %s", clientNode.get().getClientName())
+                                    "Verify details for entity: %s", clientNode.get().getName())
                             );
                         }
                     }
@@ -235,5 +250,36 @@ public class UI {
             throw new FOSException("Unable to read file stream");
         }
         return "ok";
+    }
+
+    @GetMapping("/api/ui/search")
+    public ESResponseWrapperDTO doSearch(@RequestParam String type,
+                                         @RequestParam String q) throws Exception {
+        ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO();
+        SearchRequest request = new SearchRequest();
+        SearchSourceBuilder sb = new SearchSourceBuilder();
+        sb.query(QueryBuilders
+                .matchQuery("content", q)
+                .fuzziness(Fuzziness.AUTO)
+        ).highlighter(new HighlightBuilder()
+                .preTags("<mark>")
+                .postTags("</mark>")
+                .field("content")
+        );
+        request.source(sb);
+        try {
+            SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
+            wrapper.setTookInMillis(response.getTook().getMillis());
+            Arrays.stream(response.getHits().getHits())
+                    .forEach((SearchHit hit) -> {
+                        wrapper.getResults().add(
+                                new ESResponseDTO(hit)
+                        );
+                    });
+        } catch (IOException e) {
+            logger.error(e.getMessage(), e);
+            throw new Exception("Could not perform search");
+        }
+        return wrapper;
     }
 }

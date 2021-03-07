@@ -11,30 +11,31 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.pubcoi.fos.cdm.FosESFields;
+import org.pubcoi.fos.cdm.attachments.Attachment;
 import org.pubcoi.fos.exceptions.FOSBadRequestException;
 import org.pubcoi.fos.exceptions.FOSException;
 import org.pubcoi.fos.exceptions.FOSUnauthorisedException;
 import org.pubcoi.fos.gdb.ClientNodeFTS;
 import org.pubcoi.fos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.mdb.FOSUserRepo;
-import org.pubcoi.fos.mdb.NoticesMDBRepo;
-import org.pubcoi.fos.mdb.TasksRepo;
+import org.pubcoi.fos.mdb.*;
 import org.pubcoi.fos.models.cf.ArrayOfFullNotice;
 import org.pubcoi.fos.models.cf.FullNotice;
-import org.pubcoi.fos.models.core.DRTaskType;
-import org.pubcoi.fos.models.core.FOSUITasks;
-import org.pubcoi.fos.models.core.FOSUser;
-import org.pubcoi.fos.models.core.RequestWithAuth;
+import org.pubcoi.fos.models.core.*;
 import org.pubcoi.fos.models.core.transactions.CanonicaliseClientNode;
 import org.pubcoi.fos.models.core.transactions.LinkSourceToParentClient;
 import org.pubcoi.fos.models.dao.*;
 import org.pubcoi.fos.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.services.S3Services;
 import org.pubcoi.fos.services.TransactionSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -44,6 +45,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,6 +56,7 @@ import java.util.stream.Collectors;
 public class UI {
     private static final Logger logger = LoggerFactory.getLogger(UI.class);
 
+    final AttachmentMDBRepo attachmentMDBRepo;
     final NoticesMDBRepo noticesMDBRepo;
     final AwardsMDBRepo awardsMDBRepo;
     final TasksRepo tasksRepo;
@@ -62,15 +65,18 @@ public class UI {
     final TransactionSvc transactionSvc;
     final ClientNodeFTS clientNodeFTS;
     final RestHighLevelClient esClient;
+    final S3Services s3Services;
 
-    public UI(NoticesMDBRepo noticesMDBRepo,
+    public UI(AttachmentMDBRepo attachmentMDBRepo,
+              NoticesMDBRepo noticesMDBRepo,
               AwardsMDBRepo awardsMDBRepo,
               TasksRepo tasksRepo,
               ClientsGraphRepo clientGRepo,
               FOSUserRepo userRepo,
               TransactionSvc transactionSvc,
               ClientNodeFTS clientNodeFTS,
-              RestHighLevelClient esClient) {
+              RestHighLevelClient esClient, S3Services s3Services) {
+        this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.awardsMDBRepo = awardsMDBRepo;
         this.tasksRepo = tasksRepo;
@@ -79,6 +85,7 @@ public class UI {
         this.transactionSvc = transactionSvc;
         this.clientNodeFTS = clientNodeFTS;
         this.esClient = esClient;
+        this.s3Services = s3Services;
     }
 
     @PostMapping("/api/ui/login")
@@ -252,34 +259,104 @@ public class UI {
         return "ok";
     }
 
-    @GetMapping("/api/ui/search")
-    public ESResponseWrapperDTO doSearch(@RequestParam String type,
-                                         @RequestParam String q) throws Exception {
-        ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO();
+    @GetMapping("/api/ui/view")
+    public ResponseEntity<String> viewRedirect(
+            @RequestParam("attachment_id") String attachmentId
+    ) {
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FOSBadRequestException("Unable to find attachment"));
+        // todo - check that we've got the location on the object ... for now just return where we think the doc should be
+        // attachment.getS3Locations()
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.TEMPORARY_REDIRECT)
+                    .location(s3Services.getSignedURL(attachment).toURI())
+                    .build();
+        } catch (URISyntaxException e) {
+            throw new FOSBadRequestException("Unable to get URL");
+        }
+    }
+
+    @PostMapping("/api/ui/search")
+    public ESResponseWrapperDTO doSearch(
+            @RequestBody SearchRequestDAO searchRequestDAO
+    ) throws Exception {
         SearchRequest request = new SearchRequest();
         SearchSourceBuilder sb = new SearchSourceBuilder();
-        sb.query(QueryBuilders
-                .matchQuery("content", q)
-                .fuzziness(Fuzziness.AUTO)
-        ).highlighter(new HighlightBuilder()
-                .preTags("<mark>")
-                .postTags("</mark>")
-                .field("content")
-        );
-        request.source(sb);
-        try {
-            SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
-            wrapper.setTookInMillis(response.getTook().getMillis());
-            Arrays.stream(response.getHits().getHits())
-                    .forEach((SearchHit hit) -> {
-                        wrapper.getResults().add(
-                                new ESResponseDTO(hit)
-                        );
-                    });
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            throw new Exception("Could not perform search");
+        sb.query(
+                QueryBuilders
+                        .matchQuery("content", null == searchRequestDAO.getQ() ? "" : searchRequestDAO.getQ())
+                        .fuzziness(Fuzziness.AUTO))
+                .highlighter(new HighlightBuilder()
+                        .preTags("<mark>")
+                        .postTags("</mark>")
+                        .field("content")
+                );
+        if (searchRequestDAO.getGroupResults()) {
+            sb.aggregation(AggregationBuilders.terms("attachments").field(FosESFields.ATTACHMENT_ID));
         }
+        request.source(sb);
+
+        if (searchRequestDAO.getGroupResults()) {
+            return aggregatedResults(esClient.search(request, RequestOptions.DEFAULT));
+        } else {
+            return singleResults(esClient.search(request, RequestOptions.DEFAULT));
+        }
+    }
+
+    private ESResponseWrapperDTO aggregatedResults(SearchResponse response) {
+        ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
+        wrapper.setResults(response.getAggregations().asList().size());
+
+        ((ParsedStringTerms) response.getAggregations().get("attachments")).getBuckets().forEach(bucket -> {
+            final Attachment attachment = attachmentMDBRepo.findById(bucket.getKeyAsString()).orElseThrow(() -> new FOSBadRequestException("Attachment not found"));
+            final FullNotice notice = noticesMDBRepo.findById(attachment.getNoticeId()).orElseThrow(() -> new FOSBadRequestException(String.format("Notice %s not found", attachment.getNoticeId())));
+
+            ESAggregationDTO aggregationDTO = new ESAggregationDTO()
+                    .setKey(String.format("aggregation-%s", attachment.getId()))
+                    .setAttachmentId(attachment.getId())
+                    .setNoticeId(attachment.getNoticeId())
+                    .setHits(bucket.getDocCount())
+                    .setOrganisation(notice.getNotice().getOrganisationName())
+                    .setNoticeDescription(notice.getNotice().getDescription())
+                    .setNoticeDT(notice.getCreatedDate());
+
+            // only add max of 3 results from each document / 'bucket'
+            Arrays.stream(response.getHits().getHits())
+                    .filter(hit -> hit.getSourceAsMap().get(FosESFields.ATTACHMENT_ID).equals(attachment.getId())).limit(3)
+                    .forEach(page -> {
+                        if (null != page.getHighlightFields().get("content")) {
+                            Arrays.stream(page.getHighlightFields().get("content").getFragments())
+                                    .forEach(content -> aggregationDTO.getFragments().add(content.toString()));
+                        }
+                    });
+
+            wrapper.getAggregated().add(aggregationDTO);
+        });
+        return wrapper;
+    }
+
+    private ESResponseWrapperDTO singleResults(SearchResponse response) {
+        ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
+        wrapper.setResults(response.getHits().getHits().length);
+
+        Arrays.stream(response.getHits().getHits())
+                .forEach((SearchHit hit) -> {
+                    final String noticeId = (String) hit.getSourceAsMap().get(FosESFields.NOTICE_ID);
+                    final FullNotice notice = noticesMDBRepo.findById(noticeId).orElseThrow(() -> new FOSBadRequestException(String.format("Notice %s not found", noticeId)));
+                    StringBuilder noticeInfo = new StringBuilder("Notice: ");
+                    if (null != notice.getNotice().getDescription()) {
+                        noticeInfo.append(notice.getNotice().getDescription());
+                    }
+                    wrapper.getPaged().add(
+                            new ESResponseDTO(hit)
+                                    .setPageNumber((Integer) hit.getSourceAsMap().get(FosESFields.PAGE_NUMBER))
+                                    .setAttachmentId((String) hit.getSourceAsMap().get(FosESFields.ATTACHMENT_ID))
+                                    .setNoticeId(noticeId)
+                                    .setOrganisation(notice.getNotice().getOrganisationName())
+                                    .setNoticeDescription(noticeInfo.toString())
+                                    .setNoticeDT(notice.getCreatedDate())
+                    );
+                });
         return wrapper;
     }
 }

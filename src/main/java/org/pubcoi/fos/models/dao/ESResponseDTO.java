@@ -1,7 +1,9 @@
 package org.pubcoi.fos.models.dao;
 
 import org.elasticsearch.search.SearchHit;
+import org.springframework.util.DigestUtils;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +13,10 @@ public class ESResponseDTO {
     String attachmentId;
     String noticeId;
     Integer pageNumber;
+    String key;
+    String organisation;
+    String noticeDescription;
+    OffsetDateTime noticeDT;
 
     public ESResponseDTO() {}
 
@@ -54,6 +60,40 @@ public class ESResponseDTO {
 
     public ESResponseDTO setPageNumber(Integer pageNumber) {
         this.pageNumber = pageNumber;
+        return this;
+    }
+
+    public String getKey() {
+        this.key = DigestUtils.md5DigestAsHex(String.format(
+                "%s-%s-%s", this.noticeId, this.attachmentId, this.pageNumber
+        ).getBytes());
+        return this.key;
+    }
+
+    public OffsetDateTime getNoticeDT() {
+        return noticeDT;
+    }
+
+    public ESResponseDTO setNoticeDT(OffsetDateTime noticeDT) {
+        this.noticeDT = noticeDT;
+        return this;
+    }
+
+    public String getOrganisation() {
+        return organisation;
+    }
+
+    public ESResponseDTO setOrganisation(String organisation) {
+        this.organisation = organisation;
+        return this;
+    }
+
+    public String getNoticeDescription() {
+        return noticeDescription;
+    }
+
+    public ESResponseDTO setNoticeDescription(String noticeDescription) {
+        this.noticeDescription = noticeDescription;
         return this;
     }
 }

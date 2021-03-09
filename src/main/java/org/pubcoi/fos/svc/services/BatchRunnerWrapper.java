@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.batch.utils.Ansi;
 import org.pubcoi.fos.cdm.attachments.Attachment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,17 +13,7 @@ public class BatchRunnerWrapper implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(BatchRunnerWrapper.class);
 
     final String attachmentId;
-
     final ProcessBuilder pb;
-
-    public BatchRunnerWrapper(String javaPath, String jarPath, String configPath, Attachment attachment) {
-        this.attachmentId = attachment.getId();
-        this.pb = new ProcessBuilder(
-                javaPath, "-jar", jarPath,
-                String.format("--spring.config.location=\"file://%s\"", configPath),
-                String.format("attachment_id=%s", attachmentId)
-        );
-    }
 
     public BatchRunnerWrapper(String javaPath, Resource javaJar, Resource batchProperties, Resource localProperties, Attachment attachment) throws IOException {
         this.attachmentId = attachment.getId();
@@ -44,21 +35,27 @@ public class BatchRunnerWrapper implements Runnable {
     @Override
     public void run() {
         try {
-            logger.info("Starting process with arguments " + String.join(" ", pb.command()));
+            logger.info(Ansi.HighIntensity.and(Ansi.Red).colorize(String.format("Starting batch job with arguments %s", String.join(" ", pb.command()))));
             Process process = pb.start();
             try {
                 boolean exited = process.waitFor(1, TimeUnit.SECONDS);
-                // process should have started by now, check if it's running
+                // process should have started by now, check if it's running...
                 if (exited) {
-                    logger.error("Error starting process, exit value " + process.exitValue());
+                    logger.error(String.format("Error starting process, exit value %d", process.exitValue()));
                     throw new RuntimeException("Unable to start process");
                 }
             } catch (InterruptedException e) {
                 logger.error(e.getMessage(), e);
             }
-            LogReader lr = new LogReader(process.getInputStream());
+            LogReader lr = new LogReader(process.getInputStream(), attachmentId);
             Thread t = new Thread(lr, "BatchRunner");
             t.start();
+            // three hours
+            try {
+                t.join(10800000);
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage(), e);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -67,19 +64,19 @@ public class BatchRunnerWrapper implements Runnable {
 
 
 class LogReader implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(BatchRunnerWrapper.class);
-
     private BufferedReader reader;
+    final String attachmentId;
 
-    public LogReader(InputStream is) {
+    public LogReader(InputStream is, String attachmentId) {
         this.reader = new BufferedReader(new InputStreamReader(is));
+        this.attachmentId = attachmentId;
     }
 
     public void run() {
         try {
             String line = reader.readLine();
             while (line != null) {
-                logger.info(line);
+                System.out.printf(Ansi.Green.colorize("BATCH:" + attachmentId) + " >> %s%n", line);
                 line = reader.readLine();
             }
             reader.close();

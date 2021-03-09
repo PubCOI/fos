@@ -5,14 +5,12 @@ import org.pubcoi.fos.models.cf.ArrayOfFullNotice;
 import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.svc.services.GraphSvc;
-import org.pubcoi.fos.svc.services.OperationsSvc;
-import org.pubcoi.fos.svc.services.ScheduledSvc;
-import org.pubcoi.fos.svc.services.TransactionSvc;
+import org.pubcoi.fos.svc.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -27,17 +25,21 @@ import java.util.Optional;
 public class Debug {
     private static final Logger logger = LoggerFactory.getLogger(Debug.class);
 
-    NoticesMDBRepo noticesMDBRepo;
-    OCCompaniesRepo ocCompanies;
-    GraphSvc graphSvc;
-    OperationsSvc operations;
-    ScheduledSvc scheduledSvc;
-    ClientNodeFTS clientNodeFTS;
-    TransactionSvc transactionSvc;
-    TasksRepo tasksRepo;
-    ClientsGraphRepo clientsGraphRepo;
+    final BatchExecutorSvc batchExecutorSvc;
+    final AttachmentMDBRepo attachmentMDBRepo;
+    final NoticesMDBRepo noticesMDBRepo;
+    final OCCompaniesRepo ocCompanies;
+    final GraphSvc graphSvc;
+    final OperationsSvc operations;
+    final ScheduledSvc scheduledSvc;
+    final ClientNodeFTS clientNodeFTS;
+    final TransactionSvc transactionSvc;
+    final TasksRepo tasksRepo;
+    final ClientsGraphRepo clientsGraphRepo;
 
     public Debug(
+            BatchExecutorSvc batchExecutorSvc,
+            AttachmentMDBRepo attachmentMDBRepo,
             NoticesMDBRepo noticesMDBRepo,
             OCCompaniesRepo ocCompanies,
             GraphSvc graphSvc,
@@ -47,6 +49,8 @@ public class Debug {
             TransactionSvc transactionSvc,
             TasksRepo tasksRepo,
             ClientsGraphRepo clientsGraphRepo) {
+        this.batchExecutorSvc = batchExecutorSvc;
+        this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
         this.graphSvc = graphSvc;
@@ -120,5 +124,19 @@ public class Debug {
     public Optional<ClientNode> getClient2(@PathVariable("client") String client) {
         logger.info("getClient w/tenders {}", client);
         return clientsGraphRepo.findClientsHydratingTenders(client);
+    }
+
+    @GetMapping("/api/debug/add-jobs")
+    public void addBatchJobs() {
+        attachmentMDBRepo.findAll().stream()
+                .filter(a -> a.getS3Locations().isEmpty() && a.getDataType().equals("Attachment"))
+                .limit(25)
+                .forEach(a -> {
+                    try {
+                        batchExecutorSvc.runBatch(a);
+                    } catch (Exception e) {
+                        logger.error(e.getMessage(), e);
+                    }
+                });
     }
 }

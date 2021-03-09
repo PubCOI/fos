@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 public class BatchExecutorSvcImpl implements BatchExecutorSvc {
     private static final Logger logger = LoggerFactory.getLogger(BatchExecutorSvcImpl.class);
 
-    ExecutorService executorService = Executors.newFixedThreadPool(1);
+    static ExecutorService executorService = Executors.newFixedThreadPool(1);
 
     @Value("${fos.batch.paths.java:/usr/bin/java}")
     String javaPath;

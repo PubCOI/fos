@@ -11,6 +11,6 @@ public interface ClientNodeFTS extends CrudRepository<ClientNode, String> {
     @Query("CALL db.index.fulltext.queryNodes(\"clients-fts\", $query) " +
             "YIELD node, score " +
             "WHERE node.canonical=true " +
-            "RETURN node, node.id, node.clientName, score")
+            "RETURN node, node.id, node.name, score")
     List<ClientNodeFTSResponse> findAllDTOProjectionsWithCustomQuery(String query);
 }

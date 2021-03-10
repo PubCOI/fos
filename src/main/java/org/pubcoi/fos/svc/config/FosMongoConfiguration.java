@@ -26,6 +26,9 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
 
+// interesting problem! didn't think about this ... changing the package name after objects
+// have been created results in issues in deserialisation ... d'oh. Of course.
+
 @Configuration
 public class FosMongoConfiguration {
 

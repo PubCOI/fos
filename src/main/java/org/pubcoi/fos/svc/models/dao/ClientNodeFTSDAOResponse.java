@@ -5,14 +5,14 @@ import org.pubcoi.fos.svc.models.queries.ClientNodeFTSResponse;
 public class ClientNodeFTSDAOResponse {
 
     String id;
-    String clientName;
+    String name;
     Float score;
 
     public ClientNodeFTSDAOResponse() {}
 
     public ClientNodeFTSDAOResponse(ClientNodeFTSResponse r) {
         this.id = r.getId();
-        this.clientName = r.getClientName();
+        this.name = r.getName();
         this.score = r.getScore().asFloat();
     }
 
@@ -20,8 +20,8 @@ public class ClientNodeFTSDAOResponse {
         return id;
     }
 
-    public String getClientName() {
-        return clientName;
+    public String getName() {
+        return name;
     }
 
     public Float getScore() {

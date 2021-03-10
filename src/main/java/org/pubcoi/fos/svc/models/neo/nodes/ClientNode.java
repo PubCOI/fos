@@ -56,9 +56,9 @@ public class ClientNode implements FOSEntity {
         logger.debug("Adding client {} -> (id:{})", resolveIDStr(notice), this.id);
     }
 
-    private static String getNormalisedClientName(String clientName) {
-        if (null == clientName) return "";
-        return clientName.toUpperCase().replaceAll("[^A-Z0-9]", "");
+    private static String getNormalisedClientName(String name) {
+        if (null == name) return "";
+        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     private static String getNormalisedPostCode(FullNotice notice) {

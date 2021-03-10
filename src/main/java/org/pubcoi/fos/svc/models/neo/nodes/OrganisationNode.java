@@ -24,6 +24,8 @@ public class OrganisationNode implements FOSEntity {
     @Relationship("LEGAL_ENTITY")
     OrgLELink legalEntity;
 
+    public OrganisationNode() {}
+
     public String getName() {
         return name;
     }

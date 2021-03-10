@@ -28,6 +28,8 @@ public class AwardNode implements FOSEntity {
 
     Boolean hidden = false;
 
+    public AwardNode() {}
+
     public OrganisationNode getOrganisation() {
         return (null != organisation) ? organisation.getOrganisationNode() : null;
     }

@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.models.dao;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.pubcoi.fos.svc.models.core.CFAward;
 
 /**
@@ -15,17 +16,21 @@ public class AwardDAO {
     Long valueMin;
     Long valueMax;
 
+    @JsonProperty("group_award")
+    boolean group;
+
     public AwardDAO() {
     }
 
-    public AwardDAO(CFAward CFAward) {
-        this.id = CFAward.getId();
-        this.noticeID = CFAward.getNoticeID();
-        this.organisation = CFAward.getClient();
-        this.supplierName = CFAward.getSupplierName();
-        this.value = (null == CFAward.getValue() ? 0 : CFAward.getValue());
-        this.valueMin = (null == CFAward.getValueMin() ? 0 : CFAward.getValueMin());
-        this.valueMax = (null == CFAward.getValueMax() ? 0 : CFAward.getValueMax());
+    public AwardDAO(CFAward award) {
+        this.id = award.getId();
+        this.noticeID = award.getNoticeID();
+        this.organisation = award.getClient();
+        this.supplierName = award.getSupplierName();
+        this.value = (null == award.getValue() ? 0 : award.getValue());
+        this.valueMin = (null == award.getValueMin() ? 0 : award.getValueMin());
+        this.valueMax = (null == award.getValueMax() ? 0 : award.getValueMax());
+        this.group = award.getGroup();
     }
 
     public String getId() {
@@ -88,6 +93,15 @@ public class AwardDAO {
 
     public AwardDAO setNoticeID(String noticeID) {
         this.noticeID = noticeID;
+        return this;
+    }
+
+    public boolean isGroup() {
+        return group;
+    }
+
+    public AwardDAO setGroup(boolean group) {
+        this.group = group;
         return this;
     }
 }

@@ -6,7 +6,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 public class ClientNodeFTSResponse {
     ClientNode client;
     String id;
-    String clientName;
+    String name;
     FloatValue score;
 
     public FloatValue getScore() {
@@ -27,12 +27,12 @@ public class ClientNodeFTSResponse {
         return this;
     }
 
-    public String getClientName() {
-        return clientName;
+    public String getName() {
+        return name;
     }
 
-    public ClientNodeFTSResponse setClientName(String clientName) {
-        this.clientName = clientName;
+    public ClientNodeFTSResponse setName(String name) {
+        this.name = name;
         return this;
     }
 

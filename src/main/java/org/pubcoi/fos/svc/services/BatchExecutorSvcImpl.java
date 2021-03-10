@@ -4,6 +4,7 @@ import org.pubcoi.fos.cdm.attachments.Attachment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Service
+@Profile("batch")
 public class BatchExecutorSvcImpl implements BatchExecutorSvc {
     private static final Logger logger = LoggerFactory.getLogger(BatchExecutorSvcImpl.class);
 
@@ -24,7 +26,7 @@ public class BatchExecutorSvcImpl implements BatchExecutorSvc {
     @Value("${fos.batch.paths.jar:fos-batch-1.0-SNAPSHOT.jar}")
     Resource javaJar;
 
-    @Value("${fos.batch.paths.application-config:classpath:application-batch.properties}")
+    @Value("${fos.batch.paths.application-config:classpath:application-batch-runtime.properties}")
     Resource batchProperties;
 
     @Value("${fos.batch.paths.application-config:classpath:application-local.properties}")

@@ -8,7 +8,7 @@ public class ResolveClientDAO {
     private static final Logger logger = LoggerFactory.getLogger(ResolveClientDAO.class);
 
     String id;
-    String clientName;
+    String name;
     Boolean isCanonical;
     String canonicalID;
     String postCode;
@@ -18,7 +18,7 @@ public class ResolveClientDAO {
 
     public ResolveClientDAO(ClientNode clientNode) {
         this.id = clientNode.getId();
-        this.clientName = clientNode.getName();
+        this.name = clientNode.getName();
         this.isCanonical = clientNode.getCanonical();
         this.postCode = clientNode.getPostCode();
         this.canonicalID = (null != clientNode.getParent() ? clientNode.getParent().getClient().getId() : null);
@@ -50,12 +50,12 @@ public class ResolveClientDAO {
         return this;
     }
 
-    public String getClientName() {
-        return clientName;
+    public String getName() {
+        return name;
     }
 
-    public ResolveClientDAO setClientName(String clientName) {
-        this.clientName = clientName;
+    public ResolveClientDAO setName(String name) {
+        this.name = name;
         return this;
     }
 

@@ -1,24 +1,25 @@
 package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.models.cf.ArrayOfFullNotice;
-import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
-import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.svc.services.*;
+import org.pubcoi.fos.svc.services.BatchExecutorSvc;
+import org.pubcoi.fos.svc.services.GraphSvc;
+import org.pubcoi.fos.svc.services.ScheduledSvc;
+import org.pubcoi.fos.svc.services.TransactionSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 @Profile("debug")
 @RestController
@@ -30,7 +31,6 @@ public class Debug {
     final NoticesMDBRepo noticesMDBRepo;
     final OCCompaniesRepo ocCompanies;
     final GraphSvc graphSvc;
-    final OperationsSvc operations;
     final ScheduledSvc scheduledSvc;
     final ClientNodeFTS clientNodeFTS;
     final TransactionSvc transactionSvc;
@@ -43,7 +43,6 @@ public class Debug {
             NoticesMDBRepo noticesMDBRepo,
             OCCompaniesRepo ocCompanies,
             GraphSvc graphSvc,
-            OperationsSvc operations,
             ScheduledSvc scheduledSvc,
             ClientNodeFTS clientNodeFTS,
             TransactionSvc transactionSvc,
@@ -54,25 +53,11 @@ public class Debug {
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
         this.graphSvc = graphSvc;
-        this.operations = operations;
         this.scheduledSvc = scheduledSvc;
         this.clientNodeFTS = clientNodeFTS;
         this.transactionSvc = transactionSvc;
         this.tasksRepo = tasksRepo;
         this.clientsGraphRepo = clientsGraphRepo;
-    }
-
-    @GetMapping(value = "/api/notices")
-    public List<FullNotice> getNotices() {
-        return noticesMDBRepo.findAll();
-    }
-
-    @PutMapping(value = "/api/notices", consumes = {MediaType.APPLICATION_XML_VALUE})
-    public String putNotices(@RequestBody ArrayOfFullNotice array) {
-        for (FullNotice fullNotice : array.getFullNotice()) {
-            operations.saveNotice(fullNotice);
-        }
-        return "ok";
     }
 
     @GetMapping("/api/oc-companies")
@@ -120,17 +105,10 @@ public class Debug {
         graphSvc.populateGraphFromMDB();
     }
 
-    @GetMapping("/api/debug/clients/{client}")
-    public Optional<ClientNode> getClient2(@PathVariable("client") String client) {
-        logger.info("getClient w/tenders {}", client);
-        return clientsGraphRepo.findClientsHydratingTenders(client);
-    }
-
     @GetMapping("/api/debug/add-jobs")
     public void addBatchJobs() {
         attachmentMDBRepo.findAll().stream()
-                .filter(a -> a.getS3Locations().isEmpty() && a.getDataType().equals("Attachment"))
-                .limit(25)
+                .filter(a -> a.getS3Locations().isEmpty() && a.getDataType().equals("Link") && a.getLink().contains("cloudforce"))
                 .forEach(a -> {
                     try {
                         batchExecutorSvc.runBatch(a);

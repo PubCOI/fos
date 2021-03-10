@@ -31,6 +31,7 @@ import org.pubcoi.fos.svc.models.core.transactions.LinkSourceToParentClient;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.services.BatchExecutorSvc;
+import org.pubcoi.fos.svc.services.NoticesSvc;
 import org.pubcoi.fos.svc.services.S3Services;
 import org.pubcoi.fos.svc.services.TransactionSvc;
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ public class UI {
 
     final AttachmentMDBRepo attachmentMDBRepo;
     final NoticesMDBRepo noticesMDBRepo;
+    final NoticesSvc noticesSvc;
     final AwardsMDBRepo awardsMDBRepo;
     final TasksRepo tasksRepo;
     final ClientsGraphRepo clientGRepo;
@@ -69,17 +71,21 @@ public class UI {
     final S3Services s3Services;
     final BatchExecutorSvc batchExecutorSvc;
 
-    public UI(AttachmentMDBRepo attachmentMDBRepo,
-              NoticesMDBRepo noticesMDBRepo,
-              AwardsMDBRepo awardsMDBRepo,
-              TasksRepo tasksRepo,
-              ClientsGraphRepo clientGRepo,
-              FOSUserRepo userRepo,
-              TransactionSvc transactionSvc,
-              ClientNodeFTS clientNodeFTS,
-              RestHighLevelClient esClient, S3Services s3Services, BatchExecutorSvc batchExecutorSvc) {
+    public UI(
+            AttachmentMDBRepo attachmentMDBRepo,
+            NoticesMDBRepo noticesMDBRepo,
+            NoticesSvc noticesSvc, AwardsMDBRepo awardsMDBRepo,
+            TasksRepo tasksRepo,
+            ClientsGraphRepo clientGRepo,
+            FOSUserRepo userRepo,
+            TransactionSvc transactionSvc,
+            ClientNodeFTS clientNodeFTS,
+            RestHighLevelClient esClient,
+            S3Services s3Services,
+            BatchExecutorSvc batchExecutorSvc) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
+        this.noticesSvc = noticesSvc;
         this.awardsMDBRepo = awardsMDBRepo;
         this.tasksRepo = tasksRepo;
         this.clientGRepo = clientGRepo;
@@ -254,7 +260,7 @@ public class UI {
             Unmarshaller u = context.createUnmarshaller();
             ArrayOfFullNotice array = (ArrayOfFullNotice) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
             for (FullNotice notice : array.getFullNotice()) {
-                logger.debug("got notice: " + notice.getId());
+                noticesSvc.addNotice(notice, uid);
             }
         } catch (IOException | JAXBException e) {
             throw new FOSException("Unable to read file stream");

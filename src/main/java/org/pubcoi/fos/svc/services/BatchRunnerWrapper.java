@@ -17,7 +17,7 @@ public class BatchRunnerWrapper implements Runnable {
 
     public BatchRunnerWrapper(String javaPath, Resource javaJar, Resource batchProperties, Resource localProperties, Attachment attachment) throws IOException {
         this.attachmentId = attachment.getId();
-        StringBuilder profiles = new StringBuilder("batch"); // default
+        StringBuilder profiles = new StringBuilder("batch-runtime"); // default
         StringBuilder confLocations = new StringBuilder(String.format("file://%s", batchProperties.getFile().getAbsolutePath()));
         if (localProperties.exists()) {
             profiles.append(",local");

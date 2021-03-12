@@ -24,7 +24,7 @@ public class AwardNode implements FOSEntity {
     Long value;
     @Version
     Long version = 1L;
-    String noticeID;
+    String noticeId;
 
     Boolean hidden = false;
 
@@ -67,12 +67,12 @@ public class AwardNode implements FOSEntity {
         return version;
     }
 
-    public String getNoticeID() {
-        return noticeID;
+    public String getNoticeId() {
+        return noticeId;
     }
 
-    public AwardNode setNoticeID(String noticeID) {
-        this.noticeID = noticeID;
+    public AwardNode setNoticeId(String noticeId) {
+        this.noticeId = noticeId;
         return this;
     }
 
@@ -82,7 +82,7 @@ public class AwardNode implements FOSEntity {
                 "id='" + id + '\'' +
                 ", value=" + value +
                 ", version=" + version +
-                ", noticeID='" + noticeID + '\'' +
+                ", noticeId='" + noticeId + '\'' +
                 '}';
     }
 

@@ -33,27 +33,29 @@ public class ClientNode implements FOSEntity {
     Boolean canonical = false;
 
     @Relationship("PUBLISHED")
-    List<ClientNoticeLink> tenders = new ArrayList<>();
+    List<ClientNoticeLink> notices = new ArrayList<>();
 
     public ClientNode() {
     }
 
-    static String resolveIDStr(FullNotice notice) {
+    static String resolveIdStr(FullNotice notice) {
         String postCodeN = getNormalisedPostCode(notice);
         String clientNameN = getNormalisedClientName(notice.getNotice().getOrganisationName());
         return String.format("%s:%s", getNormalisedClientName(clientNameN), postCodeN);
     }
 
-    public static String resolveID(FullNotice notice) {
-        String idStr = resolveIDStr(notice);
+    public static String resolveId(FullNotice notice) {
+        // we want to be able to deterministically figure out the ID but it's
+        // not clear whether name + PC are enough
+        String idStr = resolveIdStr(notice);
         return DigestUtils.md5DigestAsHex(idStr.getBytes());
     }
 
     public ClientNode(FullNotice notice) {
-        this.id = resolveID(notice);
+        this.id = resolveId(notice);
         this.name = notice.getNotice().getOrganisationName();
         this.postCode = getNormalisedPostCode(notice);
-        logger.debug("Adding client {} -> (id:{})", resolveIDStr(notice), this.id);
+        logger.debug("Adding client {} -> (id:{})", resolveIdStr(notice), this.id);
     }
 
     private static String getNormalisedClientName(String name) {
@@ -118,7 +120,7 @@ public class ClientNode implements FOSEntity {
     }
 
     public void addNotice(FullNotice notice) {
-        tenders.add(new ClientNoticeLink(this, notice));
+        notices.add(new ClientNoticeLink(this, notice));
     }
 
     public Boolean getHidden() {
@@ -140,12 +142,12 @@ public class ClientNode implements FOSEntity {
         return this;
     }
 
-    public List<ClientNoticeLink> getTenders() {
-        return tenders;
+    public List<ClientNoticeLink> getNotices() {
+        return notices;
     }
 
-    public ClientNode setTenders(List<ClientNoticeLink> tenders) {
-        this.tenders = tenders;
+    public ClientNode setNotices(List<ClientNoticeLink> notices) {
+        this.notices = notices;
         return this;
     }
 }

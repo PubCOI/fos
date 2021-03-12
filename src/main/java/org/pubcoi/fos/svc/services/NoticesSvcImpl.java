@@ -2,8 +2,10 @@ package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.models.cf.AwardDetailParentType;
 import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.fos.svc.exceptions.ItemNotFoundException;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.CFAward;
+import org.pubcoi.fos.svc.models.dao.NoticeNodeDAO;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,5 +25,10 @@ public class NoticesSvcImpl implements NoticesSvc {
         for (AwardDetailParentType.AwardDetail awardDetail : notice.getAwards().getAwardDetail()) {
             awardsSvc.addAward(new CFAward(notice, awardDetail), currentUser);
         }
+    }
+
+    @Override
+    public NoticeNodeDAO getNotice(String noticeID) {
+        return new NoticeNodeDAO(noticesMDBRepo.findById(noticeID).orElseThrow(ItemNotFoundException::new));
     }
 }

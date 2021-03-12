@@ -36,8 +36,8 @@ public class TransactionSvcImpl implements TransactionSvc {
         switch (transaction.getTransactionType()) {
             case link_source_to_parent_clientNode:
                 // Don't do what I did and forget to hydrate the tenders
-                Optional<ClientNode> source = clientsGraphRepo.findClientsHydratingTenders(transaction.getSource().getId());
-                Optional<ClientNode> target = clientsGraphRepo.findClientsHydratingTenders(transaction.getTarget().getId());
+                Optional<ClientNode> source = clientsGraphRepo.findClientHydratingNotices(transaction.getSource().getId());
+                Optional<ClientNode> target = clientsGraphRepo.findClientHydratingNotices(transaction.getTarget().getId());
                 if (!source.isPresent() || !target.isPresent())
                     throw new FOSBadRequestException("Unable to resolve source and/or target");
                 ClientNode sourceNode = source.get();
@@ -51,16 +51,16 @@ public class TransactionSvcImpl implements TransactionSvc {
                 clientsGraphRepo.save(sourceNode);
 
                 logger.debug("Linking all source notices directly to parent, marking with transaction ID {}", transaction.getId());
-                sourceNode.getTenders().forEach(sourceNotice -> {
-                    logger.debug("Transposing TenderNode:{} onto parent ClientNode:{}", sourceNotice.getId(), targetNode.getId());
-                    targetNode.getTenders().add(sourceNotice
-                            .setTransactionID(transaction.getId())
+                sourceNode.getNotices().forEach(sourceNotice -> {
+                    logger.debug("Transposing NoticeNode:{} onto parent ClientNode:{}", sourceNotice.getId(), targetNode.getId());
+                    targetNode.getNotices().add(sourceNotice
+                            .setTransactionId(transaction.getId())
                     );
                 });
                 clientsGraphRepo.save(sourceNode);
 
                 logger.info("Hiding all notices on the original node");
-                sourceNode.getTenders().addAll(sourceNode.getTenders().stream()
+                sourceNode.getNotices().addAll(sourceNode.getNotices().stream()
                         .peek(n -> {
                             n.setHidden(true);
                         })

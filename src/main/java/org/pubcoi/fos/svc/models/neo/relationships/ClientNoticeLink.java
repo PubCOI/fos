@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.svc.models.neo.nodes.TenderNode;
+import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -19,7 +19,7 @@ public class ClientNoticeLink {
     String id;
 
     @TargetNode
-    TenderNode notice;
+    NoticeNode notice;
 
     ZonedDateTime published;
 
@@ -32,7 +32,7 @@ public class ClientNoticeLink {
     public ClientNoticeLink(ClientNode clientNode, FullNotice notice) {
         this.id = DigestUtils.md5DigestAsHex(String.format("%s:%s", clientNode.getId(), notice.getId()).getBytes());
         this.published = notice.getCreatedDate().toZonedDateTime();
-        this.notice = new TenderNode(notice);
+        this.notice = new NoticeNode(notice);
     }
 
     @Override
@@ -64,11 +64,11 @@ public class ClientNoticeLink {
         return this;
     }
 
-    public TenderNode getNotice() {
+    public NoticeNode getNotice() {
         return notice;
     }
 
-    public ClientNoticeLink setNotice(TenderNode notice) {
+    public ClientNoticeLink setNotice(NoticeNode notice) {
         this.notice = notice;
         return this;
     }
@@ -86,7 +86,7 @@ public class ClientNoticeLink {
         return transactionID;
     }
 
-    public ClientNoticeLink setTransactionID(String transactionID) {
+    public ClientNoticeLink setTransactionId(String transactionID) {
         this.transactionID = transactionID;
         return this;
     }

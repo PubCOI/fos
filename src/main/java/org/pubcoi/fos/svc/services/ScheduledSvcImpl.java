@@ -78,7 +78,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
         if (null != response) {
             OCCompanySchema company = response.getResults().getCompany();
             ocCompanies.save(company);
-            logger.info(String.format("Saved company with ID %s", company.getId()));
+            logger.info(String.format("Saved company with id %s", company.getId()));
         }
     }
 }

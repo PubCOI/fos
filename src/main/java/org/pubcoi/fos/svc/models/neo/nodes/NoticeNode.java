@@ -9,19 +9,19 @@ import org.springframework.data.neo4j.core.schema.Node;
 import java.util.HashSet;
 import java.util.Set;
 
-@Node(primaryLabel = "Tender")
-public class TenderNode implements FOSEntity {
+@Node(primaryLabel = "Notice")
+public class NoticeNode implements FOSEntity {
 
-    @Id // tender ID
+    @Id // notice ID
     String id;
 
     Set<AwardNode> awards = new HashSet<>();
 
     Boolean hidden = false;
 
-    public TenderNode() {}
+    public NoticeNode() {}
 
-    public TenderNode(FullNotice notice) {
+    public NoticeNode(FullNotice notice) {
         this.id = notice.getId();
     }
 
@@ -29,12 +29,12 @@ public class TenderNode implements FOSEntity {
         return id;
     }
 
-    public TenderNode setId(String id) {
+    public NoticeNode setId(String id) {
         this.id = id;
         return this;
     }
 
-    public TenderNode addAward(AwardNode awardNode) {
+    public NoticeNode addAward(AwardNode awardNode) {
         this.awards.add(awardNode);
         return this;
     }
@@ -43,7 +43,7 @@ public class TenderNode implements FOSEntity {
         return awards;
     }
 
-    public TenderNode setAwards(Set<AwardNode> awards) {
+    public NoticeNode setAwards(Set<AwardNode> awards) {
         this.awards = awards;
         return this;
     }
@@ -54,7 +54,7 @@ public class TenderNode implements FOSEntity {
 
         if (o == null || getClass() != o.getClass()) return false;
 
-        TenderNode that = (TenderNode) o;
+        NoticeNode that = (NoticeNode) o;
 
         return new EqualsBuilder()
                 .append(id, that.id)
@@ -70,7 +70,7 @@ public class TenderNode implements FOSEntity {
 
     @Override
     public String toString() {
-        return "TenderNode{" +
+        return "NoticeNode{" +
                 "id='" + id + '\'' +
                 '}';
     }
@@ -81,7 +81,7 @@ public class TenderNode implements FOSEntity {
     }
 
     @Override
-    public TenderNode setHidden(Boolean hidden) {
+    public NoticeNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }

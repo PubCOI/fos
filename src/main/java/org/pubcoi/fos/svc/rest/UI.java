@@ -22,7 +22,6 @@ import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.FOSBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FOSException;
 import org.pubcoi.fos.svc.exceptions.FOSUnauthorisedException;
-import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.*;
@@ -49,7 +48,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -66,7 +68,6 @@ public class UI {
     final ClientsGraphRepo clientGRepo;
     final FOSUserRepo userRepo;
     final TransactionSvc transactionSvc;
-    final ClientNodeFTS clientNodeFTS;
     final RestHighLevelClient esClient;
     final S3Services s3Services;
     final BatchExecutorSvc batchExecutorSvc;
@@ -79,7 +80,6 @@ public class UI {
             ClientsGraphRepo clientGRepo,
             FOSUserRepo userRepo,
             TransactionSvc transactionSvc,
-            ClientNodeFTS clientNodeFTS,
             RestHighLevelClient esClient,
             S3Services s3Services,
             BatchExecutorSvc batchExecutorSvc) {
@@ -91,7 +91,6 @@ public class UI {
         this.clientGRepo = clientGRepo;
         this.userRepo = userRepo;
         this.transactionSvc = transactionSvc;
-        this.clientNodeFTS = clientNodeFTS;
         this.esClient = esClient;
         this.s3Services = s3Services;
         this.batchExecutorSvc = batchExecutorSvc;
@@ -152,8 +151,8 @@ public class UI {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/api/ui/tasks/{taskType}/{refID}")
-    public ResolveClientDAO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refID") String refID) {
+    @GetMapping("/api/ui/tasks/{taskType}/{refId}")
+    public ResolveClientDAO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
         return new ResolveClientDAO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FOSException("Unable to find entity")));
     }
 
@@ -165,18 +164,18 @@ public class UI {
         FOSUser user = userRepo.getByUid(checkAuth(req.getAuthToken()).getUid());
         switch (taskType) {
             case mark_canonical_clientNode:
-                if (null == req.getTaskID() || null == req.getTarget()) {
+                if (null == req.getTaskId() || null == req.getTarget()) {
                     throw new FOSBadRequestException("Task ID and target must not be null");
                 }
                 logger.debug("{}: target:{}", taskType, req.getTarget());
                 clientGRepo.findByIdEquals(req.getTarget()).ifPresent(clientNode -> {
                     transactionSvc.doTransaction(CanonicaliseClientNode.build(clientNode, user, null));
                 });
-                logger.debug("{}: target:{} - marking {} as COMPLETE", taskType, req.getTarget(), req.getTaskID());
-                markTaskCompleted(req.getTaskID(), user);
+                logger.debug("{}: target:{} - marking {} as COMPLETE", taskType, req.getTarget(), req.getTaskId());
+                markTaskCompleted(req.getTaskId(), user);
                 return new UpdateClientDAO().setResponse("Resolved task: marked node as canonical");
             case link_clientNode_to_parentClientNode:
-                if (null == req.getSource() || null == req.getTarget() || null == req.getTaskID()) {
+                if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
                     throw new FOSBadRequestException("Task ID, Source and Target must be populated");
                 }
                 logger.debug("{}: source:{} target:{}", taskType, req.getSource(), req.getTarget());
@@ -188,8 +187,8 @@ public class UI {
                 }
                 transactionSvc.doTransaction(LinkSourceToParentClient.build(source.get(), target.get(), user));
 
-                logger.debug("{}: source:{} target:{} - marking {} as COMPLETE", taskType, req.getSource(), req.getTarget(), req.getTaskID());
-                markTaskCompleted(req.getTaskID(), user);
+                logger.debug("{}: source:{} target:{} - marking {} as COMPLETE", taskType, req.getSource(), req.getTarget(), req.getTaskId());
+                markTaskCompleted(req.getTaskId(), user);
 
                 return new UpdateClientDAO().setResponse(String.format("Resolved task: linked %s to %s", req.getSource(), req.getTarget()));
             default:
@@ -198,33 +197,8 @@ public class UI {
         return new UpdateClientDAO().setResponse("updated");
     }
 
-    private void markTaskCompleted(String taskID, FOSUser user) {
-        tasksRepo.save(tasksRepo.getById(taskID).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
-    }
-
-    /**
-     * Return canonical client nodes that match the current client name (if any)
-     *
-     * @param query The search parameters
-     * @return List of top responses, ordered by best -> worst match
-     */
-    @GetMapping("/api/ui/graphs/clients")
-    public List<ClientNodeFTSDAOResponse> runQuery(@RequestParam String query, @RequestParam(required = false) String currentNode) {
-        if (query.isEmpty()) return new ArrayList<>();
-        return clientNodeFTS.findAllDTOProjectionsWithCustomQuery(query)
-                .stream()
-                .filter(c -> !c.getId().equals(currentNode))
-                .limit(5)
-                .map(ClientNodeFTSDAOResponse::new)
-                .collect(Collectors.toList());
-    }
-
-    private FirebaseToken checkAuth(String authToken) {
-        try {
-            return FirebaseAuth.getInstance().verifyIdToken(authToken);
-        } catch (FirebaseAuthException e) {
-            throw new FOSUnauthorisedException();
-        }
+    private void markTaskCompleted(String taskId, FOSUser user) {
+        tasksRepo.save(tasksRepo.getById(taskId).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
     }
 
     @GetMapping("/api/transactions")
@@ -375,5 +349,13 @@ public class UI {
                     );
                 });
         return wrapper;
+    }
+
+    private FirebaseToken checkAuth(String authToken) {
+        try {
+            return FirebaseAuth.getInstance().verifyIdToken(authToken);
+        } catch (FirebaseAuthException e) {
+            throw new FOSUnauthorisedException();
+        }
     }
 }

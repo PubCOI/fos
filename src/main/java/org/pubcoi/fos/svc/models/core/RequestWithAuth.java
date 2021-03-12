@@ -9,7 +9,7 @@ package org.pubcoi.fos.svc.models.core;
 public class RequestWithAuth {
 
     String authToken;
-    String taskID;
+    String taskId;
     String source;
     String target;
 
@@ -40,12 +40,12 @@ public class RequestWithAuth {
         return this;
     }
 
-    public String getTaskID() {
-        return taskID;
+    public String getTaskId() {
+        return taskId;
     }
 
-    public RequestWithAuth setTaskID(String taskID) {
-        this.taskID = taskID;
+    public RequestWithAuth setTaskId(String taskId) {
+        this.taskId = taskId;
         return this;
     }
 }

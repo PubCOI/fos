@@ -9,7 +9,7 @@ import org.pubcoi.fos.svc.models.core.CFAward;
 public class AwardDAO {
 
     String id;
-    String noticeID;
+    String noticeId;
     String organisation;
     String supplierName;
     Long value;
@@ -24,7 +24,7 @@ public class AwardDAO {
 
     public AwardDAO(CFAward award) {
         this.id = award.getId();
-        this.noticeID = award.getNoticeID();
+        this.noticeId = award.getNoticeId();
         this.organisation = award.getClient();
         this.supplierName = award.getSupplierName();
         this.value = (null == award.getValue() ? 0 : award.getValue());
@@ -87,12 +87,12 @@ public class AwardDAO {
         return this;
     }
 
-    public String getNoticeID() {
-        return noticeID;
+    public String getNoticeId() {
+        return noticeId;
     }
 
-    public AwardDAO setNoticeID(String noticeID) {
-        this.noticeID = noticeID;
+    public AwardDAO setNoticeId(String noticeId) {
+        this.noticeId = noticeId;
         return this;
     }
 

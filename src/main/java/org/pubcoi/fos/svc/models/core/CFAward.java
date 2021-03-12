@@ -21,7 +21,7 @@ public class CFAward {
      */
     @Id
     String id;
-    String noticeID;
+    String noticeId;
     Long valueMin;
     Long valueMax;
     Long value;
@@ -40,7 +40,7 @@ public class CFAward {
 
     public CFAward(FullNotice notice, AwardDetailParentType.AwardDetail awardDetail) {
         this.id = awardDetail.getAwardGuid();
-        this.noticeID = awardDetail.getNoticeId();
+        this.noticeId = awardDetail.getNoticeId();
         this.valueMin = (null != notice.getNotice().getValueLow()) ? notice.getNotice().getValueLow().longValue() : null;
         this.valueMax = (null != notice.getNotice().getValueHigh()) ? notice.getNotice().getValueHigh().longValue() : null;
         this.client = notice.getNotice().getOrganisationName();
@@ -66,12 +66,12 @@ public class CFAward {
         return this;
     }
 
-    public String getNoticeID() {
-        return noticeID;
+    public String getNoticeId() {
+        return noticeId;
     }
 
-    public CFAward setNoticeID(String noticeID) {
-        this.noticeID = noticeID;
+    public CFAward setNoticeId(String noticeId) {
+        this.noticeId = noticeId;
         return this;
     }
 

@@ -1,8 +1,8 @@
 package org.pubcoi.fos.svc.models.dao;
 
 import org.pubcoi.fos.svc.models.core.NodeReference;
-import org.pubcoi.fos.svc.models.core.transactions.FosTransaction;
-import org.pubcoi.fos.svc.models.core.transactions.FosTransactionType;
+import org.pubcoi.fos.svc.transactions.FosTransaction;
+import org.pubcoi.fos.svc.transactions.FosTransactionType;
 
 import java.time.OffsetDateTime;
 

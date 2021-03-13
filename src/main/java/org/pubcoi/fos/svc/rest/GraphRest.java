@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.rest;
 
+import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
 import org.pubcoi.fos.svc.models.dao.ClientNodeDAO;
@@ -51,12 +52,16 @@ public class GraphRest {
 
     @GetMapping("/api/ui/graphs/clients/{clientID}")
     public ClientNodeDAO getClient(@PathVariable String clientID) {
-        return clientSvc.getClientNode(clientID);
+        ClientNodeDAO clientNodeDAO = clientSvc.getClientNode(clientID);
+        for (FullNotice notice : noticesSvc.getNotices(clientID)) {
+            clientNodeDAO.getNoticeNodeDAO().add(new NoticeNodeDAO(notice));
+        }
+        return clientNodeDAO;
     }
 
     @GetMapping("/api/ui/graphs/notices/{noticeID}")
     public NoticeNodeDAO getNotice(@PathVariable String noticeID) {
-        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNotice(noticeID);
+        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNoticeDAO(noticeID);
         for (AwardDAO awardDAO : awardsSvc.getAwardsForNotice(noticeID)) {
             noticeNodeDAO.addAward(awardDAO);
         }

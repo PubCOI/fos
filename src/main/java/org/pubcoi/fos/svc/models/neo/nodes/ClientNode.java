@@ -1,6 +1,7 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
 import org.slf4j.Logger;
@@ -36,6 +37,10 @@ public class ClientNode implements FosEntity {
     List<ClientNoticeLink> notices = new ArrayList<>();
 
     public ClientNode() {
+    }
+
+    public ClientNode(NodeReference node) {
+        this.id = node.getId();
     }
 
     static String resolveIdStr(FullNotice notice) {
@@ -142,12 +147,21 @@ public class ClientNode implements FosEntity {
         return this;
     }
 
-    public List<ClientNoticeLink> getNotices() {
+    public List<ClientNoticeLink> getNoticeRelationships() {
         return notices;
     }
 
     public ClientNode setNotices(List<ClientNoticeLink> notices) {
         this.notices = notices;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "ClientNode{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", canonical=" + canonical +
+                '}';
     }
 }

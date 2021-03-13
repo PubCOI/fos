@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.neo.relationships;
 
-import org.pubcoi.fos.svc.models.core.transactions.FosTransaction;
+import org.pubcoi.fos.svc.transactions.FosTransaction;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;

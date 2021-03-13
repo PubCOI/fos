@@ -39,7 +39,7 @@ public class BatchRest {
                             .setAttachmentId(job.getJobParameters().getString("attachment_id"))
                             .setStatus(job.getStatus())
                             .setStartTime(OffsetDateTime.ofInstant(job.getStartTime().toInstant(), ZoneOffset.UTC))
-                            .setEndTime(null == job.getEndTime() ? null : // contract says otherwise, but can in fact be null
+                            .setEndTime(null == job.getEndTime() ? null : // API contract suggests otherwise, but can in fact be null
                                     OffsetDateTime.ofInstant(job.getEndTime().toInstant(), ZoneOffset.UTC)
                             );
                     for (StepExecution stepExecution : job.getStepExecutions()) {
@@ -47,7 +47,7 @@ public class BatchRest {
                                 .setId(stepExecution.getId())
                                 .setStepName(stepExecution.getStepName())
                                 .setStartTime(OffsetDateTime.ofInstant(stepExecution.getStartTime().toInstant(), ZoneOffset.UTC))
-                                .setEndTime(null == job.getEndTime() ? null :
+                                .setEndTime(null == job.getEndTime() ? null : // API contract suggests otherwise, but can in fact be null
                                         OffsetDateTime.ofInstant(stepExecution.getEndTime().toInstant(), ZoneOffset.UTC)
                                 )
                                 .setStatus(stepExecution.getStatus())

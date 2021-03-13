@@ -12,13 +12,13 @@ import java.util.Optional;
 public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, String> {
     Logger logger = LoggerFactory.getLogger(ClientsGraphRepo.class);
 
-    @Query("MATCH(c:Client) WHERE c.id = $clientID RETURN c")
-    Optional<ClientNode> findByIdEquals(String clientID);
+    @Query("MATCH(c:Client) WHERE c.id = $clientId RETURN c")
+    Optional<ClientNode> findByIdEquals(String clientId);
 
     @Query("MATCH paths = (c:Client)-[rel]->(n:Notice) " +
-            "WHERE c.id = $clientID " +
+            "WHERE c.id = $clientId " +
             "RETURN c, collect(rel) AS AWARDED, collect(n) AS NOTICES")
-    Optional<ClientNode> findClientHydratingNotices(String clientID);
+    Optional<ClientNode> findClientHydratingNotices(String clientId);
 
     default Optional<ClientNode> findById(String id) {
         logger.error("Don't run this query, it goes and executes a [:*] and merrily blows itself up");

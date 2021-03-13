@@ -25,14 +25,13 @@ import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.*;
-import org.pubcoi.fos.svc.models.core.transactions.CanonicaliseClientNode;
-import org.pubcoi.fos.svc.models.core.transactions.LinkSourceToParentClient;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.services.BatchExecutorSvc;
 import org.pubcoi.fos.svc.services.NoticesSvc;
 import org.pubcoi.fos.svc.services.S3Services;
-import org.pubcoi.fos.svc.services.TransactionSvc;
+import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
+import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -67,7 +66,7 @@ public class UI {
     final TasksRepo tasksRepo;
     final ClientsGraphRepo clientGRepo;
     final FosUserRepo userRepo;
-    final TransactionSvc transactionSvc;
+    final TransactionOrchestrationSvc transactionOrch;
     final RestHighLevelClient esClient;
     final S3Services s3Services;
     final BatchExecutorSvc batchExecutorSvc;
@@ -79,7 +78,7 @@ public class UI {
             TasksRepo tasksRepo,
             ClientsGraphRepo clientGRepo,
             FosUserRepo userRepo,
-            TransactionSvc transactionSvc,
+            TransactionOrchestrationSvc transactionOrch,
             RestHighLevelClient esClient,
             S3Services s3Services,
             BatchExecutorSvc batchExecutorSvc) {
@@ -90,7 +89,7 @@ public class UI {
         this.tasksRepo = tasksRepo;
         this.clientGRepo = clientGRepo;
         this.userRepo = userRepo;
-        this.transactionSvc = transactionSvc;
+        this.transactionOrch = transactionOrch;
         this.esClient = esClient;
         this.s3Services = s3Services;
         this.batchExecutorSvc = batchExecutorSvc;
@@ -162,39 +161,46 @@ public class UI {
             @RequestBody RequestWithAuth req
     ) {
         FosUser user = userRepo.getByUid(checkAuth(req.getAuthToken()).getUid());
-        switch (taskType) {
-            case mark_canonical_clientNode:
-                if (null == req.getTaskId() || null == req.getTarget()) {
-                    throw new FosBadRequestException("Task ID and target must not be null");
-                }
-                logger.debug("{}: target:{}", taskType, req.getTarget());
-                clientGRepo.findByIdEquals(req.getTarget()).ifPresent(clientNode -> {
-                    transactionSvc.doTransaction(CanonicaliseClientNode.build(clientNode, user, null));
-                });
-                logger.debug("{}: target:{} - marking {} as COMPLETE", taskType, req.getTarget(), req.getTaskId());
-                markTaskCompleted(req.getTaskId(), user);
-                return new UpdateClientDAO().setResponse("Resolved task: marked node as canonical");
-            case link_clientNode_to_parentClientNode:
-                if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
-                    throw new FosBadRequestException("Task ID, Source and Target must be populated");
-                }
-                logger.debug("{}: source:{} target:{}", taskType, req.getSource(), req.getTarget());
 
-                Optional<ClientNode> source = clientGRepo.findByIdEquals(req.getSource());
-                Optional<ClientNode> target = clientGRepo.findByIdEquals(req.getTarget());
-                if (!source.isPresent() || !target.isPresent()) {
-                    throw new FosBadRequestException("Unable to resolve ClientNodes");
-                }
-                transactionSvc.doTransaction(LinkSourceToParentClient.build(source.get(), target.get(), user));
+        /* ******** IMPORTANT ***********
+         * This may look a bit convoluted in the fact that we're constructing transactions
+         * here to be managed by the TransactionOrchestrationSvc but there's a good reason
+         * for that - by coupling loosely, and enforcing transactions to be built via the
+         * FosTransactionBuilder, we make it easier for transactions to be 'replayed' in
+         * future on other systems.
+         */
 
-                logger.debug("{}: source:{} target:{} - marking {} as COMPLETE", taskType, req.getSource(), req.getTarget(), req.getTaskId());
-                markTaskCompleted(req.getTaskId(), user);
+        if (taskType == FosUITasks.mark_canonical_clientNode) {
+            if (null == req.getTaskId() || null == req.getTarget()) {
+                throw new FosBadRequestException("Task ID and target must not be null");
+            }
 
-                return new UpdateClientDAO().setResponse(String.format("Resolved task: linked %s to %s", req.getSource(), req.getTarget()));
-            default:
-                logger.warn("Did not match action to request");
+            clientGRepo.findByIdEquals(req.getTarget()).ifPresent(clientNode -> {
+                transactionOrch.exec(FosTransactionBuilder.markCanonicalNode(clientNode, user, null));
+            });
+
+            markTaskCompleted(req.getTaskId(), user);
+            return new UpdateClientDAO().setResponse("Resolved task: marked node as canonical");
         }
-        return new UpdateClientDAO().setResponse("updated");
+
+        if (taskType == FosUITasks.link_clientNode_to_parentClientNode) {
+            if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
+                throw new FosBadRequestException("Task ID, Source and Target must be populated");
+            }
+
+            ClientNode source = clientGRepo.findClientHydratingNotices(req.getSource()).orElseThrow();
+            ClientNode target = clientGRepo.findClientHydratingNotices(req.getTarget()).orElseThrow();
+
+            transactionOrch.exec(FosTransactionBuilder.linkSourceToParent(source, target, user, null));
+
+            markTaskCompleted(req.getTaskId(), user);
+
+            return new UpdateClientDAO().setResponse(String.format(
+                    "Resolved task: linked %s to %s", req.getSource(), req.getTarget()
+            ));
+        }
+
+        throw new FosBadRequestException("Unable to find request type");
     }
 
     private void markTaskCompleted(String taskId, FosUser user) {
@@ -203,7 +209,7 @@ public class UI {
 
     @GetMapping("/api/transactions")
     public List<TransactionDAO> getTransactions() {
-        return transactionSvc.getTransactions();
+        return transactionOrch.getTransactions();
     }
 
     @PutMapping("/api/transactions")
@@ -213,7 +219,7 @@ public class UI {
         transactions.stream()
                 .sorted(Comparator.comparing(TransactionDAO::getTransactionDT))
                 .forEachOrdered(transaction -> {
-                    boolean success = transactionSvc.doTransaction(transaction);
+                    boolean success = transactionOrch.exec(transaction);
                     if (!success) {
                         hasErrors.set(true);
                         numErrors.getAndIncrement();

@@ -1,4 +1,4 @@
-package org.pubcoi.fos.svc.models.core.transactions;
+package org.pubcoi.fos.svc.transactions;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -20,6 +20,8 @@ public class FosTransaction {
     String uid;
     OffsetDateTime transactionDT = OffsetDateTime.now();
     String notes;
+    String transactionImpl;
+    String parentTransactionId;
 
     // should only be built via helpers
     FosTransaction() {}
@@ -106,4 +108,16 @@ public class FosTransaction {
         this.uid = uid;
         return this;
     }
+
+    public FosTransaction setTransactionImpl(Class<? extends IFosTransaction> transactionImpl) {
+        this.transactionImpl = transactionImpl.getCanonicalName();
+        return this;
+    }
+
+    public FosTransaction withMeta(FosTransaction metaTransaction) {
+        this.parentTransactionId = metaTransaction.getId();
+        this.uid = metaTransaction.getUid();
+        return this;
+    }
+
 }

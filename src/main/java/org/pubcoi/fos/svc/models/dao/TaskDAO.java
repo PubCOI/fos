@@ -5,7 +5,7 @@ import org.pubcoi.fos.svc.models.core.DRTaskType;
 
 public class TaskDAO {
 
-    String taskID;
+    String taskId;
     DRTaskType taskType;
     String entity;
     String description;
@@ -13,7 +13,7 @@ public class TaskDAO {
     public TaskDAO() {}
 
     public TaskDAO(DRTask task) {
-        this.taskID = task.getId();
+        this.taskId = task.getId();
         this.taskType = task.getTaskType();
         this.entity = task.getEntity().getId();
     }
@@ -27,12 +27,12 @@ public class TaskDAO {
         return this;
     }
 
-    public String getTaskID() {
-        return taskID;
+    public String getTaskId() {
+        return taskId;
     }
 
-    public TaskDAO setTaskID(String taskID) {
-        this.taskID = taskID;
+    public TaskDAO setTaskId(String taskId) {
+        this.taskId = taskId;
         return this;
     }
 

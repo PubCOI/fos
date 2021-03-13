@@ -157,7 +157,7 @@ public class GraphSvcImpl implements GraphSvc {
         awardsGraphRepo.findAll().stream()
                 .filter(award -> award.getOrganisation().isVerified())
                 .forEach(award -> {
-                    logger.debug("Adding notice ID {} to {}:{}", award.getNoticeId(), award.getClass().getName(), award.getId());
+                    logger.debug("Adding notice {} to AwardNode {}", award.getNoticeId(), award.getId());
                     noticesGRepo.findById(award.getNoticeId()).ifPresent(notice -> {
                         noticesGRepo.save(notice.addAward(award));
                     });

@@ -10,7 +10,7 @@ public class ResolveClientDAO {
     String id;
     String name;
     Boolean isCanonical;
-    String canonicalID;
+    String canonicalId;
     String postCode;
 
     public ResolveClientDAO() {
@@ -21,7 +21,7 @@ public class ResolveClientDAO {
         this.name = clientNode.getName();
         this.isCanonical = clientNode.getCanonical();
         this.postCode = clientNode.getPostCode();
-        this.canonicalID = (null != clientNode.getParent() ? clientNode.getParent().getClient().getId() : null);
+        this.canonicalId = (null != clientNode.getParent() ? clientNode.getParent().getClient().getId() : null);
         if (this.isCanonical && null != clientNode.getParent()) {
             logger.error("ClientNode {} is marked as canonical but has a parent node", this.id);
         }
@@ -63,8 +63,8 @@ public class ResolveClientDAO {
         return isCanonical;
     }
 
-    public String getCanonicalID() {
-        return canonicalID;
+    public String getCanonicalId() {
+        return canonicalId;
     }
 
     public ResolveClientDAO setCanonical(Boolean canonical) {
@@ -72,8 +72,8 @@ public class ResolveClientDAO {
         return this;
     }
 
-    public ResolveClientDAO setCanonicalID(String canonicalID) {
-        this.canonicalID = canonicalID;
+    public ResolveClientDAO setCanonicalId(String canonicalId) {
+        this.canonicalId = canonicalId;
         return this;
     }
 

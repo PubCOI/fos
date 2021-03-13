@@ -15,6 +15,8 @@ public class NoticeNodeDAO {
     OffsetDateTime postedDT;
     String organisation;
     String description;
+    Double valueLow;
+    Double valueHigh;
     Set<AwardDAO> awards = new HashSet<>();
 
     public NoticeNodeDAO() {}
@@ -22,6 +24,8 @@ public class NoticeNodeDAO {
     public NoticeNodeDAO(FullNotice notice) {
         this.id = notice.getId();
         this.postedDT = notice.getCreatedDate();
+        this.valueLow = notice.getNotice().getValueLow();
+        this.valueHigh = notice.getNotice().getValueHigh();
         if (null != notice.getNotice()) {
             this.organisation = notice.getNotice().getOrganisationName();
         }
@@ -90,4 +94,22 @@ public class NoticeNodeDAO {
     public void addAward(AwardDAO awardDAO) {
         this.awards.add(awardDAO);
     }
+
+    public Set<AwardDAO> getAwards() {
+        return awards;
+    }
+
+    public NoticeNodeDAO setAwards(Set<AwardDAO> awards) {
+        this.awards = awards;
+        return this;
+    }
+
+    public Double getValueLow() {
+        return valueLow;
+    }
+
+    public Double getValueHigh() {
+        return valueHigh;
+    }
+
 }

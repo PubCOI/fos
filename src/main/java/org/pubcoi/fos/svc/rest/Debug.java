@@ -10,7 +10,7 @@ import org.pubcoi.fos.svc.mdb.TasksRepo;
 import org.pubcoi.fos.svc.services.BatchExecutorSvc;
 import org.pubcoi.fos.svc.services.GraphSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
-import org.pubcoi.fos.svc.services.TransactionSvc;
+import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +33,7 @@ public class Debug {
     final GraphSvc graphSvc;
     final ScheduledSvc scheduledSvc;
     final ClientNodeFTS clientNodeFTS;
-    final TransactionSvc transactionSvc;
+    final TransactionOrchestrationSvc transactionOrchestrationSvc;
     final TasksRepo tasksRepo;
     final ClientsGraphRepo clientsGraphRepo;
 
@@ -45,7 +45,7 @@ public class Debug {
             GraphSvc graphSvc,
             ScheduledSvc scheduledSvc,
             ClientNodeFTS clientNodeFTS,
-            TransactionSvc transactionSvc,
+            TransactionOrchestrationSvc transactionOrchestrationSvc,
             TasksRepo tasksRepo,
             ClientsGraphRepo clientsGraphRepo) {
         this.batchExecutorSvc = batchExecutorSvc;
@@ -55,7 +55,7 @@ public class Debug {
         this.graphSvc = graphSvc;
         this.scheduledSvc = scheduledSvc;
         this.clientNodeFTS = clientNodeFTS;
-        this.transactionSvc = transactionSvc;
+        this.transactionOrchestrationSvc = transactionOrchestrationSvc;
         this.tasksRepo = tasksRepo;
         this.clientsGraphRepo = clientsGraphRepo;
     }
@@ -82,7 +82,7 @@ public class Debug {
 
     @DeleteMapping("/api/debug/clear-mdb")
     public void clearMDB() {
-        transactionSvc.clearTransactions();
+        transactionOrchestrationSvc.clearTransactions();
         tasksRepo.deleteAll();
     }
 

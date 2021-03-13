@@ -2,12 +2,16 @@ package org.pubcoi.fos.svc.models.dao;
 
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ClientNodeDAO {
 
     String id;
     String name;
     String postCode;
-    Integer tenderCount;
+    Integer noticeCount;
+    Set<NoticeNodeDAO> noticeNodeDAO = new HashSet<>();
 
     public ClientNodeDAO() {}
 
@@ -15,7 +19,7 @@ public class ClientNodeDAO {
         this.id = client.getId();
         this.name = client.getName();
         this.postCode = client.getPostCode();
-        this.tenderCount = client.getNotices().size();
+        this.noticeCount = client.getNoticeRelationships().size();
     }
 
     public String getName() {
@@ -45,12 +49,21 @@ public class ClientNodeDAO {
         return this;
     }
 
-    public Integer getTenderCount() {
-        return tenderCount;
+    public Integer getNoticeCount() {
+        return noticeCount;
     }
 
-    public ClientNodeDAO setTenderCount(Integer tenderCount) {
-        this.tenderCount = tenderCount;
+    public ClientNodeDAO setNoticeCount(Integer noticeCount) {
+        this.noticeCount = noticeCount;
+        return this;
+    }
+
+    public Set<NoticeNodeDAO> getNoticeNodeDAO() {
+        return noticeNodeDAO;
+    }
+
+    public ClientNodeDAO setNoticeNodeDAO(Set<NoticeNodeDAO> noticeNodeDAO) {
+        this.noticeNodeDAO = noticeNodeDAO;
         return this;
     }
 }

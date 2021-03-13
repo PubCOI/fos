@@ -54,7 +54,7 @@ public class GraphRest {
     public ClientNodeDAO getClient(@PathVariable String clientID) {
         ClientNodeDAO clientNodeDAO = clientSvc.getClientNode(clientID);
         for (FullNotice notice : noticesSvc.getNotices(clientID)) {
-            clientNodeDAO.getNoticeNodeDAO().add(new NoticeNodeDAO(notice));
+            clientNodeDAO.getNotices().add(new NoticeNodeDAO(notice));
         }
         return clientNodeDAO;
     }

@@ -11,7 +11,7 @@ public class ClientNodeDAO {
     String name;
     String postCode;
     Integer noticeCount;
-    Set<NoticeNodeDAO> noticeNodeDAO = new HashSet<>();
+    Set<NoticeNodeDAO> notices = new HashSet<>();
 
     public ClientNodeDAO() {}
 
@@ -58,12 +58,12 @@ public class ClientNodeDAO {
         return this;
     }
 
-    public Set<NoticeNodeDAO> getNoticeNodeDAO() {
-        return noticeNodeDAO;
+    public Set<NoticeNodeDAO> getNotices() {
+        return notices;
     }
 
-    public ClientNodeDAO setNoticeNodeDAO(Set<NoticeNodeDAO> noticeNodeDAO) {
-        this.noticeNodeDAO = noticeNodeDAO;
+    public ClientNodeDAO setNotices(Set<NoticeNodeDAO> notices) {
+        this.notices = notices;
         return this;
     }
 }

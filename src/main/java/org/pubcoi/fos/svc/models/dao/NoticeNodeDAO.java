@@ -2,11 +2,11 @@ package org.pubcoi.fos.svc.models.dao;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.pubcoi.fos.models.cf.AdditionalDetailsType;
 import org.pubcoi.fos.models.cf.FullNotice;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class NoticeNodeDAO {
@@ -22,6 +22,7 @@ public class NoticeNodeDAO {
     public NoticeNodeDAO() {}
 
     public NoticeNodeDAO(FullNotice notice) {
+        Objects.requireNonNull(notice.getNotice());
         this.id = notice.getId();
         this.postedDT = notice.getCreatedDate();
         this.valueLow = notice.getNotice().getValueLow();
@@ -29,9 +30,14 @@ public class NoticeNodeDAO {
         if (null != notice.getNotice()) {
             this.organisation = notice.getNotice().getOrganisationName();
         }
-        for (AdditionalDetailsType additionalDetailsType : notice.getAdditionalDetails().getAdditionalDetail()) {
-            this.description = additionalDetailsType.getDescription();
-            break;
+        if (null != notice.getNotice() && null != notice.getNotice().getTitle() && notice.getNotice().getTitle().length() > 10) {
+            this.description = notice.getNotice().getTitle();
+        }
+        else if (null != notice.getNotice() && null != notice.getNotice().getDescription() && notice.getNotice().getDescription().length() > 10) {
+            this.description = notice.getNotice().getDescription();
+        }
+        else if (null != notice.getNotice() && null != notice.getNotice().getCpvDescription() && notice.getNotice().getCpvDescription().length() > 10) {
+            this.description = notice.getNotice().getCpvDescription();
         }
     }
 

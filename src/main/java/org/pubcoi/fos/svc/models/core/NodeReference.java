@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.core;
 
-import org.pubcoi.fos.svc.models.neo.nodes.FOSEntity;
+import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 
 public class NodeReference {
     String nodeType;
@@ -8,7 +8,7 @@ public class NodeReference {
 
     public NodeReference() {}
 
-    public NodeReference(FOSEntity node) {
+    public NodeReference(FosEntity node) {
         this.nodeType = node.getClass().getTypeName();
         this.id = node.getId();
     }

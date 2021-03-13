@@ -2,10 +2,10 @@ package org.pubcoi.fos.svc.services;
 
 import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.svc.mdb.FOSOrganisationRepo;
+import org.pubcoi.fos.svc.mdb.FosOrganisationRepo;
 import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.models.cf.ReferenceTypeE;
-import org.pubcoi.fos.svc.models.core.FOSOCCompany;
+import org.pubcoi.fos.svc.models.core.FosOCCompany;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +22,12 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     AwardsMDBRepo awardsMDBRepo;
     OCCompaniesRepo ocCompanies;
     RestTemplate restTemplate;
-    FOSOrganisationRepo orgRepo;
+    FosOrganisationRepo orgRepo;
 
     @Value("${pubcoi.fos.opencorporates.api-key}")
     String apiToken;
 
-    public ScheduledSvcImpl(AwardsMDBRepo awardsMDBRepo, OCCompaniesRepo ocCompanies, RestTemplate restTemplate, FOSOrganisationRepo orgRepo) {
+    public ScheduledSvcImpl(AwardsMDBRepo awardsMDBRepo, OCCompaniesRepo ocCompanies, RestTemplate restTemplate, FosOrganisationRepo orgRepo) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.ocCompanies = ocCompanies;
         this.restTemplate = restTemplate;
@@ -45,11 +45,11 @@ public class ScheduledSvcImpl implements ScheduledSvc {
      * Takes all awards from the awards repo and creates FOSORG objects that will be further populated
      */
     @Override
-    public void populateFOSOrgsMDBFromAwards() {
+    public void populateFosOrgsMDBFromAwards() {
         awardsMDBRepo.findAll()
                 .forEach(award -> {
                     if (award.getOrgReferenceType().equals(ReferenceTypeE.COMPANIES_HOUSE)) {
-                        awardsMDBRepo.save(award.setFosOrganisation(new FOSOCCompany("gb", award.getOrgReference())));
+                        awardsMDBRepo.save(award.setFosOrganisation(new FosOCCompany("gb", award.getOrgReference())));
                     }
                 });
     }
@@ -58,12 +58,12 @@ public class ScheduledSvcImpl implements ScheduledSvc {
      * Takes companies from FOS organisations collection and populates them via calls to OpenCorporates
      */
     @Override
-    public void populateOCCompaniesFromFOSOrgs() {
+    public void populateOCCompaniesFromFosOrgs() {
         awardsMDBRepo.findAll()
                 .forEach(award -> {
-                    if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FOSOCCompany) {
-                        if (!ocCompanies.existsByCompanyNumber(((FOSOCCompany) award.getFosOrganisation()).getReference())) {
-                            populateFromOC(((FOSOCCompany) award.getFosOrganisation()).getReference());
+                    if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FosOCCompany) {
+                        if (!ocCompanies.existsByCompanyNumber(((FosOCCompany) award.getFosOrganisation()).getReference())) {
+                            populateFromOC(((FosOCCompany) award.getFosOrganisation()).getReference());
                         }
                     }
                 });

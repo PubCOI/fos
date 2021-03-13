@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.dao;
 
-import org.pubcoi.fos.svc.models.core.FOSUser;
+import org.pubcoi.fos.svc.models.core.FosUser;
 
 public class UserProfileDAO {
 
@@ -8,7 +8,7 @@ public class UserProfileDAO {
 
     public UserProfileDAO() {}
 
-    public UserProfileDAO(FOSUser user) {
+    public UserProfileDAO(FosUser user) {
         this.displayName = user.getDisplayName();
     }
 

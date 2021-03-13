@@ -10,21 +10,21 @@ import java.time.OffsetDateTime;
  * UID refers to a Firebase UID.
  */
 @Document("fos_users")
-public class FOSUser {
+public class FosUser {
 
     @Id
     String uid;
     String displayName;
     OffsetDateTime lastLogin;
 
-    public FOSUser() {
+    public FosUser() {
     }
 
     public String getDisplayName() {
         return displayName;
     }
 
-    public FOSUser setDisplayName(String displayName) {
+    public FosUser setDisplayName(String displayName) {
         this.displayName = displayName;
         return this;
     }
@@ -33,7 +33,7 @@ public class FOSUser {
         return uid;
     }
 
-    public FOSUser setUid(String uid) {
+    public FosUser setUid(String uid) {
         this.uid = uid;
         return this;
     }
@@ -42,7 +42,7 @@ public class FOSUser {
         return lastLogin;
     }
 
-    public FOSUser setLastLogin(OffsetDateTime lastLogin) {
+    public FosUser setLastLogin(OffsetDateTime lastLogin) {
         this.lastLogin = lastLogin;
         return this;
     }

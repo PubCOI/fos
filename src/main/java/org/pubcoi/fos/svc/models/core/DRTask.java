@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.core;
 
-import org.pubcoi.fos.svc.models.neo.nodes.FOSEntity;
+import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -15,14 +15,14 @@ public class DRTask {
     @Id
     String id;
     DRTaskType taskType;
-    FOSEntity entity;
+    FosEntity entity;
     Boolean completed;
-    FOSUser completedBy;
+    FosUser completedBy;
     OffsetDateTime completedDT;
 
     DRTask() {}
 
-    public DRTask(DRTaskType type, FOSEntity entity) {
+    public DRTask(DRTaskType type, FosEntity entity) {
         this.id = String.format("%s_%s", type.toString(), entity.getId());
         this.taskType = type;
         this.entity = entity;
@@ -41,11 +41,11 @@ public class DRTask {
         return this;
     }
 
-    public FOSEntity getEntity() {
+    public FosEntity getEntity() {
         return entity;
     }
 
-    public DRTask setEntity(FOSEntity entity) {
+    public DRTask setEntity(FosEntity entity) {
         this.entity = entity;
         return this;
     }
@@ -59,11 +59,11 @@ public class DRTask {
         return this;
     }
 
-    public FOSUser getCompletedBy() {
+    public FosUser getCompletedBy() {
         return completedBy;
     }
 
-    public DRTask setCompletedBy(FOSUser completedBy) {
+    public DRTask setCompletedBy(FosUser completedBy) {
         this.completedBy = completedBy;
         return this;
     }

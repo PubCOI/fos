@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "Notice")
-public class NoticeNode implements FOSEntity {
+public class NoticeNode implements FosEntity {
 
     @Id // notice ID
     String id;

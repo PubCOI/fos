@@ -5,7 +5,7 @@ import org.pubcoi.fos.cdm.BatchJobFactory;
 import org.pubcoi.fos.cdm.batch.BatchJob;
 import org.pubcoi.fos.cdm.batch.BatchJobTypeEnum;
 import org.pubcoi.fos.models.cf.AdditionalDetailsType;
-import org.pubcoi.fos.svc.exceptions.FOSException;
+import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.gdb.NoticesGRepo;
@@ -13,8 +13,8 @@ import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.DRTaskType;
-import org.pubcoi.fos.svc.models.core.FOSOCCompany;
-import org.pubcoi.fos.svc.models.core.FOSOrganisation;
+import org.pubcoi.fos.svc.models.core.FosOCCompany;
+import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -29,7 +29,7 @@ public class GraphSvcImpl implements GraphSvc {
     private static final Logger logger = LoggerFactory.getLogger(GraphSvcImpl.class);
 
     AwardsMDBRepo awardsMDBRepo;
-    FOSOrganisationRepo fosOrganisationRepo;
+    FosOrganisationRepo fosOrganisationRepo;
     OCCompaniesRepo ocCompaniesRepo;
     AwardsGraphRepo awardsGraphRepo;
     NoticesMDBRepo noticesMDBRepo;
@@ -44,7 +44,7 @@ public class GraphSvcImpl implements GraphSvc {
     public GraphSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
             AwardsGraphRepo awardsGraphRepo,
-            FOSOrganisationRepo fosOrganisationRepo,
+            FosOrganisationRepo fosOrganisationRepo,
             OrganisationsGraphRepo orgGraphRepo,
             OCCompaniesRepo ocCompaniesRepo,
             NoticesMDBRepo noticesMDBRepo,
@@ -82,8 +82,8 @@ public class GraphSvcImpl implements GraphSvc {
      */
     @Override
     public void populateGraphFromMDB() {
-        scheduledSvc.populateFOSOrgsMDBFromAwards();
-        scheduledSvc.populateOCCompaniesFromFOSOrgs();
+        scheduledSvc.populateFosOrgsMDBFromAwards();
+        scheduledSvc.populateOCCompaniesFromFosOrgs();
 
         // add all clients
         noticesMDBRepo.findAll().forEach(notice -> {
@@ -102,27 +102,27 @@ public class GraphSvcImpl implements GraphSvc {
 
         // add all awards
         awardsMDBRepo.findAll().forEach(award -> {
-            if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FOSOCCompany) {
-                FOSOrganisation org = award.getFosOrganisation();
+            if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FosOCCompany) {
+                FosOrganisation org = award.getFosOrganisation();
                 try {
                     orgGraphRepo.save(new OrganisationNode()
                             .setId(org.getId())
                             .setVerified(true)
-                            .setName(ocCompaniesRepo.findById(org.getId()).orElseThrow(() -> new FOSException()).getName())
+                            .setName(ocCompaniesRepo.findById(org.getId()).orElseThrow(() -> new FosException()).getName())
                     );
                     AwardNode awardNode = new AwardNode()
                             .setId(award.getId())
                             .setValue(award.getValue())
                             .setNoticeId(award.getNoticeId())
                             .setOrganisation(
-                                    orgGraphRepo.findById(org.getId()).orElseThrow(() -> new FOSException()),
+                                    orgGraphRepo.findById(org.getId()).orElseThrow(() -> new FosException()),
                                     award.getAwardedDate().toZonedDateTime(),
                                     award.getStartDate().toZonedDateTime(),
                                     award.getEndDate().toZonedDateTime()
                             );
                     logger.debug("Saving node: {}", awardNode);
                     awardsGraphRepo.save(awardNode);
-                } catch (FOSException e) {
+                } catch (FosException e) {
                     logger.error("Unable to insert entry into graph: is source MDB fully populated?");
                 }
             }

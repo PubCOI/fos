@@ -4,7 +4,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.io.Resources;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import org.pubcoi.fos.svc.exceptions.FOSRuntimeException;
+import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
@@ -27,7 +27,7 @@ public class FirebaseConfig {
             }
             FirebaseApp.initializeApp(options);
         } catch (IOException e) {
-            throw new FOSRuntimeException(String.format("Unable to get Firebase credentials: please create these and download them to %s", firebaseCredsPath));
+            throw new FosRuntimeException(String.format("Unable to get Firebase credentials: please create these and download them to %s", firebaseCredsPath));
         }
     }
 

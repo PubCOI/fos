@@ -19,9 +19,9 @@ import org.pubcoi.fos.cdm.FosESFields;
 import org.pubcoi.fos.cdm.attachments.Attachment;
 import org.pubcoi.fos.models.cf.ArrayOfFullNotice;
 import org.pubcoi.fos.models.cf.FullNotice;
-import org.pubcoi.fos.svc.exceptions.FOSBadRequestException;
-import org.pubcoi.fos.svc.exceptions.FOSException;
-import org.pubcoi.fos.svc.exceptions.FOSUnauthorisedException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.*;
@@ -66,7 +66,7 @@ public class UI {
     final AwardsMDBRepo awardsMDBRepo;
     final TasksRepo tasksRepo;
     final ClientsGraphRepo clientGRepo;
-    final FOSUserRepo userRepo;
+    final FosUserRepo userRepo;
     final TransactionSvc transactionSvc;
     final RestHighLevelClient esClient;
     final S3Services s3Services;
@@ -78,7 +78,7 @@ public class UI {
             NoticesSvc noticesSvc, AwardsMDBRepo awardsMDBRepo,
             TasksRepo tasksRepo,
             ClientsGraphRepo clientGRepo,
-            FOSUserRepo userRepo,
+            FosUserRepo userRepo,
             TransactionSvc transactionSvc,
             RestHighLevelClient esClient,
             S3Services s3Services,
@@ -109,14 +109,14 @@ public class UI {
         // adds user meta if it doesn't exist
         try {
             UserRecord record = FirebaseAuth.getInstance().getUser(loginDAO.getUid());
-            userRepo.save(new FOSUser()
+            userRepo.save(new FosUser()
                     .setUid(loginDAO.getUid())
                     .setDisplayName(record.getDisplayName())
                     .setLastLogin(OffsetDateTime.now())
             );
         } catch (FirebaseAuthException e) {
             logger.error(e.getMessage(), e);
-            throw new FOSException();
+            throw new FosException();
         }
     }
 
@@ -153,19 +153,19 @@ public class UI {
 
     @GetMapping("/api/ui/tasks/{taskType}/{refId}")
     public ResolveClientDAO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
-        return new ResolveClientDAO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FOSException("Unable to find entity")));
+        return new ResolveClientDAO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
     }
 
     @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
     public UpdateClientDAO updateClientDAO(
-            @PathVariable FOSUITasks taskType,
+            @PathVariable FosUITasks taskType,
             @RequestBody RequestWithAuth req
     ) {
-        FOSUser user = userRepo.getByUid(checkAuth(req.getAuthToken()).getUid());
+        FosUser user = userRepo.getByUid(checkAuth(req.getAuthToken()).getUid());
         switch (taskType) {
             case mark_canonical_clientNode:
                 if (null == req.getTaskId() || null == req.getTarget()) {
-                    throw new FOSBadRequestException("Task ID and target must not be null");
+                    throw new FosBadRequestException("Task ID and target must not be null");
                 }
                 logger.debug("{}: target:{}", taskType, req.getTarget());
                 clientGRepo.findByIdEquals(req.getTarget()).ifPresent(clientNode -> {
@@ -176,14 +176,14 @@ public class UI {
                 return new UpdateClientDAO().setResponse("Resolved task: marked node as canonical");
             case link_clientNode_to_parentClientNode:
                 if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
-                    throw new FOSBadRequestException("Task ID, Source and Target must be populated");
+                    throw new FosBadRequestException("Task ID, Source and Target must be populated");
                 }
                 logger.debug("{}: source:{} target:{}", taskType, req.getSource(), req.getTarget());
 
                 Optional<ClientNode> source = clientGRepo.findByIdEquals(req.getSource());
                 Optional<ClientNode> target = clientGRepo.findByIdEquals(req.getTarget());
                 if (!source.isPresent() || !target.isPresent()) {
-                    throw new FOSBadRequestException("Unable to resolve ClientNodes");
+                    throw new FosBadRequestException("Unable to resolve ClientNodes");
                 }
                 transactionSvc.doTransaction(LinkSourceToParentClient.build(source.get(), target.get(), user));
 
@@ -197,7 +197,7 @@ public class UI {
         return new UpdateClientDAO().setResponse("updated");
     }
 
-    private void markTaskCompleted(String taskId, FOSUser user) {
+    private void markTaskCompleted(String taskId, FosUser user) {
         tasksRepo.save(tasksRepo.getById(taskId).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
     }
 
@@ -227,7 +227,7 @@ public class UI {
         String uid = checkAuth(request.getParameter("authToken")).getUid();
         MultipartFile file = request.getFile("file");
         if (null == file) {
-            throw new FOSBadRequestException("Empty file");
+            throw new FosBadRequestException("Empty file");
         }
         try {
             JAXBContext context = JAXBContext.newInstance(ArrayOfFullNotice.class);
@@ -237,7 +237,7 @@ public class UI {
                 noticesSvc.addNotice(notice, uid);
             }
         } catch (IOException | JAXBException e) {
-            throw new FOSException("Unable to read file stream");
+            throw new FosException("Unable to read file stream");
         }
         return "ok";
     }
@@ -246,7 +246,7 @@ public class UI {
     public ResponseEntity<String> viewRedirect(
             @RequestParam("attachment_id") String attachmentId
     ) {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FOSBadRequestException("Unable to find attachment"));
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
         // todo - check that we've got the location on the object ... for now just return where we think the doc should be
         // attachment.getS3Locations()
         try {
@@ -255,7 +255,7 @@ public class UI {
                     .location(s3Services.getSignedURL(attachment).toURI())
                     .build();
         } catch (URISyntaxException e) {
-            throw new FOSBadRequestException("Unable to get URL");
+            throw new FosBadRequestException("Unable to get URL");
         }
     }
 
@@ -263,7 +263,7 @@ public class UI {
     public void executeBatch(
             @RequestParam("attachment_id") String attachmentId
     ) throws Exception {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FOSBadRequestException("Attachment not found"));
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Attachment not found"));
         batchExecutorSvc.runBatch(attachment);
     }
 
@@ -299,8 +299,8 @@ public class UI {
         wrapper.setResults(response.getAggregations().asList().size());
 
         ((ParsedStringTerms) response.getAggregations().get("attachments")).getBuckets().forEach(bucket -> {
-            final Attachment attachment = attachmentMDBRepo.findById(bucket.getKeyAsString()).orElseThrow(() -> new FOSBadRequestException("Attachment not found"));
-            final FullNotice notice = noticesMDBRepo.findById(attachment.getNoticeId()).orElseThrow(() -> new FOSBadRequestException(String.format("Notice %s not found", attachment.getNoticeId())));
+            final Attachment attachment = attachmentMDBRepo.findById(bucket.getKeyAsString()).orElseThrow(() -> new FosBadRequestException("Attachment not found"));
+            final FullNotice notice = noticesMDBRepo.findById(attachment.getNoticeId()).orElseThrow(() -> new FosBadRequestException(String.format("Notice %s not found", attachment.getNoticeId())));
 
             ESAggregationDTO aggregationDTO = new ESAggregationDTO()
                     .setKey(String.format("aggregation-%s", attachment.getId()))
@@ -333,7 +333,7 @@ public class UI {
         Arrays.stream(response.getHits().getHits())
                 .forEach((SearchHit hit) -> {
                     final String noticeId = (String) hit.getSourceAsMap().get(FosESFields.NOTICE_ID);
-                    final FullNotice notice = noticesMDBRepo.findById(noticeId).orElseThrow(() -> new FOSBadRequestException(String.format("Notice %s not found", noticeId)));
+                    final FullNotice notice = noticesMDBRepo.findById(noticeId).orElseThrow(() -> new FosBadRequestException(String.format("Notice %s not found", noticeId)));
                     StringBuilder noticeInfo = new StringBuilder("Notice: ");
                     if (null != notice.getNotice().getDescription()) {
                         noticeInfo.append(notice.getNotice().getDescription());
@@ -355,7 +355,7 @@ public class UI {
         try {
             return FirebaseAuth.getInstance().verifyIdToken(authToken);
         } catch (FirebaseAuthException e) {
-            throw new FOSUnauthorisedException();
+            throw new FosUnauthorisedException();
         }
     }
 }

@@ -67,12 +67,12 @@ public class Debug {
 
     @GetMapping("/api/debug/add-companies")
     public void addCompanies() {
-        scheduledSvc.populateFOSOrgsMDBFromAwards();
+        scheduledSvc.populateFosOrgsMDBFromAwards();
     }
 
     @GetMapping("/api/debug/populate-companies")
     public void populateCompanies() {
-        scheduledSvc.populateOCCompaniesFromFOSOrgs();
+        scheduledSvc.populateOCCompaniesFromFosOrgs();
     }
 
     @DeleteMapping("/api/debug/clear-graphs")

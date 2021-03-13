@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.core;
 
-public class FOSOCCompany extends FOSOrganisation {
+public class FosOCCompany extends FosOrganisation {
 
     private static final String PREFIX = "oc_company";
 
@@ -8,9 +8,9 @@ public class FOSOCCompany extends FOSOrganisation {
     String reference;
     String license;
 
-    public FOSOCCompany() {}
+    public FosOCCompany() {}
 
-    public FOSOCCompany(String jurisdiction, String orgReference) {
+    public FosOCCompany(String jurisdiction, String orgReference) {
         super();
         this.id = String.format("%s:%s:%s", PREFIX, jurisdiction, orgReference);
         this.jurisdiction = jurisdiction;

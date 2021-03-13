@@ -13,7 +13,7 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 import java.time.ZonedDateTime;
 
 @Node(primaryLabel = "Award")
-public class AwardNode implements FOSEntity {
+public class AwardNode implements FosEntity {
     private static final Logger logger = LoggerFactory.getLogger(AwardNode.class);
 
     @Relationship("AWARDED_TO")

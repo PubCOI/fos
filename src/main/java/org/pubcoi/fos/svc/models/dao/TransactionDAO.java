@@ -1,20 +1,20 @@
 package org.pubcoi.fos.svc.models.dao;
 
 import org.pubcoi.fos.svc.models.core.NodeReference;
-import org.pubcoi.fos.svc.models.core.transactions.FOSTransaction;
-import org.pubcoi.fos.svc.models.core.transactions.FOSTransactionType;
+import org.pubcoi.fos.svc.models.core.transactions.FosTransaction;
+import org.pubcoi.fos.svc.models.core.transactions.FosTransactionType;
 
 import java.time.OffsetDateTime;
 
 public class TransactionDAO {
 
     String id;
-    FOSTransactionType transactionType;
+    FosTransactionType transactionType;
     NodeReference source;
     NodeReference target;
     OffsetDateTime transactionDT;
 
-    public TransactionDAO(FOSTransaction transaction) {
+    public TransactionDAO(FosTransaction transaction) {
         this.id = transaction.getId();
         this.transactionType = transaction.getTransactionType();
         this.source = transaction.getSource();
@@ -38,7 +38,7 @@ public class TransactionDAO {
         return transactionDT;
     }
 
-    public FOSTransactionType getTransactionType() {
+    public FosTransactionType getTransactionType() {
         return transactionType;
     }
 }

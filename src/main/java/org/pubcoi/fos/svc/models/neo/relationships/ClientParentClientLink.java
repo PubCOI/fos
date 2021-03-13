@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.neo.relationships;
 
-import org.pubcoi.fos.svc.models.core.transactions.FOSTransaction;
+import org.pubcoi.fos.svc.models.core.transactions.FosTransaction;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
@@ -26,7 +26,7 @@ public class ClientParentClientLink {
 
     ClientParentClientLink() {}
 
-    public ClientParentClientLink(ClientNode target, FOSTransaction transaction) {
+    public ClientParentClientLink(ClientNode target, FosTransaction transaction) {
         this.id = DigestUtils.md5DigestAsHex(String.format("%s:%s", transaction.getId(), target.getId()).getBytes());
         this.transactionID = transaction.getId();
         this.transactionDT = transaction.getTransactionDT().toZonedDateTime();

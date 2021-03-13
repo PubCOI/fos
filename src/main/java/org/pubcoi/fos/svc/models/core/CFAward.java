@@ -31,7 +31,7 @@ public class CFAward {
     OffsetDateTime awardedDate;
     ReferenceTypeE orgReferenceType;
     String orgReference;
-    FOSOrganisation fosOrganisation;
+    FosOrganisation fosOrganisation;
     String supplierName;
     String supplierAddress;
     Boolean group;
@@ -172,11 +172,11 @@ public class CFAward {
                 '}';
     }
 
-    public FOSOrganisation getFosOrganisation() {
+    public FosOrganisation getFosOrganisation() {
         return fosOrganisation;
     }
 
-    public CFAward setFosOrganisation(FOSOrganisation fosOrganisation) {
+    public CFAward setFosOrganisation(FosOrganisation fosOrganisation) {
         this.fosOrganisation = fosOrganisation;
         return this;
     }

@@ -1,10 +1,10 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.exceptions.FOSBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.gdb.NoticesGRepo;
 import org.pubcoi.fos.svc.mdb.TransactionMDBRepo;
-import org.pubcoi.fos.svc.models.core.transactions.FOSTransaction;
+import org.pubcoi.fos.svc.models.core.transactions.FosTransaction;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
@@ -32,19 +32,23 @@ public class TransactionSvcImpl implements TransactionSvc {
     }
 
     @Override
-    public synchronized boolean doTransaction(FOSTransaction transaction) {
+    public synchronized boolean doTransaction(FosTransaction transaction) {
         switch (transaction.getTransactionType()) {
             case link_source_to_parent_clientNode:
-                // Don't do what I did and forget to hydrate the tenders
+                // Don't do what I did and forget to hydrate the notices
                 Optional<ClientNode> source = clientsGraphRepo.findClientHydratingNotices(transaction.getSource().getId());
                 Optional<ClientNode> target = clientsGraphRepo.findClientHydratingNotices(transaction.getTarget().getId());
-                if (!source.isPresent() || !target.isPresent())
-                    throw new FOSBadRequestException("Unable to resolve source and/or target");
+
+                if (!source.isPresent() || !target.isPresent()) {
+                    throw new FosBadRequestException("Unable to resolve source and/or target");
+                }
+
                 ClientNode sourceNode = source.get();
                 ClientNode targetNode = target.get();
 
-                if (!targetNode.getCanonical())
-                    throw new FOSBadRequestException("Target is not a canonical ClientNode");
+                if (!targetNode.getCanonical()) {
+                    throw new FosBadRequestException("Target is not a canonical ClientNode");
+                }
 
                 logger.debug("Linking ClientNodes: {} to refer to parent {}", sourceNode.getId(), targetNode.getId());
                 sourceNode.setParent(new ClientParentClientLink(targetNode, transaction));
@@ -53,8 +57,11 @@ public class TransactionSvcImpl implements TransactionSvc {
                 logger.debug("Linking all source notices directly to parent, marking with transaction ID {}", transaction.getId());
                 sourceNode.getNotices().forEach(sourceNotice -> {
                     logger.debug("Transposing NoticeNode:{} onto parent ClientNode:{}", sourceNotice.getId(), targetNode.getId());
-                    targetNode.getNotices().add(sourceNotice
-                            .setTransactionId(transaction.getId())
+
+
+
+                    targetNode.getNotices().add(
+                            sourceNotice.setTransactionId(transaction.getId())
                     );
                 });
                 clientsGraphRepo.save(sourceNode);
@@ -80,6 +87,7 @@ public class TransactionSvcImpl implements TransactionSvc {
                 });
                 transactionRepo.save(transaction);
                 return true;
+
             default:
                 logger.warn("Unable to process transaction {}", transaction.getId());
         }
@@ -94,7 +102,7 @@ public class TransactionSvcImpl implements TransactionSvc {
     @Override
     public List<TransactionDAO> getTransactions() {
         return transactionRepo.findAll().stream()
-                .sorted(Comparator.comparing(FOSTransaction::getTransactionDT))
+                .sorted(Comparator.comparing(FosTransaction::getTransactionDT))
                 .map(TransactionDAO::new)
                 .collect(Collectors.toList());
     }

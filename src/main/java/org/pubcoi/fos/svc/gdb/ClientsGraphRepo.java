@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.gdb;
 
-import org.pubcoi.fos.svc.exceptions.FOSRuntimeException;
+import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, String> {
 
     default Optional<ClientNode> findById(String id) {
         logger.error("Don't run this query, it goes and executes a [:*] and merrily blows itself up");
-        throw new FOSRuntimeException("NOOP");
+        throw new FosRuntimeException("NOOP");
     }
 
 }

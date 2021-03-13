@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Node(primaryLabel = "Client")
-public class ClientNode implements FOSEntity {
+public class ClientNode implements FosEntity {
     private static final Logger logger = LoggerFactory.getLogger(ClientNode.class);
 
     @Id

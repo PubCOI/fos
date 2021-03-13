@@ -3,21 +3,21 @@ package org.pubcoi.fos.svc.exceptions;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-public class FOSException extends ResponseStatusException {
+public class FosException extends ResponseStatusException {
 
-    public FOSException() {
+    public FosException() {
         super(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    public FOSException(String message) {
+    public FosException(String message) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
 
-    public FOSException(HttpStatus status, String message) {
+    public FosException(HttpStatus status, String message) {
         super(status, message);
     }
 
-    public FOSException(HttpStatus status) {
+    public FosException(HttpStatus status) {
         super(status);
     }
 }

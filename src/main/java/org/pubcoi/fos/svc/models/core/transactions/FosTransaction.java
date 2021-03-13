@@ -10,11 +10,11 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Document("fos_transactions")
-public class FOSTransaction {
+public class FosTransaction {
 
     @Id
     String id = UUID.randomUUID().toString();
-    FOSTransactionType transactionType;
+    FosTransactionType transactionType;
     NodeReference source;
     NodeReference target;
     String uid;
@@ -22,22 +22,22 @@ public class FOSTransaction {
     String notes;
 
     // should only be built via helpers
-    FOSTransaction() {}
+    FosTransaction() {}
 
     public String getId() {
         return id;
     }
 
-    public FOSTransaction setId(String id) {
+    public FosTransaction setId(String id) {
         this.id = id;
         return this;
     }
 
-    public FOSTransactionType getTransactionType() {
+    public FosTransactionType getTransactionType() {
         return transactionType;
     }
 
-    public FOSTransaction setTransactionType(FOSTransactionType transactionType) {
+    public FosTransaction setTransactionType(FosTransactionType transactionType) {
         this.transactionType = transactionType;
         return this;
     }
@@ -46,7 +46,7 @@ public class FOSTransaction {
         return source;
     }
 
-    public FOSTransaction setSource(NodeReference source) {
+    public FosTransaction setSource(NodeReference source) {
         this.source = source;
         return this;
     }
@@ -55,7 +55,7 @@ public class FOSTransaction {
         return target;
     }
 
-    public FOSTransaction setTarget(NodeReference target) {
+    public FosTransaction setTarget(NodeReference target) {
         this.target = target;
         return this;
     }
@@ -64,7 +64,7 @@ public class FOSTransaction {
         return transactionDT;
     }
 
-    public FOSTransaction setTransactionDT(OffsetDateTime transactionDT) {
+    public FosTransaction setTransactionDT(OffsetDateTime transactionDT) {
         this.transactionDT = transactionDT;
         return this;
     }
@@ -73,7 +73,7 @@ public class FOSTransaction {
         return notes;
     }
 
-    public FOSTransaction setNotes(String notes) {
+    public FosTransaction setNotes(String notes) {
         this.notes = notes;
         return this;
     }
@@ -84,7 +84,7 @@ public class FOSTransaction {
 
         if (o == null || getClass() != o.getClass()) return false;
 
-        FOSTransaction that = (FOSTransaction) o;
+        FosTransaction that = (FosTransaction) o;
 
         return new EqualsBuilder()
                 .append(id, that.id)
@@ -102,7 +102,7 @@ public class FOSTransaction {
         return uid;
     }
 
-    public FOSTransaction setUid(String uid) {
+    public FosTransaction setUid(String uid) {
         this.uid = uid;
         return this;
     }

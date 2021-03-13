@@ -5,7 +5,7 @@ package org.pubcoi.fos.svc.models.core;
  * enum in the UI code)
  *
  */
-public enum FOSUITasks {
+public enum FosUITasks {
     mark_canonical_clientNode,
     link_clientNode_to_parentClientNode
 }

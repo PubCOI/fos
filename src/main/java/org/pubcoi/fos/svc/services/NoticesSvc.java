@@ -8,7 +8,7 @@ import java.util.List;
 public interface NoticesSvc {
     void addNotice(FullNotice notice, String currentUser);
 
-    NoticeNodeDAO getNoticeDAO(String noticeID);
+    NoticeNodeDAO getNoticeDAO(String noticeId);
 
-    List<FullNotice> getNotices(String clientID);
+    List<FullNotice> getNoticesByClientId(String clientId);
 }

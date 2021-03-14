@@ -27,10 +27,7 @@ import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.svc.services.BatchExecutorSvc;
-import org.pubcoi.fos.svc.services.NoticesSvc;
-import org.pubcoi.fos.svc.services.S3Services;
-import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
+import org.pubcoi.fos.svc.services.*;
 import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +67,7 @@ public class UI {
     final RestHighLevelClient esClient;
     final S3Services s3Services;
     final BatchExecutorSvc batchExecutorSvc;
+    final AwardsSvc awardsSvc;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -81,7 +79,7 @@ public class UI {
             TransactionOrchestrationSvc transactionOrch,
             RestHighLevelClient esClient,
             S3Services s3Services,
-            BatchExecutorSvc batchExecutorSvc) {
+            BatchExecutorSvc batchExecutorSvc, AwardsSvc awardsSvc) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -93,6 +91,7 @@ public class UI {
         this.esClient = esClient;
         this.s3Services = s3Services;
         this.batchExecutorSvc = batchExecutorSvc;
+        this.awardsSvc = awardsSvc;
     }
 
     @PostMapping("/api/ui/login")
@@ -122,6 +121,11 @@ public class UI {
     @GetMapping("/api/ui/awards")
     public List<AwardDAO> getContractAwards() {
         return awardsMDBRepo.findAll().stream().map(AwardDAO::new).collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/ui/awards/{awardId}")
+    public AwardDAO getAward(@PathVariable String awardId) {
+        return awardsSvc.getAwardDAOWithAttachments(awardId);
     }
 
     @PostMapping("/api/ui/user")

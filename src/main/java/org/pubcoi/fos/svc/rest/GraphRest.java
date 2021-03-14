@@ -53,7 +53,7 @@ public class GraphRest {
     @GetMapping("/api/ui/graphs/clients/{clientID}")
     public ClientNodeDAO getClient(@PathVariable String clientID) {
         ClientNodeDAO clientNodeDAO = clientSvc.getClientNode(clientID);
-        for (FullNotice notice : noticesSvc.getNotices(clientID)) {
+        for (FullNotice notice : noticesSvc.getNoticesByClientId(clientID)) {
             clientNodeDAO.getNotices().add(new NoticeNodeDAO(notice));
         }
         return clientNodeDAO;

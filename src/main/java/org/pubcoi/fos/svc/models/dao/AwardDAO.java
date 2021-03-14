@@ -1,20 +1,33 @@
 package org.pubcoi.fos.svc.models.dao;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import org.pubcoi.fos.svc.models.core.CFAward;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Used to return list of awards to the user
  */
 public class AwardDAO {
 
+    @JsonView(Views.Summary.class)
     String id;
+    @JsonView(Views.Summary.class)
     String noticeId;
+    @JsonView(Views.Summary.class)
     String organisation;
+    @JsonView(Views.Summary.class)
     String supplierName;
+    @JsonView(Views.Details.class)
     Long value;
+    @JsonView(Views.Details.class)
     Long valueMin;
+    @JsonView(Views.Details.class)
     Long valueMax;
+    @JsonView(Views.WithChildObjects.class)
+    List<AttachmentDAO> attachments = new ArrayList<>();
 
     @JsonProperty("group_award")
     boolean group;
@@ -102,6 +115,15 @@ public class AwardDAO {
 
     public AwardDAO setGroup(boolean group) {
         this.group = group;
+        return this;
+    }
+
+    public List<AttachmentDAO> getAttachments() {
+        return attachments;
+    }
+
+    public AwardDAO setAttachments(List<AttachmentDAO> attachments) {
+        this.attachments = attachments;
         return this;
     }
 }

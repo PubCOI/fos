@@ -10,4 +10,6 @@ public interface AwardsSvc {
     void addAward(CFAward cfAward, String currentUser);
 
     Set<AwardDAO> getAwardsForNotice(String noticeID);
+
+    AwardDAO getAwardDAOWithAttachments(String awardId);
 }

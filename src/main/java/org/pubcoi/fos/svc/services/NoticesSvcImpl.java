@@ -39,13 +39,13 @@ public class NoticesSvcImpl implements NoticesSvc {
     }
 
     @Override
-    public NoticeNodeDAO getNoticeDAO(String noticeID) {
-        return new NoticeNodeDAO(noticesMDBRepo.findById(noticeID).orElseThrow(ItemNotFoundException::new));
+    public NoticeNodeDAO getNoticeDAO(String noticeId) {
+        return new NoticeNodeDAO(noticesMDBRepo.findById(noticeId).orElseThrow(ItemNotFoundException::new));
     }
 
     @Override
-    public List<FullNotice> getNotices(String clientID) {
-        return noticesGRepo.findAllNoticesByClientNode(clientID).stream()
+    public List<FullNotice> getNoticesByClientId(String clientId) {
+        return noticesGRepo.findAllNoticesByClientNode(clientId).stream()
                 .map(n -> noticesMDBRepo.findById(n.getId()).orElseThrow())
                 .sorted(Comparator.comparing(FullNotice::getCreatedDate))
                 .collect(Collectors.toList());

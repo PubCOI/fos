@@ -4,4 +4,4 @@
 target/
 application-local.properties
 /src/test/resources/test-resources
-/src/main/resources/credentials/*
+/config/*

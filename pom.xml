@@ -99,11 +99,12 @@
 
     <profiles>
         <profile>
-            <id>with-fe</id>
+            <id>with-ui</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <build>
+                <finalName>${project.artifactId}-and-ui</finalName>
                 <plugins>
                     <plugin>
                         <groupId>com.github.eirslett</groupId>

@@ -24,11 +24,11 @@ import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
-import org.pubcoi.fos.svc.models.core.*;
+import org.pubcoi.fos.svc.models.core.FosUser;
+import org.pubcoi.fos.svc.models.core.RequestWithAuth;
+import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.*;
-import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.services.*;
-import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -47,7 +47,6 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -60,7 +59,6 @@ public class UI {
     final NoticesMDBRepo noticesMDBRepo;
     final NoticesSvc noticesSvc;
     final AwardsMDBRepo awardsMDBRepo;
-    final TasksRepo tasksRepo;
     final ClientsGraphRepo clientGRepo;
     final FosUserRepo userRepo;
     final TransactionOrchestrationSvc transactionOrch;
@@ -73,7 +71,6 @@ public class UI {
             AttachmentMDBRepo attachmentMDBRepo,
             NoticesMDBRepo noticesMDBRepo,
             NoticesSvc noticesSvc, AwardsMDBRepo awardsMDBRepo,
-            TasksRepo tasksRepo,
             ClientsGraphRepo clientGRepo,
             FosUserRepo userRepo,
             TransactionOrchestrationSvc transactionOrch,
@@ -84,7 +81,6 @@ public class UI {
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
         this.awardsMDBRepo = awardsMDBRepo;
-        this.tasksRepo = tasksRepo;
         this.clientGRepo = clientGRepo;
         this.userRepo = userRepo;
         this.transactionOrch = transactionOrch;
@@ -125,90 +121,13 @@ public class UI {
 
     @GetMapping("/api/ui/awards/{awardId}")
     public AwardDAO getAward(@PathVariable String awardId) {
-        return awardsSvc.getAwardDAOWithAttachments(awardId);
+        return awardsSvc.getAwardDetailsDAOWithAttachments(awardId);
     }
 
     @PostMapping("/api/ui/user")
     public UserProfileDAO getUserProfile(@RequestBody RequestWithAuth auth) {
         String uid = checkAuth(auth.getAuthToken()).getUid();
         return new UserProfileDAO(userRepo.getByUid(uid));
-    }
-
-    @GetMapping("/api/ui/tasks")
-    public List<TaskDAO> getTasks(@RequestParam(value = "completed", defaultValue = "false") Boolean completed) {
-        return tasksRepo.findAll().stream()
-                .filter(t -> t.getCompleted().equals(completed))
-                .map(TaskDAO::new)
-                .peek(t -> {
-                    if (t.getTaskType().equals(DRTaskType.resolve_client)) {
-                        Optional<ClientNode> clientNode = clientGRepo.findByIdEquals(t.getEntity());
-                        if (!clientNode.isPresent()) {
-                            logger.error("Unable to find ClientNode {}", t.getEntity());
-                        } else {
-                            t.setDescription(String.format(
-                                    "Verify details for entity: %s", clientNode.get().getName())
-                            );
-                        }
-                    }
-                })
-                .collect(Collectors.toList());
-    }
-
-    @GetMapping("/api/ui/tasks/{taskType}/{refId}")
-    public ResolveClientDAO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
-        return new ResolveClientDAO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
-    }
-
-    @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
-    public UpdateClientDAO updateClientDAO(
-            @PathVariable FosUITasks taskType,
-            @RequestBody RequestWithAuth req
-    ) {
-        FosUser user = userRepo.getByUid(checkAuth(req.getAuthToken()).getUid());
-
-        /* ******** IMPORTANT ***********
-         * This may look a bit convoluted in the fact that we're constructing transactions
-         * here to be managed by the TransactionOrchestrationSvc but there's a good reason
-         * for that - by coupling loosely, and enforcing transactions to be built via the
-         * FosTransactionBuilder, we make it easier for transactions to be 'replayed' in
-         * future on other systems.
-         */
-
-        if (taskType == FosUITasks.mark_canonical_clientNode) {
-            if (null == req.getTaskId() || null == req.getTarget()) {
-                throw new FosBadRequestException("Task ID and target must not be null");
-            }
-
-            clientGRepo.findByIdEquals(req.getTarget()).ifPresent(clientNode -> {
-                transactionOrch.exec(FosTransactionBuilder.markCanonicalNode(clientNode, user, null));
-            });
-
-            markTaskCompleted(req.getTaskId(), user);
-            return new UpdateClientDAO().setResponse("Resolved task: marked node as canonical");
-        }
-
-        if (taskType == FosUITasks.link_clientNode_to_parentClientNode) {
-            if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
-                throw new FosBadRequestException("Task ID, Source and Target must be populated");
-            }
-
-            ClientNode source = clientGRepo.findClientHydratingNotices(req.getSource()).orElseThrow();
-            ClientNode target = clientGRepo.findClientHydratingNotices(req.getTarget()).orElseThrow();
-
-            transactionOrch.exec(FosTransactionBuilder.linkSourceToParent(source, target, user, null));
-
-            markTaskCompleted(req.getTaskId(), user);
-
-            return new UpdateClientDAO().setResponse(String.format(
-                    "Resolved task: linked %s to %s", req.getSource(), req.getTarget()
-            ));
-        }
-
-        throw new FosBadRequestException("Unable to find request type");
-    }
-
-    private void markTaskCompleted(String taskId, FosUser user) {
-        tasksRepo.save(tasksRepo.getById(taskId).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
     }
 
     @GetMapping("/api/transactions")
@@ -361,7 +280,7 @@ public class UI {
         return wrapper;
     }
 
-    private FirebaseToken checkAuth(String authToken) {
+    public static FirebaseToken checkAuth(String authToken) {
         try {
             return FirebaseAuth.getInstance().verifyIdToken(authToken);
         } catch (FirebaseAuthException e) {

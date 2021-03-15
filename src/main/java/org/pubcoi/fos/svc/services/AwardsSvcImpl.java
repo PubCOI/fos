@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.svc.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
@@ -15,10 +16,16 @@ public class AwardsSvcImpl implements AwardsSvc {
 
     final AwardsMDBRepo awardsMDBRepo;
     final AttachmentSvc attachmentSvc;
+    final AwardsGraphRepo awardsGraphRepo;
 
-    public AwardsSvcImpl(AwardsMDBRepo awardsMDBRepo, AttachmentSvc attachmentSvc) {
+    public AwardsSvcImpl(
+            AwardsMDBRepo awardsMDBRepo,
+            AttachmentSvc attachmentSvc,
+            AwardsGraphRepo awardsGraphRepo
+    ) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.attachmentSvc = attachmentSvc;
+        this.awardsGraphRepo = awardsGraphRepo;
     }
 
     @Override
@@ -32,9 +39,15 @@ public class AwardsSvcImpl implements AwardsSvc {
     }
 
     @Override
-    public AwardDAO getAwardDAOWithAttachments(String awardId) {
-        AwardDAO awardDAO = awardsMDBRepo.findById(awardId).map(AwardDAO::new).orElseThrow();
-        List<AttachmentDAO> attachments = attachmentSvc.findAttachmentsByNoticeId(awardDAO.getNoticeId());
+    public AwardDAO getAwardDetailsDAOWithAttachments(String awardId) {
+        final CFAward award = awardsMDBRepo.findById(awardId).orElseThrow();
+        AwardDAO awardDAO = new AwardDAO(award);
+        List<AttachmentDAO> attachments = attachmentSvc.findAttachmentsByNoticeId(award.getNoticeId());
+        if (null != award.getFosOrganisation() && null != award.getFosOrganisation().getId()) {
+            awardDAO.setSupplierNumTotalAwards(awardsGraphRepo.countAwardsToSupplier(
+                    award.getFosOrganisation().getId()
+            ));
+        }
         return awardDAO.setAttachments(attachments);
     }
 }

@@ -21,6 +21,8 @@ public class AwardDAO {
     @JsonView(Views.Summary.class)
     String supplierName;
     @JsonView(Views.Details.class)
+    Long supplierNumTotalAwards;
+    @JsonView(Views.Details.class)
     Long value;
     @JsonView(Views.Details.class)
     Long valueMin;
@@ -124,6 +126,15 @@ public class AwardDAO {
 
     public AwardDAO setAttachments(List<AttachmentDAO> attachments) {
         this.attachments = attachments;
+        return this;
+    }
+
+    public Long getSupplierNumTotalAwards() {
+        return supplierNumTotalAwards;
+    }
+
+    public AwardDAO setSupplierNumTotalAwards(Long supplierNumTotalAwards) {
+        this.supplierNumTotalAwards = supplierNumTotalAwards;
         return this;
     }
 }

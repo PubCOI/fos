@@ -1,7 +1,8 @@
 package org.pubcoi.fos.svc.models.dao;
 
 import org.pubcoi.fos.cdm.attachments.Attachment;
-import org.pubcoi.fos.models.cf.AdditionalDetailsType;
+import org.pubcoi.fos.cdm.attachments.DocTypeEnum;
+import org.pubcoi.fos.cdm.attachments.S3LocationType;
 
 // corresponds to the 'additional detail' type
 public class AttachmentDAO {
@@ -11,16 +12,11 @@ public class AttachmentDAO {
     String description;
     String type;
     String href;
+    String textData;
+    String mime;
+    boolean isOcr = false;
 
     AttachmentDAO() {}
-
-    public AttachmentDAO(AdditionalDetailsType details) {
-        this.id = details.getId();
-        this.noticeId = details.getNoticeId();
-        this.description = details.getDescription();
-        this.type = details.getDataType();
-        this.href = details.getLink();
-    }
 
     public AttachmentDAO(Attachment attachment) {
         this.id = attachment.getId();
@@ -28,6 +24,13 @@ public class AttachmentDAO {
         this.description = attachment.getDescription();
         this.type = attachment.getDataType();
         this.href = attachment.getLink();
+        this.textData = attachment.getTextData();
+        this.mime = attachment.getMimeType();
+        for (S3LocationType s3Location : attachment.getS3Locations()) {
+            if (s3Location.getType().equals(DocTypeEnum.OCR)) {
+                this.isOcr = true;
+            }
+        }
     }
 
     public String getId() {
@@ -82,5 +85,32 @@ public class AttachmentDAO {
                 ", noticeId='" + noticeId + '\'' +
                 ", type='" + type + '\'' +
                 '}';
+    }
+
+    public String getTextData() {
+        return textData;
+    }
+
+    public AttachmentDAO setTextData(String textData) {
+        this.textData = textData;
+        return this;
+    }
+
+    public String getMime() {
+        return mime;
+    }
+
+    public AttachmentDAO setMime(String mime) {
+        this.mime = mime;
+        return this;
+    }
+
+    public boolean isOcr() {
+        return isOcr;
+    }
+
+    public AttachmentDAO setOcr(boolean ocr) {
+        isOcr = ocr;
+        return this;
     }
 }

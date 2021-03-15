@@ -12,6 +12,7 @@ import java.util.Set;
 public class NoticeNodeDAO {
 
     String id;
+    String title;
     OffsetDateTime postedDT;
     String organisation;
     String description;
@@ -24,6 +25,7 @@ public class NoticeNodeDAO {
     public NoticeNodeDAO(FullNotice notice) {
         Objects.requireNonNull(notice.getNotice());
         this.id = notice.getId();
+        this.title = notice.getNotice().getTitle();
         this.postedDT = notice.getCreatedDate();
         this.valueLow = notice.getNotice().getValueLow();
         this.valueHigh = notice.getNotice().getValueHigh();
@@ -118,4 +120,22 @@ public class NoticeNodeDAO {
         return valueHigh;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public NoticeNodeDAO setTitle(String title) {
+        this.title = title;
+        return this;
+    }
+
+    public NoticeNodeDAO setValueLow(Double valueLow) {
+        this.valueLow = valueLow;
+        return this;
+    }
+
+    public NoticeNodeDAO setValueHigh(Double valueHigh) {
+        this.valueHigh = valueHigh;
+        return this;
+    }
 }

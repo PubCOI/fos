@@ -11,5 +11,5 @@ public interface AwardsSvc {
 
     Set<AwardDAO> getAwardsForNotice(String noticeID);
 
-    AwardDAO getAwardDAOWithAttachments(String awardId);
+    AwardDAO getAwardDetailsDAOWithAttachments(String awardId);
 }

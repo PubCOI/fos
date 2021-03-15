@@ -8,7 +8,7 @@ package org.pubcoi.fos.svc.models.core;
  */
 public class RequestWithAuth {
 
-    String authToken;
+    String authToken; // todo move this into a header
     String taskId;
     String source;
     String target;

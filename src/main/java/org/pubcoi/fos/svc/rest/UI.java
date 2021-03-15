@@ -66,8 +66,9 @@ public class UI {
     final TransactionOrchestrationSvc transactionOrch;
     final RestHighLevelClient esClient;
     final S3Services s3Services;
-    final BatchExecutorSvc batchExecutorSvc;
     final AwardsSvc awardsSvc;
+    final ScheduledSvc scheduledSvc;
+    final GraphSvc graphSvc;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -78,7 +79,8 @@ public class UI {
             TransactionOrchestrationSvc transactionOrch,
             RestHighLevelClient esClient,
             S3Services s3Services,
-            BatchExecutorSvc batchExecutorSvc, AwardsSvc awardsSvc) {
+            AwardsSvc awardsSvc,
+            ScheduledSvc scheduledSvc, GraphSvc graphSvc) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -88,8 +90,9 @@ public class UI {
         this.transactionOrch = transactionOrch;
         this.esClient = esClient;
         this.s3Services = s3Services;
-        this.batchExecutorSvc = batchExecutorSvc;
         this.awardsSvc = awardsSvc;
+        this.scheduledSvc = scheduledSvc;
+        this.graphSvc = graphSvc;
     }
 
     @PostMapping("/api/ui/login")
@@ -180,6 +183,9 @@ public class UI {
             for (FullNotice notice : array.getFullNotice()) {
                 noticesSvc.addNotice(notice, uid);
             }
+            scheduledSvc.populateFosOrgsMDBFromAwards();
+            scheduledSvc.populateOCCompaniesFromFosOrgs();
+            graphSvc.populateGraphFromMDB();
         } catch (IOException | JAXBException e) {
             throw new FosException("Unable to read file stream");
         }
@@ -201,14 +207,6 @@ public class UI {
         } catch (URISyntaxException e) {
             throw new FosBadRequestException("Unable to get URL");
         }
-    }
-
-    @PostMapping("/api/ui/batch")
-    public void executeBatch(
-            @RequestParam("attachment_id") String attachmentId
-    ) throws Exception {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Attachment not found"));
-        batchExecutorSvc.runBatch(attachment);
     }
 
     @PostMapping("/api/ui/search")

@@ -5,3 +5,4 @@ target/
 application-local.properties
 /src/test/resources/test-resources
 /config/*
+/docker-runtime

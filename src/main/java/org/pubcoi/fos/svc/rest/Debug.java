@@ -7,7 +7,6 @@ import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
-import org.pubcoi.fos.svc.services.BatchExecutorSvc;
 import org.pubcoi.fos.svc.services.GraphSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
 import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
@@ -26,7 +25,6 @@ import java.util.List;
 public class Debug {
     private static final Logger logger = LoggerFactory.getLogger(Debug.class);
 
-    final BatchExecutorSvc batchExecutorSvc;
     final AttachmentMDBRepo attachmentMDBRepo;
     final NoticesMDBRepo noticesMDBRepo;
     final OCCompaniesRepo ocCompanies;
@@ -38,7 +36,6 @@ public class Debug {
     final ClientsGraphRepo clientsGraphRepo;
 
     public Debug(
-            BatchExecutorSvc batchExecutorSvc,
             AttachmentMDBRepo attachmentMDBRepo,
             NoticesMDBRepo noticesMDBRepo,
             OCCompaniesRepo ocCompanies,
@@ -48,7 +45,6 @@ public class Debug {
             TransactionOrchestrationSvc transactionOrchestrationSvc,
             TasksRepo tasksRepo,
             ClientsGraphRepo clientsGraphRepo) {
-        this.batchExecutorSvc = batchExecutorSvc;
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
@@ -103,18 +99,5 @@ public class Debug {
     @GetMapping("/api/debug/populate-graph")
     public void populateGraph() {
         graphSvc.populateGraphFromMDB();
-    }
-
-    @GetMapping("/api/debug/add-jobs")
-    public void addBatchJobs() {
-        attachmentMDBRepo.findAll().stream()
-                .filter(a -> a.getS3Locations().isEmpty() && a.getDataType().equals("Link") && a.getLink().contains("cloudforce"))
-                .forEach(a -> {
-                    try {
-                        batchExecutorSvc.runBatch(a);
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    }
-                });
     }
 }

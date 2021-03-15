@@ -35,27 +35,37 @@ Then to run:
 
 ```$bash
 java -Dspring.profiles.active=<your_profile_name> \
-    -jar target/fos-svc-<version>.jar
+    -jar target/fos-svc.jar
 ```
+
+If building the UI, you must use the correct Maven profile:
+
+```$bash
+mvn -Pwith-ui clean package
+```
+
+This will pull in the UI code under `./fos-ui` and build it into the final
+JAR.
+
+### Docker
+
+Running `docker-compose up` will start up the service as well as Mongo and Neo4j
+ready to test. Note that you _must_ have built the source under `./fos-ui` before
+the frontend is served.
 
 ### Administration
 
-Neo4j index creation:
+By default, the application will try to create the node indices on startup. See
+the `Neo4JConfig.class` file for further info.
+
+Neo4j index creation (for reference):
 
 ```
 CALL db.index.fulltext.createNodeIndex("clients-fts", ["Client"], ["name", "postCode"], {analyzer: "english"})
-
 # clear via CALL db.index.fulltext.drop("clients-fts")
 ```
 
 Verify:
-
 ```
 SHOW INDEXES
-```
-
-Development only: clearing schemas -
-
-```
-CALL apoc.schema.assert({},{})
 ```

@@ -26,7 +26,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -99,15 +101,41 @@ public class GraphRest {
     }
 
     @GetMapping("/api/ui/queries/initial")
-    public String getQuery() {
-        Neo4jClient.RunnableSpec response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
+    public String getQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "50") String max
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 250));
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
                 "WHERE c.hidden=false AND ref.hidden=false AND n.hidden=false " +
-                "RETURN c, ref, n LIMIT 50");
+                "RETURN c, ref, n LIMIT $limit").bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestException(e.getMessage());
+            throw new FosBadRequestException();
         }
     }
 
+    @GetMapping("/api/ui/queries/notices/{noticeId}/children")
+    public String getChildrenQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "50") String max,
+            @PathVariable String noticeId
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 50));
+        bindParams.put("noticeId", noticeId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (a:Award)-[ref]-(n:Notice) WHERE n.hidden=false AND n.id = $noticeId " +
+                        "RETURN a, ref, n LIMIT $limit").bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    private int getLimit(String limit, int hardLimit) {
+        int lim = Integer.parseInt(limit);
+        return (lim > hardLimit) ? hardLimit : (lim > 0) ? lim : 1;
+    }
 }

@@ -23,9 +23,11 @@ import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.mdb.*;
+import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
+import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
+import org.pubcoi.fos.svc.mdb.FosUserRepo;
+import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.FosUser;
-import org.pubcoi.fos.svc.models.core.RequestWithAuth;
 import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.services.*;
@@ -125,9 +127,22 @@ public class UI {
     }
 
     @PostMapping("/api/ui/user")
-    public UserProfileDAO getUserProfile(@RequestBody RequestWithAuth auth) {
-        String uid = checkAuth(auth.getAuthToken()).getUid();
+    public UserProfileDAO getUserProfile(
+            @RequestHeader("authToken") String authToken
+    ) {
+        String uid = UI.checkAuth(authToken).getUid();
         return new UserProfileDAO(userRepo.getByUid(uid));
+    }
+
+    @PutMapping("/api/ui/user")
+    public UserProfileDAO updateUserProfile(
+            @RequestBody UpdateProfileRequestDAO updateProfileRequestDAO,
+            @RequestHeader("authToken") String authToken
+    ) {
+        String uid = UI.checkAuth(authToken).getUid();
+        FosUser user = userRepo.getByUid(uid);
+        if (null == user) throw new FosBadRequestException("Unable to find user");
+        return new UserProfileDAO(userRepo.save(user.setDisplayName(updateProfileRequestDAO.getDisplayName())));
     }
 
     @GetMapping("/api/transactions")

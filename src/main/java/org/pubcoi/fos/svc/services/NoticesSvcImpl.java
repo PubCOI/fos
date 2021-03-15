@@ -3,7 +3,7 @@ package org.pubcoi.fos.svc.services;
 import org.pubcoi.fos.models.cf.AwardDetailParentType;
 import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.ItemNotFoundException;
-import org.pubcoi.fos.svc.gdb.NoticesGRepo;
+import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dao.NoticeNodeDAO;
@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 public class NoticesSvcImpl implements NoticesSvc {
 
     final NoticesMDBRepo noticesMDBRepo;
-    final NoticesGRepo noticesGRepo;
+    final NoticesGraphRepo noticesGRepo;
     final AwardsSvc awardsSvc;
 
     public NoticesSvcImpl(
             NoticesMDBRepo noticesMDBRepo,
-            NoticesGRepo noticesGRepo,
+            NoticesGraphRepo noticesGRepo,
             AwardsSvc awardsSvc
     ) {
         this.noticesMDBRepo = noticesMDBRepo;

@@ -8,7 +8,7 @@ import org.pubcoi.fos.models.cf.AdditionalDetailsType;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.gdb.NoticesGRepo;
+import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.DRTask;
@@ -35,7 +35,7 @@ public class GraphSvcImpl implements GraphSvc {
     NoticesMDBRepo noticesMDBRepo;
     OrganisationsGraphRepo orgGraphRepo;
     ClientsGraphRepo clientsGraphRepo;
-    NoticesGRepo noticesGRepo;
+    NoticesGraphRepo noticesGRepo;
     ScheduledSvc scheduledSvc;
     TasksSvc tasksSvc;
     AttachmentMDBRepo attachmentMDBRepo;
@@ -49,7 +49,7 @@ public class GraphSvcImpl implements GraphSvc {
             OCCompaniesRepo ocCompaniesRepo,
             NoticesMDBRepo noticesMDBRepo,
             ClientsGraphRepo clientsGraphRepo,
-            NoticesGRepo noticesGRepo,
+            NoticesGraphRepo noticesGRepo,
             ScheduledSvc scheduledSvc,
             TasksSvc tasksSvc,
             AttachmentMDBRepo attachmentMDBRepo,

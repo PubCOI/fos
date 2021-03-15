@@ -1,14 +1,25 @@
 package org.pubcoi.fos.svc.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.neo4j.driver.internal.InternalNode;
+import org.neo4j.driver.internal.InternalRelationship;
 import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
 import org.pubcoi.fos.svc.models.dao.ClientNodeDAO;
 import org.pubcoi.fos.svc.models.dao.ClientNodeFTSDAOResponse;
 import org.pubcoi.fos.svc.models.dao.NoticeNodeDAO;
+import org.pubcoi.fos.svc.models.dao.neo.InternalNodeSerializer;
+import org.pubcoi.fos.svc.models.dao.neo.InternalRelationshipSerializer;
 import org.pubcoi.fos.svc.services.AwardsSvc;
 import org.pubcoi.fos.svc.services.ClientsSvc;
 import org.pubcoi.fos.svc.services.NoticesSvc;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,12 +32,31 @@ import java.util.stream.Collectors;
 @RestController
 public class GraphRest {
 
+    final Neo4jClient neo4jClient;
     final ClientNodeFTS clientNodeFTS;
     final ClientsSvc clientSvc;
     final NoticesSvc noticesSvc;
     final AwardsSvc awardsSvc;
+    static ObjectMapper neo4jObjectMapper;
 
-    public GraphRest(ClientNodeFTS clientNodeFTS, ClientsSvc clientSvc, NoticesSvc noticesSvc, AwardsSvc awardsSvc) {
+    {
+        neo4jObjectMapper = new ObjectMapper();
+        SimpleModule sm = new SimpleModule();
+        sm.addSerializer(InternalNode.class, new InternalNodeSerializer());
+        sm.addSerializer(InternalRelationship.class, new InternalRelationshipSerializer());
+        neo4jObjectMapper.registerModule(sm);
+        neo4jObjectMapper.registerModule(new JavaTimeModule()); // for ZonedDateTime
+        neo4jObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // DT not epoch please
+    }
+
+    public GraphRest(
+            Neo4jClient neo4jClient,
+            ClientNodeFTS clientNodeFTS,
+            ClientsSvc clientSvc,
+            NoticesSvc noticesSvc,
+            AwardsSvc awardsSvc
+    ) {
+        this.neo4jClient = neo4jClient;
         this.clientNodeFTS = clientNodeFTS;
         this.clientSvc = clientSvc;
         this.noticesSvc = noticesSvc;
@@ -66,6 +96,18 @@ public class GraphRest {
             noticeNodeDAO.addAward(awardDAO);
         }
         return noticeNodeDAO;
+    }
+
+    @GetMapping("/api/ui/queries/initial")
+    public String getQuery() {
+        Neo4jClient.RunnableSpec response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
+                "WHERE c.hidden=false AND ref.hidden=false AND n.hidden=false " +
+                "RETURN c, ref, n LIMIT 50");
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException(e.getMessage());
+        }
     }
 
 }

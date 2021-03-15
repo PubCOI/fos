@@ -6,7 +6,7 @@ import org.springframework.data.neo4j.repository.query.Query;
 
 import java.util.List;
 
-public interface NoticesGRepo extends Neo4jRepository<NoticeNode, String> {
+public interface NoticesGraphRepo extends Neo4jRepository<NoticeNode, String> {
 
     @Query("MATCH (n:Notice)-[rel:PUBLISHED]-(c:Client) " +
             "WHERE c.id = $clientId " +

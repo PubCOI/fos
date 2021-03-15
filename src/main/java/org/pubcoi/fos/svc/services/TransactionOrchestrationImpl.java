@@ -2,7 +2,7 @@ package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.gdb.NoticesGRepo;
+import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.mdb.TransactionMDBRepo;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
@@ -23,13 +23,13 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
 
     final TransactionFactory tcf;
     final TransactionMDBRepo transactionRepo;
-    final NoticesGRepo noticesGRepo;
+    final NoticesGraphRepo noticesGRepo;
     final ClientsGraphRepo clientsGraphRepo;
 
     TransactionOrchestrationImpl(
             TransactionFactory tcf,
             TransactionMDBRepo transactionRepo,
-            NoticesGRepo noticesGRepo,
+            NoticesGraphRepo noticesGRepo,
             ClientsGraphRepo clientsGraphRepo
     ) {
         this.tcf = tcf;

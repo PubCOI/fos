@@ -117,7 +117,7 @@ public class GraphRest {
     }
 
     @GetMapping("/api/ui/queries/notices/{noticeId}/children")
-    public String getChildrenQuery(
+    public String getNoticeChildrenQuery(
             @RequestParam(value = "max", required = false, defaultValue = "50") String max,
             @PathVariable String noticeId
     ) {
@@ -127,6 +127,25 @@ public class GraphRest {
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (a:Award)-[ref]-(n:Notice) WHERE n.hidden=false AND n.id = $noticeId " +
                         "RETURN a, ref, n LIMIT $limit").bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @GetMapping("/api/ui/queries/awards/{awardId}/children")
+    public String getAwardChildrenQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "50") String max,
+            @PathVariable String awardId
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 50));
+        bindParams.put("awardId", awardId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (:Award {id: $awardId})-[:AWARDED_TO]-(o:Organisation) " +
+                        "MATCH (o)-[ref:AWARDED_TO]-(a:Award) return o, ref, a LIMIT $limit")
+                .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {

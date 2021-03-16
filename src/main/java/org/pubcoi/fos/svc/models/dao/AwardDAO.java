@@ -16,6 +16,8 @@ public class AwardDAO {
     String id;
     @JsonView(Views.Summary.class)
     String noticeId;
+    @JsonView(Views.Details.class)
+    String noticeTitle;
     @JsonView(Views.Summary.class)
     String organisation;
     @JsonView(Views.Summary.class)
@@ -135,6 +137,15 @@ public class AwardDAO {
 
     public AwardDAO setSupplierNumTotalAwards(Long supplierNumTotalAwards) {
         this.supplierNumTotalAwards = supplierNumTotalAwards;
+        return this;
+    }
+
+    public String getNoticeTitle() {
+        return noticeTitle;
+    }
+
+    public AwardDAO setNoticeTitle(String noticeTitle) {
+        this.noticeTitle = noticeTitle;
         return this;
     }
 }

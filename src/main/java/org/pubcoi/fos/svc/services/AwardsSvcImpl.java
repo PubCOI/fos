@@ -1,7 +1,9 @@
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.models.cf.FullNotice;
 import org.pubcoi.fos.svc.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
+import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
@@ -17,15 +19,17 @@ public class AwardsSvcImpl implements AwardsSvc {
     final AwardsMDBRepo awardsMDBRepo;
     final AttachmentSvc attachmentSvc;
     final AwardsGraphRepo awardsGraphRepo;
+    final NoticesMDBRepo noticesMDBRepo;
 
     public AwardsSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
             AttachmentSvc attachmentSvc,
-            AwardsGraphRepo awardsGraphRepo
-    ) {
+            AwardsGraphRepo awardsGraphRepo,
+            NoticesMDBRepo noticesMDBRepo) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.attachmentSvc = attachmentSvc;
         this.awardsGraphRepo = awardsGraphRepo;
+        this.noticesMDBRepo = noticesMDBRepo;
     }
 
     @Override
@@ -48,6 +52,8 @@ public class AwardsSvcImpl implements AwardsSvc {
                     award.getFosOrganisation().getId()
             ));
         }
+        FullNotice notice = noticesMDBRepo.findById(award.getNoticeId()).orElseThrow();
+        awardDAO.setNoticeTitle(notice.getNotice().getTitle());
         return awardDAO.setAttachments(attachments);
     }
 }

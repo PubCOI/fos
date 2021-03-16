@@ -29,7 +29,7 @@ public class BatchExecutorSvcImpl implements BatchExecutorSvc {
     @Value("${fos.batch.paths.application-config:classpath:application-batch-runtime.properties}")
     Resource batchProperties;
 
-    @Value("${fos.batch.paths.application-config:classpath:application-local.properties}")
+    @Value("${fos.batch.paths.application-config:file:config/application-local.properties}")
     Resource localProperties;
 
     @PostConstruct
@@ -52,6 +52,7 @@ public class BatchExecutorSvcImpl implements BatchExecutorSvc {
             logger.warn("application-local.properties does not exist, but will not halt execution...");
         }
         if (!javaJar.exists() || !batchProperties.exists()) {
+            logger.error("Found files: jar:{} batchProperties:{}", javaJar.exists(), batchProperties.exists());
             throw new RuntimeException("Unable to find required resources");
         }
     }

@@ -69,6 +69,7 @@ public class UI {
     final AwardsSvc awardsSvc;
     final ScheduledSvc scheduledSvc;
     final GraphSvc graphSvc;
+    final ApplicationStatusBean applicationStatus;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -80,7 +81,7 @@ public class UI {
             RestHighLevelClient esClient,
             S3Services s3Services,
             AwardsSvc awardsSvc,
-            ScheduledSvc scheduledSvc, GraphSvc graphSvc) {
+            ScheduledSvc scheduledSvc, GraphSvc graphSvc, ApplicationStatusBean applicationStatus) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -93,6 +94,7 @@ public class UI {
         this.awardsSvc = awardsSvc;
         this.scheduledSvc = scheduledSvc;
         this.graphSvc = graphSvc;
+        this.applicationStatus = applicationStatus;
     }
 
     @PostMapping("/api/ui/login")
@@ -213,7 +215,7 @@ public class UI {
     public ESResponseWrapperDTO doSearch(
             @RequestBody SearchRequestDAO searchRequestDAO
     ) throws Exception {
-        SearchRequest request = new SearchRequest();
+        SearchRequest request = new SearchRequest().indices("attachments");
         SearchSourceBuilder sb = new SearchSourceBuilder();
         sb.query(
                 QueryBuilders
@@ -291,6 +293,11 @@ public class UI {
                     );
                 });
         return wrapper;
+    }
+
+    @GetMapping("/api/status")
+    public ApplicationStatusBean getApplicationStatus() {
+        return applicationStatus;
     }
 
     public static FirebaseToken checkAuth(String authToken) {

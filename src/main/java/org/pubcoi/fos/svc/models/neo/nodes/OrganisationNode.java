@@ -6,6 +6,7 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
+import javax.persistence.Version;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +18,8 @@ public class OrganisationNode implements FosEntity {
     String name;
     Boolean verified;
     Boolean hidden = false;
+    @Version
+    Long version = 1L;
 
     @DynamicLabels
     Set<String> labels = new HashSet<>();
@@ -92,5 +95,18 @@ public class OrganisationNode implements FosEntity {
     public OrganisationNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public OrganisationNode setVersion(Long version) {
+        this.version = version;
+        return this;
+    }
+
+    public Boolean getVerified() {
+        return verified;
     }
 }

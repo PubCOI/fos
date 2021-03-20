@@ -1,21 +1,23 @@
 package org.pubcoi.fos.svc.models.core;
 
-public class FosOCCompany extends FosOrganisation {
-
-    private static final String PREFIX = "oc_company";
+/**
+ * A canonical org is one we've added and we're 99.99% sure that it's the same as the reference
+ * given in Companies House etc.
+ *
+ */
+public class FosCanonicalOrg extends FosOrganisation {
 
     String jurisdiction;
     String reference;
     String license;
 
-    public FosOCCompany() {}
+    public FosCanonicalOrg() {}
 
-    public FosOCCompany(String jurisdiction, String orgReference) {
+    public FosCanonicalOrg(String jurisdiction, String orgReference) {
         super();
-        this.id = String.format("%s:%s:%s", PREFIX, jurisdiction, orgReference);
+        this.id = String.format("%s:%s", jurisdiction, orgReference);
         this.jurisdiction = jurisdiction;
         this.reference = orgReference;
-        this.license = "OKF ODbL 1.0 via OpenCorporates.com";
     }
 
     public String getJurisdiction() {

@@ -4,11 +4,9 @@ import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.mdb.FosUserRepo;
+import org.pubcoi.fos.svc.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
-import org.pubcoi.fos.svc.models.core.DRTaskType;
-import org.pubcoi.fos.svc.models.core.FosUITasks;
-import org.pubcoi.fos.svc.models.core.FosUser;
-import org.pubcoi.fos.svc.models.core.RequestWithAuth;
+import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.rest.UI;
@@ -32,12 +30,20 @@ public class Tasks {
     final TransactionOrchestrationSvc transactionOrch;
     final FosUserRepo userRepo;
     final ClientsGraphRepo clientGRepo;
+    final OrganisationsMDBRepo orgMDBRepo;
 
-    public Tasks(TasksRepo tasksRepo, TransactionOrchestrationSvc transactionOrch, FosUserRepo userRepo, ClientsGraphRepo clientGRepo) {
+    public Tasks(
+            TasksRepo tasksRepo,
+            TransactionOrchestrationSvc transactionOrch,
+            FosUserRepo userRepo,
+            ClientsGraphRepo clientGRepo,
+            OrganisationsMDBRepo orgMDBRepo
+    ) {
         this.tasksRepo = tasksRepo;
         this.transactionOrch = transactionOrch;
         this.userRepo = userRepo;
         this.clientGRepo = clientGRepo;
+        this.orgMDBRepo = orgMDBRepo;
     }
 
     @GetMapping("/api/ui/tasks")
@@ -45,16 +51,19 @@ public class Tasks {
         return tasksRepo.findAll().stream()
                 .filter(t -> t.getCompleted().equals(completed))
                 .map(TaskDAO::new)
-                .peek(t -> {
-                    if (t.getTaskType().equals(DRTaskType.resolve_client)) {
-                        Optional<ClientNode> clientNode = clientGRepo.findByIdEquals(t.getEntity());
+                .peek(task -> {
+                    if (task.getTaskType().equals(FosTaskType.resolve_client)) {
+                        Optional<ClientNode> clientNode = clientGRepo.findByIdEquals(task.getEntity());
                         if (!clientNode.isPresent()) {
-                            logger.error("Unable to find ClientNode {}", t.getEntity());
+                            logger.error("Unable to find ClientNode {}", task.getEntity());
                         } else {
-                            t.setDescription(String.format(
+                            task.setDescription(String.format(
                                     "Verify details for entity: %s", clientNode.get().getName())
                             );
                         }
+                    }
+                    if (task.getTaskType().equals(FosTaskType.resolve_company)) {
+                        task.setDescription(String.format("Verify details for company: %s", ((FosNonCanonicalOrg) orgMDBRepo.findById(task.getEntity()).orElseThrow()).getCompanyName()));
                     }
                 })
                 .collect(Collectors.toList());

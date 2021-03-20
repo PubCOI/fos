@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.core;
 
-public enum DRTaskType {
+public enum FosTaskType {
 
     resolve_client, resolve_company
 

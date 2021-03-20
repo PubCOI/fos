@@ -5,11 +5,11 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.annotation.Version;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
+import javax.persistence.Version;
 import java.time.ZonedDateTime;
 
 @Node(primaryLabel = "Award")
@@ -63,10 +63,6 @@ public class AwardNode implements FosEntity {
         return this;
     }
 
-    public Long getVersion() {
-        return version;
-    }
-
     public String getNoticeId() {
         return noticeId;
     }
@@ -81,7 +77,6 @@ public class AwardNode implements FosEntity {
         return "AwardNode{" +
                 "id='" + id + '\'' +
                 ", value=" + value +
-                ", version=" + version +
                 ", noticeId='" + noticeId + '\'' +
                 '}';
     }
@@ -96,7 +91,6 @@ public class AwardNode implements FosEntity {
 
         return new EqualsBuilder()
                 .append(id, awardNode.id)
-                .append(version, awardNode.version)
                 .isEquals();
     }
 
@@ -104,7 +98,6 @@ public class AwardNode implements FosEntity {
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(id)
-                .append(version)
                 .toHashCode();
     }
 
@@ -114,6 +107,15 @@ public class AwardNode implements FosEntity {
 
     public AwardNode setHidden(Boolean hidden) {
         this.hidden = hidden;
+        return this;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public AwardNode setVersion(Long version) {
+        this.version = version;
         return this;
     }
 }

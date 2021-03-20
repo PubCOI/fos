@@ -66,9 +66,14 @@ public class Debug {
         scheduledSvc.populateFosOrgsMDBFromAwards();
     }
 
-    @GetMapping("/api/debug/populate-companies")
+    @PutMapping("/api/debug/companies/all")
     public void populateCompanies() {
-        scheduledSvc.populateOCCompaniesFromFosOrgs();
+        scheduledSvc.populateOCCompaniesFromFosOrgs(true);
+    }
+
+    @PutMapping("/api/debug/companies/one")
+    public void populateOneCompany() {
+        scheduledSvc.populateOCCompaniesFromFosOrgs(false);
     }
 
     @DeleteMapping("/api/debug/clear-graphs")

@@ -108,6 +108,7 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 250));
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
                 "WHERE c.hidden=false AND ref.hidden=false AND n.hidden=false " +
+                "CALL apoc.create.setProperty(n, \"has_awards\", exists((n)-[:AWARDS]-())) YIELD node " +
                 "RETURN c, ref, n LIMIT $limit").bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());

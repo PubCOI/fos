@@ -32,6 +32,9 @@ public class NoticesSvcImpl implements NoticesSvc {
 
     @Override
     public void addNotice(FullNotice notice, String currentUser) {
+        // remove data we don't want / need
+        notice.getNotice().setContactDetails(null);
+
         noticesMDBRepo.save(notice);
         for (AwardDetailParentType.AwardDetail awardDetail : notice.getAwards().getAwardDetail()) {
             awardsSvc.addAward(new CFAward(notice, awardDetail), currentUser);

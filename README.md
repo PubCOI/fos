@@ -17,6 +17,10 @@ each dependency (if pointing to SNAPSHOT).
 
 I'll eventually publish ‘final’ versions to Maven Central.
 
+**NOTE**
+
+Neo4j requires `apoc` core plugins to be installed.
+
 **Mandatory params**
 
 - `spring.neo4j.authentication.username` (no default)

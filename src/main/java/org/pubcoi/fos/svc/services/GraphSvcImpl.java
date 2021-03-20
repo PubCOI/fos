@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
+import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.cdm.AttachmentFactory;
 import org.pubcoi.fos.cdm.BatchJobFactory;
 import org.pubcoi.fos.cdm.batch.BatchJob;
@@ -12,8 +13,7 @@ import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.DRTask;
-import org.pubcoi.fos.svc.models.core.DRTaskType;
-import org.pubcoi.fos.svc.models.core.FosOCCompany;
+import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
@@ -29,7 +29,7 @@ public class GraphSvcImpl implements GraphSvc {
     private static final Logger logger = LoggerFactory.getLogger(GraphSvcImpl.class);
 
     AwardsMDBRepo awardsMDBRepo;
-    FosOrganisationRepo fosOrganisationRepo;
+    OrganisationsMDBRepo organisationsMDBRepo;
     OCCompaniesRepo ocCompaniesRepo;
     AwardsGraphRepo awardsGraphRepo;
     NoticesMDBRepo noticesMDBRepo;
@@ -44,7 +44,7 @@ public class GraphSvcImpl implements GraphSvc {
     public GraphSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
             AwardsGraphRepo awardsGraphRepo,
-            FosOrganisationRepo fosOrganisationRepo,
+            OrganisationsMDBRepo organisationsMDBRepo,
             OrganisationsGraphRepo orgGraphRepo,
             OCCompaniesRepo ocCompaniesRepo,
             NoticesMDBRepo noticesMDBRepo,
@@ -57,7 +57,7 @@ public class GraphSvcImpl implements GraphSvc {
     ) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
-        this.fosOrganisationRepo = fosOrganisationRepo;
+        this.organisationsMDBRepo = organisationsMDBRepo;
         this.orgGraphRepo = orgGraphRepo;
         this.ocCompaniesRepo = ocCompaniesRepo;
         this.noticesMDBRepo = noticesMDBRepo;
@@ -82,9 +82,6 @@ public class GraphSvcImpl implements GraphSvc {
      */
     @Override
     public void populateGraphFromMDB() {
-        scheduledSvc.populateFosOrgsMDBFromAwards();
-        scheduledSvc.populateOCCompaniesFromFosOrgs();
-
         // add all clients
         noticesMDBRepo.findAll().forEach(notice -> {
             Optional<ClientNode> nodeOpt = (clientsGraphRepo.findByIdEquals(ClientNode.resolveId(notice)));
@@ -93,7 +90,7 @@ public class GraphSvcImpl implements GraphSvc {
             }
             ClientNode node = (nodeOpt.orElseGet(() -> {
                 ClientNode clientNode = new ClientNode(notice);
-                tasksSvc.createTask(new DRTask(DRTaskType.resolve_client, clientNode));
+                tasksSvc.createTask(new DRTask(FosTaskType.resolve_client, clientNode));
                 return clientNode;
             }));
             node.addNotice(notice);
@@ -102,15 +99,24 @@ public class GraphSvcImpl implements GraphSvc {
 
         // add all awards
         awardsMDBRepo.findAll().forEach(award -> {
-            if (null != award.getFosOrganisation() && award.getFosOrganisation() instanceof FosOCCompany) {
+            if (null != award.getFosOrganisation()) {
                 FosOrganisation org = award.getFosOrganisation();
                 try {
-                    orgGraphRepo.save(new OrganisationNode()
+                    // if the organisation is "verified", it'll already have an entry on the OCCompanyRepo
+                    Optional<OCCompanySchema> ocCompany = ocCompaniesRepo.findById(org.getId());
+                    boolean verified = ocCompany.isPresent();
+                    // if it's verified, use the OFFICIAL name for the company (not whatever is in Contracts Finder)
+                    String companyName = (verified) ? ocCompany.orElseThrow().getName() : award.getSupplierName();
+
+                    OrganisationNode orgNode = orgGraphRepo.findById(org.getId()).orElse(new OrganisationNode()
                             .setId(org.getId())
-                            .setVerified(true)
-                            .setName(ocCompaniesRepo.findById(org.getId()).orElseThrow(() -> new FosException()).getName())
+                            .setVerified(verified)
+                            .setName(companyName)
                     );
-                    AwardNode awardNode = new AwardNode()
+                    logger.debug("Saving org node: {}", orgNode);
+                    orgGraphRepo.save(orgNode);
+
+                    AwardNode awardNode = awardsGraphRepo.findById(award.getId()).orElse(new AwardNode()
                             .setId(award.getId())
                             .setValue(award.getValue())
                             .setNoticeId(award.getNoticeId())
@@ -119,12 +125,16 @@ public class GraphSvcImpl implements GraphSvc {
                                     award.getAwardedDate().toZonedDateTime(),
                                     award.getStartDate().toZonedDateTime(),
                                     award.getEndDate().toZonedDateTime()
-                            );
+                            )
+                    );
                     logger.debug("Saving node: {}", awardNode);
                     awardsGraphRepo.save(awardNode);
                 } catch (FosException e) {
                     logger.error("Unable to insert entry into graph: is source MDB fully populated?");
                 }
+            }
+            else {
+                logger.debug("Unable to find OC entry for {}", award.getSupplierName());
             }
         });
 
@@ -152,10 +162,8 @@ public class GraphSvcImpl implements GraphSvc {
             }
         });
 
-        // for every award on the graph, put the associated notice
-        // only adding 'verified' companies for now
-        awardsGraphRepo.findAll().stream()
-                .filter(award -> award.getOrganisation().isVerified())
+        // for every award on the graph, link the associated notice
+        awardsGraphRepo.findAll()
                 .forEach(award -> {
                     logger.debug("Adding notice {} to AwardNode {}", award.getNoticeId(), award.getId());
                     noticesGRepo.findById(award.getNoticeId()).ifPresent(notice -> {

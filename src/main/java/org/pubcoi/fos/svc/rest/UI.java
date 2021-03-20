@@ -186,7 +186,6 @@ public class UI {
                 noticesSvc.addNotice(notice, uid);
             }
             scheduledSvc.populateFosOrgsMDBFromAwards();
-            scheduledSvc.populateOCCompaniesFromFosOrgs();
             graphSvc.populateGraphFromMDB();
         } catch (IOException | JAXBException e) {
             throw new FosException("Unable to read file stream");

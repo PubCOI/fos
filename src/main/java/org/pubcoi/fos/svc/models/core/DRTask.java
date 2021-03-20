@@ -14,15 +14,15 @@ public class DRTask {
 
     @Id
     String id;
-    DRTaskType taskType;
+    FosTaskType taskType;
     FosEntity entity;
-    Boolean completed;
+    Boolean completed = false;
     FosUser completedBy;
     OffsetDateTime completedDT;
 
     DRTask() {}
 
-    public DRTask(DRTaskType type, FosEntity entity) {
+    public DRTask(FosTaskType type, FosEntity entity) {
         this.id = String.format("%s_%s", type.toString(), entity.getId());
         this.taskType = type;
         this.entity = entity;
@@ -32,11 +32,11 @@ public class DRTask {
         return id;
     }
 
-    public DRTaskType getTaskType() {
+    public FosTaskType getTaskType() {
         return taskType;
     }
 
-    public DRTask setTaskType(DRTaskType taskType) {
+    public DRTask setTaskType(FosTaskType taskType) {
         this.taskType = taskType;
         return this;
     }

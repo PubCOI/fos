@@ -14,6 +14,8 @@ import org.springframework.util.DigestUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.pubcoi.fos.svc.services.Utils.normalise;
+
 @Node(primaryLabel = "Client")
 public class ClientNode implements FosEntity {
     private static final Logger logger = LoggerFactory.getLogger(ClientNode.class);
@@ -45,8 +47,8 @@ public class ClientNode implements FosEntity {
 
     static String resolveIdStr(FullNotice notice) {
         String postCodeN = getNormalisedPostCode(notice);
-        String clientNameN = getNormalisedClientName(notice.getNotice().getOrganisationName());
-        return String.format("%s:%s", getNormalisedClientName(clientNameN), postCodeN);
+        String clientNameN = normalise(notice.getNotice().getOrganisationName());
+        return String.format("%s:%s", normalise(clientNameN), postCodeN);
     }
 
     public static String resolveId(FullNotice notice) {
@@ -63,22 +65,11 @@ public class ClientNode implements FosEntity {
         logger.debug("Adding client {} -> (id:{})", resolveIdStr(notice), this.id);
     }
 
-    private static String getNormalisedClientName(String name) {
-        if (null == name) return "";
-        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
-    }
-
     private static String getNormalisedPostCode(FullNotice notice) {
         String postCode1 = normalisePostCode(notice.getNotice().getPostcode());
-        String postCode2 = normalisePostCode(notice.getNotice().getContactDetails().getPostcode());
-        if (null == postCode1 && null == postCode2) {
+        if (null == postCode1) {
             logger.warn("Unable to find post code for client with notice {}", notice.getId());
             return "";
-        }
-        if (null == postCode1) return postCode2;
-        if (null == postCode2) return postCode1;
-        if (!postCode1.equals(postCode2)) {
-            logger.warn("Client postcodes for notice {} do not match, returning first", notice.getId());
         }
         return postCode1;
     }

@@ -1,12 +1,12 @@
 package org.pubcoi.fos.svc.models.dao;
 
 import org.pubcoi.fos.svc.models.core.DRTask;
-import org.pubcoi.fos.svc.models.core.DRTaskType;
+import org.pubcoi.fos.svc.models.core.FosTaskType;
 
 public class TaskDAO {
 
     String taskId;
-    DRTaskType taskType;
+    FosTaskType taskType;
     String entity;
     String description;
 
@@ -18,11 +18,11 @@ public class TaskDAO {
         this.entity = task.getEntity().getId();
     }
 
-    public DRTaskType getTaskType() {
+    public FosTaskType getTaskType() {
         return taskType;
     }
 
-    public TaskDAO setTaskType(DRTaskType taskType) {
+    public TaskDAO setTaskType(FosTaskType taskType) {
         this.taskType = taskType;
         return this;
     }

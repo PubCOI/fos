@@ -82,6 +82,8 @@ public class GraphRest {
     /**
      * Return client or org nodes that match the current search
      *
+     * Currently performs 4x searches and then returns the most relevant results ... so not terribly efficient
+     *
      * @param query The search parameters
      * @return List of top responses, ordered by best -> worst match
      */
@@ -92,12 +94,25 @@ public class GraphRest {
                 .stream()
                 .map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.client))
                 .collect(Collectors.toList());
+
+        response.addAll(clientNodeFTS.findAnyClientsMatching(query, 5)
+                .stream()
+                .map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.client))
+                .collect(Collectors.toList()));
+
         response.addAll(orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
                 map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toList())
         );
+
+        response.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
+                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                .collect(Collectors.toList())
+        );
+
         return response.stream()
-                .sorted(Comparator.comparing(GraphSearchResponseDAO::getScore))
+                .sorted(Comparator.comparing(GraphSearchResponseDAO::getScore).reversed())
+                .limit(10)
                 .collect(Collectors.toList());
     }
 

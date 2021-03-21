@@ -11,8 +11,8 @@ import org.pubcoi.fos.svc.transactions.TransactionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;

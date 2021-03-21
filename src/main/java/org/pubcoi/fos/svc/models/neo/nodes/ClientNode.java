@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
-import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;

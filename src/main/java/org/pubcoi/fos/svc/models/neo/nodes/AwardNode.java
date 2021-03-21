@@ -9,7 +9,6 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import javax.persistence.Version;
 import java.time.ZonedDateTime;
 
 @Node(primaryLabel = "Award")
@@ -22,8 +21,6 @@ public class AwardNode implements FosEntity {
     @Id
     String id;
     Long value;
-    @Version
-    Long version = 1L;
     String noticeId;
 
     Boolean hidden = false;
@@ -107,15 +104,6 @@ public class AwardNode implements FosEntity {
 
     public AwardNode setHidden(Boolean hidden) {
         this.hidden = hidden;
-        return this;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public AwardNode setVersion(Long version) {
-        this.version = version;
         return this;
     }
 }

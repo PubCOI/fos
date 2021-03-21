@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.mdb;
 
+
 import com.opencorporates.schemas.OCCompanySchema;
 import org.springframework.data.mongodb.repository.MongoRepository;
 

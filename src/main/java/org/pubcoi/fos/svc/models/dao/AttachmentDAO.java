@@ -1,8 +1,8 @@
 package org.pubcoi.fos.svc.models.dao;
 
-import org.pubcoi.fos.cdm.attachments.Attachment;
-import org.pubcoi.fos.cdm.attachments.DocTypeEnum;
-import org.pubcoi.fos.cdm.attachments.S3LocationType;
+import org.pubcoi.cdm.cf.attachments.Attachment;
+import org.pubcoi.cdm.cf.attachments.DocTypeEnum;
+import org.pubcoi.cdm.cf.attachments.S3LocationType;
 
 // corresponds to the 'additional detail' type
 public class AttachmentDAO {

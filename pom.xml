@@ -43,6 +43,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-depends-aspects</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -67,6 +68,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-cdm</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -77,10 +79,6 @@
             <artifactId>aws-java-sdk-s3</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.pubcoi.fos</groupId>
-            <artifactId>fos-batch</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.batch</groupId>
             <artifactId>spring-batch-admin-resources</artifactId>
         </dependency>
@@ -88,12 +86,20 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-batch</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+        </dependency>
     </dependencies>
 
     <parent>
         <groupId>org.pubcoi.fos</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.1</version>
     </parent>
 
     <profiles>

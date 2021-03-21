@@ -1,6 +1,7 @@
 package org.pubcoi.fos.svc.mdb;
 
-import org.pubcoi.fos.cdm.attachments.Attachment;
+
+import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;

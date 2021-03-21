@@ -28,14 +28,25 @@ public class Neo4JConfig {
             ResultSummary rs = client.query(
                     "CALL db.index.fulltext.createNodeIndex(\"clients-fts\", [\"Client\"], [\"name\", \"postCode\"], {analyzer: \"english\"})"
             ).run();
-            logger.info("Ran create index {}", rs);
+            logger.info("Ran create node index {}", rs);
         }
         // This is REALLY nasty ...
         // Josh Bloch would wince (and quote rule #69)
         // I can't seem to find a way to call up on legacy indices and check if it exists beforehand:
         // For now we are checking to see if this is thrown...
         catch (InvalidDataAccessResourceUsageException e) {
-            logger.info("Index appears to already exist");
+            logger.info("Clients index appears to already exist");
+        }
+
+        // same again for the orgs index
+        try {
+            ResultSummary rs = client.query(
+                    "CALL db.index.fulltext.createNodeIndex(\"orgs-fts\", [\"Organisation\"], [\"name\", \"id\"], {analyzer: \"english\"})"
+            ).run();
+            logger.info("Ran create orgs index {}", rs);
+        }
+        catch (InvalidDataAccessResourceUsageException e) {
+            logger.info("Orgs index appears to already exist");
         }
     }
 

@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.cdm.attachments.Attachment;
+import org.pubcoi.cdm.cf.attachments.Attachment;
 
 import java.io.IOException;
 

@@ -1,7 +1,7 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.models.cf.AwardDetailParentType;
-import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.cdm.cf.AwardDetailParentType;
+import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.ItemNotFoundException;
 import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;

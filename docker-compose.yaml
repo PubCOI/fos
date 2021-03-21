@@ -21,10 +21,13 @@ services:
             - ./docker-runtime/neo4j/data:/data
         environment:
             NEO4J_AUTH: neo4j/password
-        expose:
-            - "7576"
+            NEO4JLABS_PLUGINS: '["apoc"]'
 
+#   todo add proper depends_on via waitforit or similar
     svc:
+        depends_on:
+          - neo4j
+          - mongodb
         image: openjdk:11-jdk
         hostname: svc
         container_name: svc
@@ -39,6 +42,8 @@ services:
             - "8099:8084"
        
     ui:
+        depends_on:
+          - svc
         image: nginx:1.19.8
         hostname: ui
         container_name: ui

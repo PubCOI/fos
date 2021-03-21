@@ -1,8 +1,8 @@
 package org.pubcoi.fos.svc.models.core;
 
-import org.pubcoi.fos.models.cf.AwardDetailParentType;
-import org.pubcoi.fos.models.cf.FullNotice;
-import org.pubcoi.fos.models.cf.ReferenceTypeE;
+import org.pubcoi.cdm.cf.AwardDetailParentType;
+import org.pubcoi.cdm.cf.FullNotice;
+import org.pubcoi.cdm.cf.ReferenceTypeE;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 

@@ -1,7 +1,7 @@
 package org.pubcoi.fos.svc.services;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.models.cf.ReferenceTypeE;
+import org.pubcoi.cdm.cf.ReferenceTypeE;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.mdb.OrganisationsMDBRepo;

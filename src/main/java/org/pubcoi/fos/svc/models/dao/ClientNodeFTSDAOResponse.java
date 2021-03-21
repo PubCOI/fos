@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.dao;
 
-import org.pubcoi.fos.svc.models.queries.ClientNodeFTSResponse;
+import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;
 
 public class ClientNodeFTSDAOResponse {
 
@@ -10,7 +10,7 @@ public class ClientNodeFTSDAOResponse {
 
     public ClientNodeFTSDAOResponse() {}
 
-    public ClientNodeFTSDAOResponse(ClientNodeFTSResponse r) {
+    public ClientNodeFTSDAOResponse(GraphFTSResponse r) {
         this.id = r.getId();
         this.name = r.getName();
         this.score = r.getScore().asFloat();

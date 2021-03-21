@@ -2,7 +2,7 @@ package org.pubcoi.fos.svc.models.dao;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.cdm.cf.FullNotice;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;

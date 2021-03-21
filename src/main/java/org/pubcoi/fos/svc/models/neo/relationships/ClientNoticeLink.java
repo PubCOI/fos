@@ -2,7 +2,7 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
 import org.springframework.data.annotation.Id;

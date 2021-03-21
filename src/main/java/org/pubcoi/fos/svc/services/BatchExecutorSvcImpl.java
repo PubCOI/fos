@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.cdm.attachments.Attachment;
+import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

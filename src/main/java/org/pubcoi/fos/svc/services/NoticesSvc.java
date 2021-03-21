@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.models.cf.FullNotice;
+import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.dao.NoticeNodeDAO;
 
 import java.util.List;

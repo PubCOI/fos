@@ -66,7 +66,9 @@ Neo4j index creation (for reference):
 
 ```
 CALL db.index.fulltext.createNodeIndex("clients-fts", ["Client"], ["name", "postCode"], {analyzer: "english"})
+CALL db.index.fulltext.createNodeIndex("orgs-fts", ["Organisation"], ["name", "id"], {analyzer: "english"})
 # clear via CALL db.index.fulltext.drop("clients-fts")
+# clear via CALL db.index.fulltext.drop("orgs-fts")
 ```
 
 Verify:

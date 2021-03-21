@@ -1,11 +1,11 @@
 package org.pubcoi.fos.svc.services;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.cdm.AttachmentFactory;
-import org.pubcoi.fos.cdm.BatchJobFactory;
-import org.pubcoi.fos.cdm.batch.BatchJob;
-import org.pubcoi.fos.cdm.batch.BatchJobTypeEnum;
-import org.pubcoi.fos.models.cf.AdditionalDetailsType;
+import org.pubcoi.cdm.batch.BatchJob;
+import org.pubcoi.cdm.batch.BatchJobTypeEnum;
+import org.pubcoi.cdm.cf.AdditionalDetailsType;
+import org.pubcoi.cdm.fos.AttachmentFactory;
+import org.pubcoi.cdm.fos.BatchJobFactory;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.gdb.AwardsGraphRepo;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
@@ -13,8 +13,8 @@ import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.*;
 import org.pubcoi.fos.svc.models.core.DRTask;
-import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
+import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -165,9 +165,16 @@ public class GraphSvcImpl implements GraphSvc {
         // for every award on the graph, link the associated notice
         awardsGraphRepo.findAll()
                 .forEach(award -> {
-                    logger.debug("Adding notice {} to AwardNode {}", award.getNoticeId(), award.getId());
+                    logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getId());
                     noticesGRepo.findById(award.getNoticeId()).ifPresent(notice -> {
-                        noticesGRepo.save(notice.addAward(award));
+                        logger.debug("Found notice {}", notice);
+                        logger.debug("Awards size: {}", notice.getAwards().size());
+                        if (!notice.getAwards().contains(award)) {
+                            noticesGRepo.save(notice.addAward(award));
+                        }
+                        else {
+                            logger.debug("Did not add {} to {} (already exists)", award.getId(), notice.getId());
+                        }
                     });
                 });
     }

@@ -90,24 +90,24 @@ public class GraphRest {
     @GetMapping("/api/ui/graphs/search")
     public List<GraphSearchResponseDAO> findAnyClientOrOrgQuery(@RequestParam String query) {
         if (query.isEmpty()) return new ArrayList<>();
-        List<GraphSearchResponseDAO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
+        Set<GraphSearchResponseDAO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
                 .stream()
                 .map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.client))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         response.addAll(clientNodeFTS.findAnyClientsMatching(query, 5)
                 .stream()
                 .map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.client))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toSet()));
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
                 map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
-                .collect(Collectors.toList())
+                .collect(Collectors.toSet())
         );
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
                 map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
-                .collect(Collectors.toList())
+                .collect(Collectors.toSet())
         );
 
         return response.stream()

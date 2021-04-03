@@ -56,14 +56,23 @@ public class Tasks {
                         Optional<ClientNode> clientNode = clientGRepo.findByIdEquals(task.getEntity());
                         if (!clientNode.isPresent()) {
                             logger.error("Unable to find ClientNode {}", task.getEntity());
+                            task = null;
                         } else {
                             task.setDescription(String.format(
                                     "Verify details for entity: %s", clientNode.get().getName())
                             );
                         }
                     }
-                    if (task.getTaskType().equals(FosTaskType.resolve_company)) {
-                        task.setDescription(String.format("Verify details for company: %s", ((FosNonCanonicalOrg) orgMDBRepo.findById(task.getEntity()).orElseThrow()).getCompanyName()));
+                    else if (task.getTaskType().equals(FosTaskType.resolve_company)) {
+                        logger.debug("Resolving task details for entity {}", task.getEntity());
+                        Optional<FosOrganisation> org = orgMDBRepo.findById(task.getEntity());
+                        if (org.isPresent()) {
+                            task.setDescription(String.format("Verify details for company: %s", ((FosNonCanonicalOrg)org.get()).getCompanyName()));
+                        }
+                        else {
+                            logger.warn("Unable to resolve task for entity {}", task.getEntity());
+                            task = null;
+                        }
                     }
                 })
                 .collect(Collectors.toList());

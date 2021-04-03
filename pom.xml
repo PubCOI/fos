@@ -4,6 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.pubcoi.fos</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.1</version>
+    </parent>
+
     <artifactId>fos-svc</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -13,6 +19,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <frontend-src-dir>fos-ui</frontend-src-dir>
+
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
@@ -43,7 +50,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-depends-aspects</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -68,7 +75,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-cdm</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -95,12 +102,6 @@
             <artifactId>mariadb-java-client</artifactId>
         </dependency>
     </dependencies>
-
-    <parent>
-        <groupId>org.pubcoi.fos</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.1</version>
-    </parent>
 
     <profiles>
         <profile>
@@ -157,6 +158,34 @@
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <fail>false</fail>
+                            <rules>
+                                <banDuplicatePomDependencyVersions/>
+                                <dependencyConvergence/>
+                                <requireReleaseDeps/>
+                                <requireMavenVersion>
+                                    <version>[3.5,)</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[1.9,)</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

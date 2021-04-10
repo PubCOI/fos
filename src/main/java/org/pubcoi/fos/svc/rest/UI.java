@@ -30,6 +30,10 @@ import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.*;
+import org.pubcoi.fos.svc.models.dao.es.ESAggregationDTO;
+import org.pubcoi.fos.svc.models.dao.es.ESResponseWrapperDTO;
+import org.pubcoi.fos.svc.models.dao.es.ESResult;
+import org.pubcoi.fos.svc.models.dao.es.ESSingleResponseDTO;
 import org.pubcoi.fos.svc.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,9 +197,9 @@ public class UI {
         return "ok";
     }
 
-    @GetMapping("/api/ui/view")
+    @GetMapping("/api/attachments/{attachmentId}/view")
     public ResponseEntity<String> viewRedirect(
-            @RequestParam("attachment_id") String attachmentId
+            @PathVariable String attachmentId
     ) {
         Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
         // todo - check that we've got the location on the object ... for now just return where we think the doc should be
@@ -208,6 +212,14 @@ public class UI {
         } catch (URISyntaxException e) {
             throw new FosBadRequestException("Unable to get URL");
         }
+    }
+
+    @GetMapping("/api/attachments/{attachmentId}/metadata")
+    public AttachmentDAO getAttachmentMetadata(
+            @PathVariable String attachmentId
+    ) {
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
+        return new AttachmentDAO(attachment);
     }
 
     @PostMapping("/api/ui/search")
@@ -239,20 +251,14 @@ public class UI {
 
     private ESResponseWrapperDTO aggregatedResults(SearchResponse response) {
         ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
-        wrapper.setResults(response.getAggregations().asList().size());
+        wrapper.setCount(response.getAggregations().asList().size());
 
         ((ParsedStringTerms) response.getAggregations().get("attachments")).getBuckets().forEach(bucket -> {
             final Attachment attachment = attachmentMDBRepo.findById(bucket.getKeyAsString()).orElseThrow(() -> new FosBadRequestException("Attachment not found"));
             final FullNotice notice = noticesMDBRepo.findById(attachment.getNoticeId()).orElseThrow(() -> new FosBadRequestException(String.format("Notice %s not found", attachment.getNoticeId())));
 
-            ESAggregationDTO aggregationDTO = new ESAggregationDTO()
-                    .setKey(String.format("aggregation-%s", attachment.getId()))
-                    .setAttachmentId(attachment.getId())
-                    .setNoticeId(attachment.getNoticeId())
-                    .setHits(bucket.getDocCount())
-                    .setOrganisation(notice.getNotice().getOrganisationName())
-                    .setNoticeDescription(notice.getNotice().getDescription())
-                    .setNoticeDT(notice.getCreatedDate());
+            ESResult aggregationDTO = new ESAggregationDTO(attachment, notice);
+            aggregationDTO.setHits(bucket.getDocCount());
 
             // only add max of 3 results from each document / 'bucket'
             Arrays.stream(response.getHits().getHits())
@@ -264,31 +270,23 @@ public class UI {
                         }
                     });
 
-            wrapper.getAggregated().add(aggregationDTO);
+            wrapper.getResults().add(aggregationDTO);
         });
         return wrapper;
     }
 
     private ESResponseWrapperDTO singleResults(SearchResponse response) {
         ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
-        wrapper.setResults(response.getHits().getHits().length);
+        wrapper.setCount(response.getHits().getHits().length);
 
         Arrays.stream(response.getHits().getHits())
                 .forEach((SearchHit hit) -> {
                     final String noticeId = (String) hit.getSourceAsMap().get(FosESFields.NOTICE_ID);
                     final FullNotice notice = noticesMDBRepo.findById(noticeId).orElseThrow(() -> new FosBadRequestException(String.format("Notice %s not found", noticeId)));
-                    StringBuilder noticeInfo = new StringBuilder("Notice: ");
-                    if (null != notice.getNotice().getDescription()) {
-                        noticeInfo.append(notice.getNotice().getDescription());
-                    }
-                    wrapper.getPaged().add(
-                            new ESResponseDTO(hit)
+                    wrapper.getResults().add(
+                            new ESSingleResponseDTO(notice)
                                     .setPageNumber((Integer) hit.getSourceAsMap().get(FosESFields.PAGE_NUMBER))
                                     .setAttachmentId((String) hit.getSourceAsMap().get(FosESFields.ATTACHMENT_ID))
-                                    .setNoticeId(noticeId)
-                                    .setOrganisation(notice.getNotice().getOrganisationName())
-                                    .setNoticeDescription(noticeInfo.toString())
-                                    .setNoticeDT(notice.getCreatedDate())
                     );
                 });
         return wrapper;

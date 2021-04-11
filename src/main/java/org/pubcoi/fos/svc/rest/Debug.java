@@ -3,10 +3,15 @@ package org.pubcoi.fos.svc.rest;
 import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.gdb.PersonsGraphRepo;
 import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
+import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.pubcoi.fos.svc.services.GraphSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
 import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
@@ -18,7 +23,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Profile("debug")
 @RestController
@@ -34,6 +43,8 @@ public class Debug {
     final TransactionOrchestrationSvc transactionOrchestrationSvc;
     final TasksRepo tasksRepo;
     final ClientsGraphRepo clientsGraphRepo;
+    final PersonsGraphRepo personsGraphRepo;
+    final OrganisationsGraphRepo organisationsGraphRepo;
 
     public Debug(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -44,7 +55,7 @@ public class Debug {
             ClientNodeFTS clientNodeFTS,
             TransactionOrchestrationSvc transactionOrchestrationSvc,
             TasksRepo tasksRepo,
-            ClientsGraphRepo clientsGraphRepo) {
+            ClientsGraphRepo clientsGraphRepo, PersonsGraphRepo personsGraphRepo, OrganisationsGraphRepo organisationsGraphRepo) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
@@ -54,6 +65,8 @@ public class Debug {
         this.transactionOrchestrationSvc = transactionOrchestrationSvc;
         this.tasksRepo = tasksRepo;
         this.clientsGraphRepo = clientsGraphRepo;
+        this.personsGraphRepo = personsGraphRepo;
+        this.organisationsGraphRepo = organisationsGraphRepo;
     }
 
     @GetMapping("/api/oc-companies")
@@ -105,4 +118,58 @@ public class Debug {
     public void populateGraph() {
         graphSvc.populateGraphFromMDB();
     }
+
+    /**
+     * calls list of companies
+     * pulls back an officer
+     * inserts officer and links to company
+     */
+    @PutMapping("/api/debug/populate-office-bearers")
+    public void populateOfficeBearers() {
+        OCCompanySchema companySchema = ocCompanies.findAll().stream().findFirst()
+                .orElseThrow();
+        companySchema.getOfficers().forEach(officer -> {
+            // warning don't use in production - won't add people to two different companies
+            if (!personsGraphRepo.existsByOcId(String.format("%s", officer.getOfficer().getId()))) {
+                final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
+                OrganisationNode org = organisationsGraphRepo
+                        // first look for a version WITH persons
+                        .findOrgHydratingPersons(orgId)
+                        // ok, no people maybe ... so let's not hydrate
+                        .orElse(organisationsGraphRepo.findOrgNotHydratingPersons(orgId)
+                                // this would throw if org is not found at all
+                                .orElseThrow()
+                        );
+                OrgPersonLink orgPersonLink = new OrgPersonLink(
+                        new PersonNode(
+                                String.format("%s", officer.getOfficer().getId()),
+                                officer.getOfficer().getName(), officer.getOfficer().getOccupation(), officer.getOfficer().getNationality(), UUID.randomUUID().toString()
+                        ), getZDT(officer.getOfficer().getStartDate()), getZDT(officer.getOfficer().getEndDate()), UUID.randomUUID().toString()
+                );
+                if (!org.getOrgPersons().contains(orgPersonLink)) {
+                    org.getOrgPersons().add(orgPersonLink);
+                    organisationsGraphRepo.save(org);
+                }
+            }
+        });
+    }
+
+    private LocalDate getDate(Object date) {
+        if (null == date) {
+            return null;
+        }
+        if (date instanceof String) {
+            return LocalDate.parse((CharSequence) date);
+        }
+        throw new IllegalArgumentException("Must provide valid date string");
+    }
+
+    private ZonedDateTime getZDT(Object date) {
+        LocalDate localDate = getDate(date);
+        if (null == localDate) {
+            return null;
+        }
+        return localDate.atStartOfDay(ZoneOffset.UTC);
+    }
 }
+

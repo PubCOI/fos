@@ -3,7 +3,6 @@ package org.pubcoi.fos.svc.rest;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -27,9 +26,10 @@ import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.mdb.FosUserRepo;
 import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
-import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
-import org.pubcoi.fos.svc.models.dao.*;
+import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
+import org.pubcoi.fos.svc.models.dao.AwardDAO;
+import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.dao.es.ESAggregationDTO;
 import org.pubcoi.fos.svc.models.dao.es.ESResponseWrapperDTO;
 import org.pubcoi.fos.svc.models.dao.es.ESResult;
@@ -49,7 +49,6 @@ import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -101,57 +100,9 @@ public class UI {
         this.applicationStatus = applicationStatus;
     }
 
-    @PostMapping("/api/ui/login")
-    public void doLogin(@RequestBody UserLoginDAO loginDAO) {
-        // shortcut .. if we already have the UID, we know we've created the user:
-        // if no match, it could be because the UID refers to another provider (eg they initially
-        // logged in via GitHub but are now using Google
-        if (userRepo.existsByUid(loginDAO.getUid())) {
-            userRepo.save(userRepo.getByUid(loginDAO.getUid()).setLastLogin(OffsetDateTime.now()));
-            return;
-        }
-
-        // adds user meta if it doesn't exist
-        try {
-            UserRecord record = FirebaseAuth.getInstance().getUser(loginDAO.getUid());
-            userRepo.save(new FosUser()
-                    .setUid(loginDAO.getUid())
-                    .setDisplayName(record.getDisplayName())
-                    .setLastLogin(OffsetDateTime.now())
-            );
-        } catch (FirebaseAuthException e) {
-            logger.error(e.getMessage(), e);
-            throw new FosException();
-        }
-    }
-
-    @GetMapping("/api/ui/awards")
+    @GetMapping("/api/awards")
     public List<AwardDAO> getContractAwards() {
         return awardsMDBRepo.findAll().stream().map(AwardDAO::new).collect(Collectors.toList());
-    }
-
-    @GetMapping("/api/ui/awards/{awardId}")
-    public AwardDAO getAward(@PathVariable String awardId) {
-        return awardsSvc.getAwardDetailsDAOWithAttachments(awardId);
-    }
-
-    @PostMapping("/api/ui/user")
-    public UserProfileDAO getUserProfile(
-            @RequestHeader("authToken") String authToken
-    ) {
-        String uid = UI.checkAuth(authToken).getUid();
-        return new UserProfileDAO(userRepo.getByUid(uid));
-    }
-
-    @PutMapping("/api/ui/user")
-    public UserProfileDAO updateUserProfile(
-            @RequestBody UpdateProfileRequestDAO updateProfileRequestDAO,
-            @RequestHeader("authToken") String authToken
-    ) {
-        String uid = UI.checkAuth(authToken).getUid();
-        FosUser user = userRepo.getByUid(uid);
-        if (null == user) throw new FosBadRequestException("Unable to find user");
-        return new UserProfileDAO(userRepo.save(user.setDisplayName(updateProfileRequestDAO.getDisplayName())));
     }
 
     @GetMapping("/api/transactions")
@@ -175,7 +126,7 @@ public class UI {
         return String.format("Transaction playback complete with %d errors", numErrors.get());
     }
 
-    @PostMapping("/api/ui/data/contracts")
+    @PostMapping("/api/contracts")
     public String uploadContracts(MultipartHttpServletRequest request) {
         String uid = checkAuth(request.getParameter("authToken")).getUid();
         MultipartFile file = request.getFile("file");
@@ -222,7 +173,7 @@ public class UI {
         return new AttachmentDAO(attachment);
     }
 
-    @PostMapping("/api/ui/search")
+    @PostMapping("/api/search")
     public ESResponseWrapperDTO doSearch(
             @RequestBody SearchRequestDAO searchRequestDAO
     ) throws Exception {

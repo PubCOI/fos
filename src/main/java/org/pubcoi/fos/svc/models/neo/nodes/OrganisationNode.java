@@ -1,12 +1,15 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
+import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.springframework.data.neo4j.core.schema.DynamicLabels;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Node(primaryLabel = "Organisation")
@@ -23,6 +26,9 @@ public class OrganisationNode implements FosEntity {
 
     @Relationship("LEGAL_ENTITY")
     OrgLELink legalEntity;
+
+    @Relationship("ORG_PERSON")
+    List<OrgPersonLink> orgPersons = new ArrayList<>();
 
     public OrganisationNode() {}
 
@@ -96,5 +102,14 @@ public class OrganisationNode implements FosEntity {
 
     public Boolean getVerified() {
         return verified;
+    }
+
+    public List<OrgPersonLink> getOrgPersons() {
+        return orgPersons;
+    }
+
+    public OrganisationNode setOrgPersons(List<OrgPersonLink> orgPersons) {
+        this.orgPersons = orgPersons;
+        return this;
     }
 }

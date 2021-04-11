@@ -68,8 +68,8 @@ public class GraphRest {
      * @param query The search parameters
      * @return List of top responses, ordered by best -> worst match
      */
-    @GetMapping("/api/ui/graphs/clients")
-    public List<ClientNodeFTSDAOResponse> runQuery(@RequestParam String query, @RequestParam(required = false) String currentNode) {
+    @GetMapping("/api/graphs/_search/clients")
+    public List<ClientNodeFTSDAOResponse> findAnyClientQuery(@RequestParam String query, @RequestParam(required = false) String currentNode) {
         if (query.isEmpty()) return new ArrayList<>();
         return clientNodeFTS.findAllCanonicalClientNodesMatching(query)
                 .stream()
@@ -87,7 +87,7 @@ public class GraphRest {
      * @param query The search parameters
      * @return List of top responses, ordered by best -> worst match
      */
-    @GetMapping("/api/ui/graphs/search")
+    @GetMapping("/api/graphs/_search")
     public List<GraphSearchResponseDAO> findAnyClientOrOrgQuery(@RequestParam String query) {
         if (query.isEmpty()) return new ArrayList<>();
         Set<GraphSearchResponseDAO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
@@ -116,59 +116,7 @@ public class GraphRest {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Used when a user clicks on a search result on the graph
-     * @param clientId the client id to return details on
-     * @return a neo4j object that can be read by cytoscape
-     */
-    @GetMapping("/api/ui/graph/clients/{clientId}")
-    public String getSpecificClientForSearchResult(@PathVariable String clientId) {
-        Map<String, Object> bindParams = new HashMap<>();
-        bindParams.put("clientId", clientId);
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
-                "WHERE c.id = $clientId " +
-                "CALL apoc.create.setProperty(n, \"has_awards\", exists((n)-[:AWARDS]-())) YIELD node " +
-                "RETURN c, ref, n").bindAll(bindParams);
-        try {
-            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
-        } catch (JsonProcessingException e) {
-            throw new FosBadRequestException();
-        }
-    }
-
-    @GetMapping("/api/ui/graph/organisations/{orgId}")
-    public String getSpecificOrganisationForSearchResult(@PathVariable String orgId) {
-        Map<String, Object> bindParams = new HashMap<>();
-        bindParams.put("orgId", orgId);
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("match (o:Organisation)-[ref:AWARDED_TO]-(a:Award) " +
-                "WHERE o.id = $orgId " +
-                "RETURN a, ref, o").bindAll(bindParams);
-        try {
-            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
-        } catch (JsonProcessingException e) {
-            throw new FosBadRequestException();
-        }
-    }
-
-    @GetMapping("/api/ui/clients/{clientID}")
-    public ClientNodeDAO getClient(@PathVariable String clientID) {
-        ClientNodeDAO clientNodeDAO = clientSvc.getClientNode(clientID);
-        for (FullNotice notice : noticesSvc.getNoticesByClientId(clientID)) {
-            clientNodeDAO.getNotices().add(new NoticeNodeDAO(notice));
-        }
-        return clientNodeDAO;
-    }
-
-    @GetMapping("/api/ui/notices/{noticeID}")
-    public NoticeNodeDAO getNotice(@PathVariable String noticeID) {
-        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNoticeDAO(noticeID);
-        for (AwardDAO awardDAO : awardsSvc.getAwardsForNotice(noticeID)) {
-            noticeNodeDAO.addAward(awardDAO);
-        }
-        return noticeNodeDAO;
-    }
-
-    @GetMapping("/api/ui/queries/initial")
+    @GetMapping("/api/graphs/_meta/initial")
     public String getQuery(
             @RequestParam(value = "max", required = false, defaultValue = "50") String max
     ) {
@@ -185,25 +133,17 @@ public class GraphRest {
         }
     }
 
-    @GetMapping("/api/ui/queries/notices/{noticeId}/children")
-    public String getNoticeChildrenQuery(
-            @RequestParam(value = "max", required = false, defaultValue = "50") String max,
-            @PathVariable String noticeId
-    ) {
-        Map<String, Object> bindParams = new HashMap<>();
-        bindParams.put("limit", getLimit(max, 50));
-        bindParams.put("noticeId", noticeId);
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
-                "MATCH (a:Award)-[ref]-(n:Notice) WHERE n.hidden=false AND n.id = $noticeId " +
-                        "RETURN a, ref, n LIMIT $limit").bindAll(bindParams);
-        try {
-            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
-        } catch (JsonProcessingException e) {
-            throw new FosBadRequestException();
-        }
+    /**
+     * Return awards metadata so that it can be displayed in the metadata pane
+     * @param awardId The award ID to look up
+     * @return The award object
+     */
+    @GetMapping("/api/graphs/awards/{awardId}/metadata")
+    public AwardDAO getAward(@PathVariable String awardId) {
+        return awardsSvc.getAwardDetailsDAOWithAttachments(awardId);
     }
 
-    @GetMapping("/api/ui/queries/awards/{awardId}/children")
+    @GetMapping("/api/graphs/awards/{awardId}/children")
     public String getAwardChildrenQuery(
             @RequestParam(value = "max", required = false, defaultValue = "50") String max,
             @PathVariable String awardId
@@ -222,7 +162,7 @@ public class GraphRest {
         }
     }
 
-    @GetMapping("/api/ui/queries/awards/{awardId}/parents")
+    @GetMapping("/api/graphs/awards/{awardId}/parents")
     public String getAwardParentsQuery(
             @RequestParam(value = "max", required = false, defaultValue = "50") String max,
             @PathVariable String awardId
@@ -241,7 +181,63 @@ public class GraphRest {
         }
     }
 
-    @GetMapping("/api/ui/queries/notices/{noticeId}/parents")
+    /**
+     * Used when a user clicks on a search result on the graph
+     * @param clientId the client id to return details on
+     * @return a neo4j object that can be read by cytoscape
+     */
+    @GetMapping("/api/graphs/clients/{clientId}")
+    public String getSpecificClientForSearchResult(@PathVariable String clientId) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("clientId", clientId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
+                "WHERE c.id = $clientId " +
+                "CALL apoc.create.setProperty(n, \"has_awards\", exists((n)-[:AWARDS]-())) YIELD node " +
+                "RETURN c, ref, n").bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @GetMapping("/api/graphs/clients/{clientID}/metadata")
+    public ClientNodeDAO getClient(@PathVariable String clientID) {
+        ClientNodeDAO clientNodeDAO = clientSvc.getClientNode(clientID);
+        for (FullNotice notice : noticesSvc.getNoticesByClientId(clientID)) {
+            clientNodeDAO.getNotices().add(new NoticeNodeDAO(notice));
+        }
+        return clientNodeDAO;
+    }
+
+    @GetMapping("/api/graphs/notices/{noticeID}/metadata")
+    public NoticeNodeDAO getNotice(@PathVariable String noticeID) {
+        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNoticeDAO(noticeID);
+        for (AwardDAO awardDAO : awardsSvc.getAwardsForNotice(noticeID)) {
+            noticeNodeDAO.addAward(awardDAO);
+        }
+        return noticeNodeDAO;
+    }
+
+    @GetMapping("/api/graphs/notices/{noticeId}/children")
+    public String getNoticeChildrenQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "50") String max,
+            @PathVariable String noticeId
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 50));
+        bindParams.put("noticeId", noticeId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (a:Award)-[ref]-(n:Notice) WHERE n.hidden=false AND n.id = $noticeId " +
+                        "RETURN a, ref, n LIMIT $limit").bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @GetMapping("/api/graphs/notices/{noticeId}/parents")
     public String getNoticeParentsQuery(
             @RequestParam(value = "max", required = false, defaultValue = "50") String max,
             @PathVariable String noticeId
@@ -252,6 +248,39 @@ public class GraphRest {
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (:Notice {id: $noticeId})-[:PUBLISHED]-(c:Client) " +
                         "MATCH (c)-[ref:PUBLISHED]-(n:Notice) return c, ref, n LIMIT $limit")
+                .bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @GetMapping("/api/graphs/organisations/{orgId}")
+    public String getSpecificOrganisationForSearchResult(@PathVariable String orgId) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("orgId", orgId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("match (o:Organisation)-[ref:AWARDED_TO]-(a:Award) " +
+                "WHERE o.id = $orgId " +
+                "RETURN a, ref, o").bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @GetMapping("/api/graphs/organisations/{orgId}/relationships")
+    public String getOrgRelsQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "25") String max,
+            @PathVariable String orgId
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 50));
+        bindParams.put("orgId", orgId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (:Organisation {id: $orgId})-[:ORG_PERSON]-(p:Person) " +
+                        "MATCH (p)-[ref:ORG_PERSON]-(o:Organisation) return o, ref, p LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());

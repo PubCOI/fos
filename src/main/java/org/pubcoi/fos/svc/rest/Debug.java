@@ -1,6 +1,7 @@
 package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
+import org.apache.commons.lang3.StringUtils;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
@@ -27,6 +28,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Profile("debug")
@@ -120,6 +122,8 @@ public class Debug {
     }
 
     /**
+     * DEBUG CLASS
+     *
      * calls list of companies
      * pulls back an officer
      * inserts officer and links to company
@@ -128,45 +132,81 @@ public class Debug {
     public void populateOfficeBearers() {
         ocCompanies.findAll().forEach(companySchema -> {
             companySchema.getOfficers().forEach(officer -> {
+                logger.debug("Looking up details for officer {}", getUID(officer.getOfficer().getId()));
                 // warning don't use in production - won't add people to two different companies
                 // if (!personsGraphRepo.existsByOcId(getUID(officer.getOfficer().getId()))) { // todo add getid to aspects
-                    final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
-                    OrganisationNode org = organisationsGraphRepo
-                            // first look for a version WITH persons
-                            .findOrgHydratingPersons(orgId)
-                            // ok, no people maybe ... so let's not hydrate
-                            .orElse(organisationsGraphRepo.findOrgNotHydratingPersons(orgId)
-                                    // this would throw if org is not found at all
-                                    .orElseThrow()
-                            );
-                    OrgPersonLink orgPersonLink = new OrgPersonLink(
-                            new PersonNode(
-                                    getUID(officer.getOfficer().getId()),
-                                    officer.getOfficer().getName(),
-                                    officer.getOfficer().getOccupation(),
-                                    officer.getOfficer().getNationality(),
-                                    UUID.randomUUID().toString()
-                            ),
-                            org.getId(),
-                            officer.getOfficer().getPosition(),
-                            getZDT(officer.getOfficer().getStartDate()),
-                            getZDT(officer.getOfficer().getEndDate()),
-                            UUID.randomUUID().toString()
-                    );
-                    if (!org.getOrgPersons().contains(orgPersonLink)) {
-                        org.getOrgPersons().add(orgPersonLink);
-                        organisationsGraphRepo.save(org);
+                final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
+                logger.debug("Looking up org details for {}", orgId);
+
+                // first try find org using stated ID
+                Optional<OrganisationNode> orgOpt = organisationsGraphRepo
+                        // first look for a version WITH persons
+                        .findOrgHydratingPersons(orgId);
+
+                if (orgOpt.isEmpty()) {
+                    orgOpt = organisationsGraphRepo.findOrgNotHydratingPersons(orgId);
+                }
+
+                // if it's still empty it may be the formatting is wrong
+                if (orgOpt.isEmpty()) {
+                    final String altId = getAlternativeId(companySchema);
+                    logger.warn("Having to look up using alternative ID {}", altId);
+
+                    orgOpt = organisationsGraphRepo.findOrgHydratingPersons(altId);
+                    if (orgOpt.isEmpty()) {
+                        orgOpt = organisationsGraphRepo.findOrgNotHydratingPersons(altId);
                     }
+
+                    if (orgOpt.isEmpty()) {
+                        // screw it
+                        throw new RuntimeException();
+                    }
+                }
+
+                // null
+                OrganisationNode org = orgOpt.get();
+
+
+                OrgPersonLink orgPersonLink = new OrgPersonLink(
+                        new PersonNode(
+                                getUID(officer.getOfficer().getId()),
+                                officer.getOfficer().getName(),
+                                officer.getOfficer().getOccupation(),
+                                officer.getOfficer().getNationality(),
+                                UUID.randomUUID().toString()
+                        ),
+                        org.getId(),
+                        officer.getOfficer().getPosition(),
+                        getZDT(officer.getOfficer().getStartDate()),
+                        getZDT(officer.getOfficer().getEndDate()),
+                        UUID.randomUUID().toString()
+                );
+                if (!org.getOrgPersons().contains(orgPersonLink)) {
+                    logger.debug("org {} does not contain person {}: adding with link ID {}", org.getId(), orgPersonLink.getPerson().getId(), orgPersonLink.getId());
+                    org.getOrgPersons().add(orgPersonLink);
+                    organisationsGraphRepo.save(org);
+                }
                 // }
             });
         });
+    }
+
+    // TODO quick fix - needs properly fixed on import!
+    private String getAlternativeId(OCCompanySchema companySchema) {
+        // if starts with a zero, drop them
+        // otherwise pad
+        return (companySchema.getCompanyNumber().startsWith("0") ?
+                String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber().replaceFirst("^0+(?!$)", "")) :
+                String.format("%s:%s", companySchema.getJurisdictionCode(), StringUtils.leftPad(companySchema.getCompanyNumber(), 8, "0")));
     }
 
     @PutMapping("/api/debug/verify-all-oc")
     public void verifyAllOC() {
         organisationsGraphRepo.findAll().forEach(org -> {
             if (org.getId().startsWith("gb:")) {
-                OrganisationNode organisationNode = organisationsGraphRepo.findOrgHydratingPersons(org.getId()).orElseThrow();
+                OrganisationNode organisationNode = organisationsGraphRepo.findOrgHydratingPersons(org.getId()).orElse(
+                        organisationsGraphRepo.findOrgNotHydratingPersons(org.getId()).orElseThrow()
+                );
                 if (ocCompanies.existsByCompanyNumber(org.getId().split(":")[1])) {
                     logger.debug(String.format("Updating %s to mark as verified", organisationNode.getId()));
                     organisationsGraphRepo.save(organisationNode.setVerified(true));

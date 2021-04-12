@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.models.dao;
 
-public enum AddRelationshipRelSubtypeEnum {
+public enum AddRelCoiSubtypeEnum {
     director,
     shareholder,
     management_consultant,

@@ -29,4 +29,9 @@ public class PersonsSvcImpl implements PersonsSvc {
         PersonNode personNode = getPersonGraphObject(personId);
         return orgGraphRepo.findAllByPerson(personNode.getId());
     }
+
+    @Override
+    public PersonNode save(PersonNode personNode) {
+        return personsGraphRepo.save(personNode);
+    }
 }

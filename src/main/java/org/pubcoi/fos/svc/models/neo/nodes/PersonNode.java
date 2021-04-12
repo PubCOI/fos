@@ -1,12 +1,12 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Node(primaryLabel = "Person")
 public class PersonNode implements FosEntity {
@@ -24,6 +24,9 @@ public class PersonNode implements FosEntity {
     String occupation;
     String nationality;
     Set<String> transactions = new HashSet<>();
+
+    @Relationship("CONFLICT")
+    List<PersonConflictLink> conflicts = new ArrayList<>();
 
     PersonNode() {}
 
@@ -104,5 +107,26 @@ public class PersonNode implements FosEntity {
     public PersonNode setTransactions(Set<String> transactions) {
         this.transactions = transactions;
         return this;
+    }
+
+    public List<PersonConflictLink> getConflicts() {
+        return conflicts;
+    }
+
+    public PersonNode setConflicts(List<PersonConflictLink> conflicts) {
+        this.conflicts = conflicts;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "PersonNode{" +
+                "id='" + id + '\'' +
+                ", hidden=" + hidden +
+                ", ocId='" + ocId + '\'' +
+                ", commonName='" + commonName + '\'' +
+                ", occupation='" + occupation + '\'' +
+                ", nationality='" + nationality + '\'' +
+                '}';
     }
 }

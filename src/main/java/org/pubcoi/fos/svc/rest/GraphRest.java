@@ -22,6 +22,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
+import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.AwardsSvc;
 import org.pubcoi.fos.svc.services.ClientsSvc;
 import org.pubcoi.fos.svc.services.NoticesSvc;
@@ -285,16 +286,40 @@ public class GraphRest {
             @PathVariable String clientId,
             @RequestBody AddRelationshipDAO addRelationshipDAO
     ) {
-        logger.debug("Adding relationship {}", addRelationshipDAO);
+        logger.debug("Adding relationship for client: {}", addRelationshipDAO);
         ClientNode client = clientSvc.getClientNode(clientId);
         client.getPersons().add(new ClientPersonLink(
-                new PersonNode(addRelationshipDAO.getName()),
-                addRelationshipDAO.getRelType().toString(),
-                addRelationshipDAO.getRelSubtype().toString(),
+                new PersonNode(addRelationshipDAO.getRelName()),
+                addRelationshipDAO.getCoiType().toString(),
+                addRelationshipDAO.getCoiSubtype().toString(),
                 clientId, UUID.randomUUID().toString()
         ));
         clientSvc.save(client);
         return new ClientNodeDAO(client);
+    }
+
+    @PutMapping("/api/graphs/persons/{personId}/relationships")
+    public PersonNodeDAO addRelationshipForPerson(
+            @PathVariable String personId,
+            @RequestBody AddRelationshipDAO addRelationshipDAO
+    ) {
+        logger.debug("Adding relationship for person: {}", addRelationshipDAO);
+        OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(addRelationshipDAO.getRelId()).orElseThrow();
+        logger.debug("Found {}", org);
+
+        PersonNode personNode = personsSvc.getPersonGraphObject(personId);
+
+        // generate link first, then check if it exists ...
+        PersonConflictLink conflictLink = new PersonConflictLink(
+                personId, org,
+                addRelationshipDAO.getCoiType().toString(), addRelationshipDAO.getCoiSubtype().toString(),
+                UUID.randomUUID().toString()
+        );
+
+        if (!personNode.getConflicts().contains(conflictLink)) {
+            personNode.getConflicts().add(conflictLink);
+        }
+        return new PersonNodeDAO(personsSvc.save(personNode));
     }
 
     @GetMapping("/api/graphs/notices/{noticeId}/metadata")
@@ -398,7 +423,7 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 100));
         bindParams.put("personId", personId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
-                "MATCH (p:Person {id: $personId})-[ref:ORG_PERSON]-(o:Organisation) " +
+                "MATCH (p:Person {id: $personId})-[ref:ORG_PERSON|CONFLICT]-(o:Organisation) " +
                         "return p, ref, o LIMIT $limit")
                 .bindAll(bindParams);
         try {
@@ -409,12 +434,12 @@ public class GraphRest {
     }
 
     @GetMapping("/api/graphs/persons/{personId}/metadata")
-    public PersonDAO getPersonMetadata(
+    public PersonNodeDAO getPersonMetadata(
             @PathVariable String personId
     ) {
         List<OrganisationNode> links = personsSvc.getOrgPersonLinks(personId);
         PersonNode person = personsSvc.getPersonGraphObject(personId);
-        return new PersonDAO(person, links);
+        return new PersonNodeDAO(person, links);
     }
 
     private int getLimit(String limit, int hardLimit) {

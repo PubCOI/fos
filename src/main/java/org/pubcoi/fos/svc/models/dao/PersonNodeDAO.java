@@ -6,7 +6,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonDAO {
+public class PersonNodeDAO {
     String id;
     String ocId;
     String commonName;
@@ -14,24 +14,28 @@ public class PersonDAO {
     String nationality;
     List<PositionDAO> positions = new ArrayList<>();
 
-    PersonDAO() {}
+    PersonNodeDAO() {}
 
-    public PersonDAO(PersonNode person, List<OrganisationNode> links) {
+    public PersonNodeDAO(PersonNode person, List<OrganisationNode> links) {
+        this(person);
+        for (OrganisationNode link : links) {
+            positions.add(new PositionDAO(link));
+        }
+    }
+
+    public PersonNodeDAO(PersonNode person) {
         this.id = person.getId();
         this.ocId = person.getOcId();
         this.commonName = person.getCommonName();
         this.occupation = person.getOccupation();
         this.nationality = person.getNationality();
-        for (OrganisationNode link : links) {
-            positions.add(new PositionDAO(link));
-        }
     }
 
     public String getId() {
         return id;
     }
 
-    public PersonDAO setId(String id) {
+    public PersonNodeDAO setId(String id) {
         this.id = id;
         return this;
     }
@@ -40,7 +44,7 @@ public class PersonDAO {
         return commonName;
     }
 
-    public PersonDAO setCommonName(String commonName) {
+    public PersonNodeDAO setCommonName(String commonName) {
         this.commonName = commonName;
         return this;
     }
@@ -49,7 +53,7 @@ public class PersonDAO {
         return ocId;
     }
 
-    public PersonDAO setOcId(String ocId) {
+    public PersonNodeDAO setOcId(String ocId) {
         this.ocId = ocId;
         return this;
     }
@@ -58,7 +62,7 @@ public class PersonDAO {
         return occupation;
     }
 
-    public PersonDAO setOccupation(String occupation) {
+    public PersonNodeDAO setOccupation(String occupation) {
         this.occupation = occupation;
         return this;
     }
@@ -67,7 +71,7 @@ public class PersonDAO {
         return positions;
     }
 
-    public PersonDAO setPositions(List<PositionDAO> positions) {
+    public PersonNodeDAO setPositions(List<PositionDAO> positions) {
         this.positions = positions;
         return this;
     }
@@ -76,7 +80,7 @@ public class PersonDAO {
         return nationality;
     }
 
-    public PersonDAO setNationality(String nationality) {
+    public PersonNodeDAO setNationality(String nationality) {
         this.nationality = nationality;
         return this;
     }

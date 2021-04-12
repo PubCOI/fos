@@ -9,4 +9,6 @@ public interface PersonsSvc {
     PersonNode getPersonGraphObject(String personId);
 
     List<OrganisationNode> getOrgPersonLinks(String personId);
+
+    PersonNode save(PersonNode personNode);
 }

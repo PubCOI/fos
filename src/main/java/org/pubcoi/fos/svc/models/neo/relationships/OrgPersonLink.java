@@ -1,6 +1,8 @@
 package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
@@ -77,5 +79,25 @@ public class OrgPersonLink {
     public OrgPersonLink setId(String id) {
         this.id = id;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OrgPersonLink that = (OrgPersonLink) o;
+
+        return new EqualsBuilder()
+                .append(id, that.id)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .toHashCode();
     }
 }

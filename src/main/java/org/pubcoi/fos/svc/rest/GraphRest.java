@@ -14,8 +14,7 @@ import org.pubcoi.fos.svc.gdb.OrgNodeFTS;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.gdb.PersonNodeFTS;
 import org.pubcoi.fos.svc.models.dao.*;
-import org.pubcoi.fos.svc.models.dao.fts.ClientNodeFTSDAOResponse;
-import org.pubcoi.fos.svc.models.dao.fts.PersonNodeFTSDAOResponse;
+import org.pubcoi.fos.svc.models.dao.fts.GenericIDNameFTSResponse;
 import org.pubcoi.fos.svc.models.dao.neo.InternalNodeSerializer;
 import org.pubcoi.fos.svc.models.dao.neo.InternalRelationshipSerializer;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
@@ -89,28 +88,49 @@ public class GraphRest {
      * @return List of top responses, ordered by best -> worst match
      */
     @GetMapping("/api/graphs/_search/clients")
-    public List<ClientNodeFTSDAOResponse> findAnyClientQuery(@RequestParam String query, @RequestParam(required = false) String currentNode) {
+    public List<GenericIDNameFTSResponse> findAnyClientQuery(@RequestParam String query, @RequestParam(required = false) String currentNode) {
         if (query.isEmpty()) return new ArrayList<>();
         return clientNodeFTS.findAllCanonicalClientNodesMatching(query)
                 .stream()
                 .filter(c -> !c.getId().equals(currentNode))
                 .limit(5)
-                .map(ClientNodeFTSDAOResponse::new)
+                .map(GenericIDNameFTSResponse::new)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/api/graphs/_search/persons")
-    public List<PersonNodeFTSDAOResponse> findAnyPersonQuery(@RequestParam String query) {
+    public List<GenericIDNameFTSResponse> findAnyPersonQuery(@RequestParam String query) {
         if (query.isEmpty()) return new ArrayList<>();
         return personNodeFTS.findAnyPersonsMatching(String.format("%s*", query))
                 .stream()
-                .map(PersonNodeFTSDAOResponse::new)
+                .map(GenericIDNameFTSResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/graphs/_search/organisations")
+    public List<GenericIDNameFTSResponse> findAnyOrgQuery(@RequestParam String query) {
+        if (query.isEmpty()) return new ArrayList<>();
+
+        // open / wildcard
+        Set<GenericIDNameFTSResponse> responses = orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
+                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                .collect(Collectors.toSet());
+
+        // entire token
+        responses.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
+                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                .collect(Collectors.toSet()));
+
+        // now sort
+        return responses.stream()
+                .sorted(Comparator.comparing(GenericIDNameFTSResponse::getScore).reversed())
+                .limit(10)
                 .collect(Collectors.toList());
     }
 
     /**
      * Return client or org nodes that match the current search
-     *
+     * <p>
      * Currently performs 4x searches and then returns the most relevant results ... so not terribly efficient
      *
      * @param query The search parameters
@@ -164,6 +184,7 @@ public class GraphRest {
 
     /**
      * Return awards metadata so that it can be displayed in the metadata pane
+     *
      * @param awardId The award ID to look up
      * @return The award object
      */
@@ -212,6 +233,7 @@ public class GraphRest {
 
     /**
      * Used when a user clicks on a search result on the graph
+     *
      * @param clientId the client id to return details on
      * @return a neo4j object that can be read by cytoscape
      */

@@ -55,11 +55,20 @@ public class Tasks {
         this.ocCompanySearch = ocCompanySearch;
     }
 
+    /**
+     * Searches OpenCorporates for companies matching a particular set of terms
+     * @param requestDAO the request object
+     * @param authToken the user auth token
+     * @return a set of matching results
+     *
+     */
     @PostMapping("/api/ui/tasks/verify_company/_search")
     public List<VerifyCompanySearchResponse> doCompanyVerifySearch(
             @RequestBody VerifyCompanySearchRequestDAO requestDAO,
             @RequestHeader String authToken
     ) {
+        // TODO ADD OC CACHE
+        // reduce calls to OC via a cache
         String uid = UI.checkAuth(authToken).getUid();
         FosUser user = userRepo.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);

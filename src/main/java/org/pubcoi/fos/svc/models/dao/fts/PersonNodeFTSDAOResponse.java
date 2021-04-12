@@ -2,6 +2,7 @@ package org.pubcoi.fos.svc.models.dao.fts;
 
 import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;
 
+// todo not sure this is needed - if we're just using the generic name / id response
 public class PersonNodeFTSDAOResponse {
     String id;
     String name;

@@ -4,15 +4,15 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;
 
-public class ClientNodeFTSDAOResponse {
+public class GenericIDNameFTSResponse {
 
     String id;
     String name;
     Float score;
 
-    public ClientNodeFTSDAOResponse() {}
+    public GenericIDNameFTSResponse() {}
 
-    public ClientNodeFTSDAOResponse(GraphFTSResponse r) {
+    public GenericIDNameFTSResponse(GraphFTSResponse r) {
         this.id = r.getId();
         this.name = r.getName();
         this.score = (null != r.getScore()) ? r.getScore().asFloat() : null;
@@ -36,7 +36,7 @@ public class ClientNodeFTSDAOResponse {
 
         if (o == null || getClass() != o.getClass()) return false;
 
-        ClientNodeFTSDAOResponse that = (ClientNodeFTSDAOResponse) o;
+        GenericIDNameFTSResponse that = (GenericIDNameFTSResponse) o;
 
         return new EqualsBuilder()
                 .append(id, that.id)

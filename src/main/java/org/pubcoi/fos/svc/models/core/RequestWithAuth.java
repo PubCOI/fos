@@ -8,19 +8,9 @@ package org.pubcoi.fos.svc.models.core;
  */
 public class RequestWithAuth {
 
-    String authToken; // todo move this into a header
     String taskId;
     String source;
     String target;
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public RequestWithAuth setAuthToken(String authToken) {
-        this.authToken = authToken;
-        return this;
-    }
 
     public String getSource() {
         return source;

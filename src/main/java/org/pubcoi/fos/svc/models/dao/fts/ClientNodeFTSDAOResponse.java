@@ -1,4 +1,4 @@
-package org.pubcoi.fos.svc.models.dao;
+package org.pubcoi.fos.svc.models.dao.fts;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;

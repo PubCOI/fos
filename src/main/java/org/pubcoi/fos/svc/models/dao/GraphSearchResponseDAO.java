@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.models.dao;
 
+import org.pubcoi.fos.svc.models.dao.fts.ClientNodeFTSDAOResponse;
 import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;
 
 public class GraphSearchResponseDAO extends ClientNodeFTSDAOResponse {

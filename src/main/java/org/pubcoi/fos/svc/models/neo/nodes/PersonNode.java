@@ -6,9 +6,10 @@ import org.springframework.data.neo4j.core.schema.Node;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Node(primaryLabel = "Person")
-public class PersonNode {
+public class PersonNode implements FosEntity {
 
     // if the person is a director, they will have an OCID and a UUID
     // if not, they will just have a UUID
@@ -17,10 +18,10 @@ public class PersonNode {
 
     @Id
     String id;
+    Boolean hidden = false;
     String ocId;
     String commonName;
     String occupation;
-    String position;
     String nationality;
     Set<String> transactions = new HashSet<>();
 
@@ -35,8 +36,24 @@ public class PersonNode {
         this.transactions.add(transactionId);
     }
 
+    public PersonNode(String name) {
+        this.id = UUID.randomUUID().toString();
+        this.commonName = name;
+    }
+
     public String getId() {
         return id;
+    }
+
+    @Override
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    @Override
+    public FosEntity setHidden(Boolean hidden) {
+        this.hidden = hidden;
+        return this;
     }
 
     public PersonNode setId(String id) {
@@ -68,15 +85,6 @@ public class PersonNode {
 
     public PersonNode setOccupation(String occupation) {
         this.occupation = occupation;
-        return this;
-    }
-
-    public String getPosition() {
-        return position;
-    }
-
-    public PersonNode setPosition(String position) {
-        this.position = position;
         return this;
     }
 

@@ -7,6 +7,7 @@ import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
+import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -55,5 +56,10 @@ public class AwardsSvcImpl implements AwardsSvc {
         FullNotice notice = noticesMDBRepo.findById(award.getNoticeId()).orElseThrow();
         awardDAO.setNoticeTitle(notice.getNotice().getTitle());
         return awardDAO.setAttachments(attachments);
+    }
+
+    @Override
+    public List<AwardNode> getAwardsForOrg(String orgId) {
+        return awardsGraphRepo.getAwardsForSupplier(orgId);
     }
 }

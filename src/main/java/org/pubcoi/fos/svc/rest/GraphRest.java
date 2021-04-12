@@ -11,30 +11,43 @@ import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.OrgNodeFTS;
+import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.gdb.PersonNodeFTS;
 import org.pubcoi.fos.svc.models.dao.*;
+import org.pubcoi.fos.svc.models.dao.fts.ClientNodeFTSDAOResponse;
+import org.pubcoi.fos.svc.models.dao.fts.PersonNodeFTSDAOResponse;
 import org.pubcoi.fos.svc.models.dao.neo.InternalNodeSerializer;
 import org.pubcoi.fos.svc.models.dao.neo.InternalRelationshipSerializer;
+import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
+import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
+import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
 import org.pubcoi.fos.svc.services.AwardsSvc;
 import org.pubcoi.fos.svc.services.ClientsSvc;
 import org.pubcoi.fos.svc.services.NoticesSvc;
+import org.pubcoi.fos.svc.services.PersonsSvc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.core.Neo4jClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
 public class GraphRest {
+    private static final Logger logger = LoggerFactory.getLogger(GraphRest.class);
 
     final Neo4jClient neo4jClient;
     final ClientNodeFTS clientNodeFTS;
     final OrgNodeFTS orgNodeFTS;
+    final PersonNodeFTS personNodeFTS;
     final ClientsSvc clientSvc;
     final NoticesSvc noticesSvc;
     final AwardsSvc awardsSvc;
+    final PersonsSvc personsSvc;
+    final OrganisationsGraphRepo organisationsGraphRepo;
     static ObjectMapper neo4jObjectMapper;
 
     {
@@ -50,16 +63,23 @@ public class GraphRest {
     public GraphRest(
             Neo4jClient neo4jClient,
             ClientNodeFTS clientNodeFTS,
-            OrgNodeFTS orgNodeFTS, ClientsSvc clientSvc,
+            OrgNodeFTS orgNodeFTS,
+            PersonNodeFTS personNodeFTS,
+            ClientsSvc clientSvc,
             NoticesSvc noticesSvc,
-            AwardsSvc awardsSvc
+            AwardsSvc awardsSvc,
+            PersonsSvc personsSvc,
+            OrganisationsGraphRepo organisationsGraphRepo
     ) {
         this.neo4jClient = neo4jClient;
         this.clientNodeFTS = clientNodeFTS;
         this.orgNodeFTS = orgNodeFTS;
+        this.personNodeFTS = personNodeFTS;
         this.clientSvc = clientSvc;
         this.noticesSvc = noticesSvc;
         this.awardsSvc = awardsSvc;
+        this.personsSvc = personsSvc;
+        this.organisationsGraphRepo = organisationsGraphRepo;
     }
 
     /**
@@ -76,6 +96,15 @@ public class GraphRest {
                 .filter(c -> !c.getId().equals(currentNode))
                 .limit(5)
                 .map(ClientNodeFTSDAOResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/graphs/_search/persons")
+    public List<PersonNodeFTSDAOResponse> findAnyPersonQuery(@RequestParam String query) {
+        if (query.isEmpty()) return new ArrayList<>();
+        return personNodeFTS.findAnyPersonsMatching(String.format("%s*", query))
+                .stream()
+                .map(PersonNodeFTSDAOResponse::new)
                 .collect(Collectors.toList());
     }
 
@@ -201,19 +230,55 @@ public class GraphRest {
         }
     }
 
-    @GetMapping("/api/graphs/clients/{clientID}/metadata")
-    public ClientNodeDAO getClient(@PathVariable String clientID) {
-        ClientNodeDAO clientNodeDAO = clientSvc.getClientNode(clientID);
-        for (FullNotice notice : noticesSvc.getNoticesByClientId(clientID)) {
+    @GetMapping("/api/graphs/clients/{clientId}/metadata")
+    public ClientNodeDAO getClient(@PathVariable String clientId) {
+        ClientNodeDAO clientNodeDAO = clientSvc.getClientNodeDAO(clientId);
+        for (FullNotice notice : noticesSvc.getNoticesByClientId(clientId)) {
             clientNodeDAO.getNotices().add(new NoticeNodeDAO(notice));
         }
         return clientNodeDAO;
     }
 
-    @GetMapping("/api/graphs/notices/{noticeID}/metadata")
-    public NoticeNodeDAO getNotice(@PathVariable String noticeID) {
-        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNoticeDAO(noticeID);
-        for (AwardDAO awardDAO : awardsSvc.getAwardsForNotice(noticeID)) {
+    @GetMapping("/api/graphs/clients/{clientId}/relationships")
+    public String getClientsRelQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "25") String max,
+            @PathVariable String clientId
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 50));
+        bindParams.put("clientId", clientId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (:Client {id: $clientId})-[:REL_PERSON]-(p:Person) " +
+                        "MATCH (p)-[ref:REL_PERSON]-(c:Client) return c, ref, p LIMIT $limit")
+                .bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @PutMapping("/api/graphs/clients/{clientId}/relationships")
+    public ClientNodeDAO addRelationship(
+            @PathVariable String clientId,
+            @RequestBody AddRelationshipDAO addRelationshipDAO
+    ) {
+        logger.debug("Adding relationship {}", addRelationshipDAO);
+        ClientNode client = clientSvc.getClientNode(clientId);
+        client.getPersons().add(new ClientPersonLink(
+                new PersonNode(addRelationshipDAO.getName()),
+                addRelationshipDAO.getRelType().toString(),
+                addRelationshipDAO.getRelSubtype().toString(),
+                clientId, UUID.randomUUID().toString()
+        ));
+        clientSvc.save(client);
+        return new ClientNodeDAO(client);
+    }
+
+    @GetMapping("/api/graphs/notices/{noticeId}/metadata")
+    public NoticeNodeDAO getNotice(@PathVariable String noticeId) {
+        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNoticeDAO(noticeId);
+        for (AwardDAO awardDAO : awardsSvc.getAwardsForNotice(noticeId)) {
             noticeNodeDAO.addAward(awardDAO);
         }
         return noticeNodeDAO;
@@ -270,6 +335,12 @@ public class GraphRest {
         }
     }
 
+    @GetMapping("/api/graphs/organisations/{orgId}/metadata")
+    public OrganisationDAO getOrgMetadata(@PathVariable String orgId) {
+        OrganisationNode organisationNode = organisationsGraphRepo.findOrgNotHydratingPersons(orgId).orElseThrow();
+        return new OrganisationDAO(organisationNode);
+    }
+
     @GetMapping("/api/graphs/organisations/{orgId}/relationships")
     public String getOrgRelsQuery(
             @RequestParam(value = "max", required = false, defaultValue = "25") String max,
@@ -287,6 +358,41 @@ public class GraphRest {
         } catch (JsonProcessingException e) {
             throw new FosBadRequestException();
         }
+    }
+
+    @GetMapping("/api/graphs/organisations/{orgId}/notices")
+    public List<String> getNoticesForOrg(
+            @PathVariable String orgId
+    ) {
+        return awardsSvc.getAwardsForOrg(orgId).stream().map(AwardNode::getNoticeId).collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/graphs/persons/{personId}/relationships")
+    public String getPersonQuery(
+            @RequestParam(value = "max", required = false, defaultValue = "50") String max,
+            @PathVariable String personId
+    ) {
+        Map<String, Object> bindParams = new HashMap<>();
+        bindParams.put("limit", getLimit(max, 100));
+        bindParams.put("personId", personId);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (p:Person {id: $personId})-[ref:ORG_PERSON]-(o:Organisation) " +
+                        "return p, ref, o LIMIT $limit")
+                .bindAll(bindParams);
+        try {
+            return neo4jObjectMapper.writeValueAsString(response.fetch().all());
+        } catch (JsonProcessingException e) {
+            throw new FosBadRequestException();
+        }
+    }
+
+    @GetMapping("/api/graphs/persons/{personId}/metadata")
+    public PersonDAO getPersonMetadata(
+            @PathVariable String personId
+    ) {
+        List<OrganisationNode> links = personsSvc.getOrgPersonLinks(personId);
+        PersonNode person = personsSvc.getPersonGraphObject(personId);
+        return new PersonDAO(person, links);
     }
 
     private int getLimit(String limit, int hardLimit) {

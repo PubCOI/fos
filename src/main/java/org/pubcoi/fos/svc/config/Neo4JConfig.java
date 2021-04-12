@@ -48,6 +48,18 @@ public class Neo4JConfig {
         catch (InvalidDataAccessResourceUsageException e) {
             logger.info("Orgs index appears to already exist");
         }
+
+        // and for persons
+        try {
+            // CALL db.index.fulltext.createNodeIndex("persons-fts", ["Person"], ["commonName"], {analyzer: "english"})
+            ResultSummary rs = client.query(
+                    "CALL db.index.fulltext.createNodeIndex(\"persons-fts\", [\"Person\"], [\"commonName\"], {analyzer: \"english\"})"
+            ).run();
+            logger.info("Ran create persons index {}", rs);
+        }
+        catch (InvalidDataAccessResourceUsageException e) {
+            logger.info("Persons index appears to already exist");
+        }
     }
 
 }

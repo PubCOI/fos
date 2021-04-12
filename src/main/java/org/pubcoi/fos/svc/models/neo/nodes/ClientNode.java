@@ -4,6 +4,7 @@ import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
+import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -37,6 +38,9 @@ public class ClientNode implements FosEntity {
 
     @Relationship("PUBLISHED")
     List<ClientNoticeLink> notices = new ArrayList<>();
+
+    @Relationship("REL_PERSON")
+    List<ClientPersonLink> persons = new ArrayList<>();
 
     public ClientNode() {
     }
@@ -154,5 +158,13 @@ public class ClientNode implements FosEntity {
                 ", name='" + name + '\'' +
                 ", canonical=" + canonical +
                 '}';
+    }
+
+    public List<ClientNoticeLink> getNotices() {
+        return notices;
+    }
+
+    public List<ClientPersonLink> getPersons() {
+        return persons;
     }
 }

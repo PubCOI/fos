@@ -126,29 +126,50 @@ public class Debug {
      */
     @PutMapping("/api/debug/populate-office-bearers")
     public void populateOfficeBearers() {
-        OCCompanySchema companySchema = ocCompanies.findAll().stream().findFirst()
-                .orElseThrow();
-        companySchema.getOfficers().forEach(officer -> {
-            // warning don't use in production - won't add people to two different companies
-            if (!personsGraphRepo.existsByOcId(String.format("%s", officer.getOfficer().getId()))) {
-                final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
-                OrganisationNode org = organisationsGraphRepo
-                        // first look for a version WITH persons
-                        .findOrgHydratingPersons(orgId)
-                        // ok, no people maybe ... so let's not hydrate
-                        .orElse(organisationsGraphRepo.findOrgNotHydratingPersons(orgId)
-                                // this would throw if org is not found at all
-                                .orElseThrow()
-                        );
-                OrgPersonLink orgPersonLink = new OrgPersonLink(
-                        new PersonNode(
-                                String.format("%s", officer.getOfficer().getId()),
-                                officer.getOfficer().getName(), officer.getOfficer().getOccupation(), officer.getOfficer().getNationality(), UUID.randomUUID().toString()
-                        ), getZDT(officer.getOfficer().getStartDate()), getZDT(officer.getOfficer().getEndDate()), UUID.randomUUID().toString()
-                );
-                if (!org.getOrgPersons().contains(orgPersonLink)) {
-                    org.getOrgPersons().add(orgPersonLink);
-                    organisationsGraphRepo.save(org);
+        ocCompanies.findAll().forEach(companySchema -> {
+            companySchema.getOfficers().forEach(officer -> {
+                // warning don't use in production - won't add people to two different companies
+                // if (!personsGraphRepo.existsByOcId(getUID(officer.getOfficer().getId()))) { // todo add getid to aspects
+                    final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
+                    OrganisationNode org = organisationsGraphRepo
+                            // first look for a version WITH persons
+                            .findOrgHydratingPersons(orgId)
+                            // ok, no people maybe ... so let's not hydrate
+                            .orElse(organisationsGraphRepo.findOrgNotHydratingPersons(orgId)
+                                    // this would throw if org is not found at all
+                                    .orElseThrow()
+                            );
+                    OrgPersonLink orgPersonLink = new OrgPersonLink(
+                            new PersonNode(
+                                    getUID(officer.getOfficer().getId()),
+                                    officer.getOfficer().getName(),
+                                    officer.getOfficer().getOccupation(),
+                                    officer.getOfficer().getNationality(),
+                                    UUID.randomUUID().toString()
+                            ),
+                            org.getId(),
+                            officer.getOfficer().getPosition(),
+                            getZDT(officer.getOfficer().getStartDate()),
+                            getZDT(officer.getOfficer().getEndDate()),
+                            UUID.randomUUID().toString()
+                    );
+                    if (!org.getOrgPersons().contains(orgPersonLink)) {
+                        org.getOrgPersons().add(orgPersonLink);
+                        organisationsGraphRepo.save(org);
+                    }
+                // }
+            });
+        });
+    }
+
+    @PutMapping("/api/debug/verify-all-oc")
+    public void verifyAllOC() {
+        organisationsGraphRepo.findAll().forEach(org -> {
+            if (org.getId().startsWith("gb:")) {
+                OrganisationNode organisationNode = organisationsGraphRepo.findOrgHydratingPersons(org.getId()).orElseThrow();
+                if (ocCompanies.existsByCompanyNumber(org.getId().split(":")[1])) {
+                    logger.debug(String.format("Updating %s to mark as verified", organisationNode.getId()));
+                    organisationsGraphRepo.save(organisationNode.setVerified(true));
                 }
             }
         });
@@ -170,6 +191,10 @@ public class Debug {
             return null;
         }
         return localDate.atStartOfDay(ZoneOffset.UTC);
+    }
+
+    private String getUID(Double id) {
+        return String.format("%.0f", id);
     }
 }
 

@@ -17,8 +17,17 @@ public class ClientsSvcImpl implements ClientsSvc {
     }
 
     @Override
-    public ClientNodeDAO getClientNode(String clientID) {
-        ClientNode client = clientsGraphRepo.findClientHydratingNotices(clientID).orElseThrow(ItemNotFoundException::new);
-        return new ClientNodeDAO(client);
+    public ClientNodeDAO getClientNodeDAO(String clientID) {
+        return new ClientNodeDAO(getClientNode(clientID));
+    }
+
+    @Override
+    public ClientNode getClientNode(String clientID) {
+        return clientsGraphRepo.findClientHydratingNotices(clientID).orElseThrow(ItemNotFoundException::new);
+    }
+
+    @Override
+    public void save(ClientNode client) {
+        clientsGraphRepo.save(client);
     }
 }

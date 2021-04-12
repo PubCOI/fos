@@ -46,4 +46,12 @@ public class FosUser {
         this.lastLogin = lastLogin;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "FosUser{" +
+                "uid='" + uid + '\'' +
+                ", displayName='" + displayName + '\'' +
+                '}';
+    }
 }

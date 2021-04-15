@@ -132,7 +132,7 @@ public class GraphRest {
     /**
      * Return client or org nodes that match the current search
      * <p>
-     * Currently performs 4x searches and then returns the most relevant results ... so not terribly efficient
+     * Currently performs 6x searches and then returns the most relevant results ... so not remotely efficient
      *
      * @param query The search parameters
      * @return List of top responses, ordered by best -> worst match
@@ -157,6 +157,16 @@ public class GraphRest {
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
                 map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                .collect(Collectors.toSet())
+        );
+
+        response.addAll(personNodeFTS.findAnyPersonsMatching(query).stream().
+                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.person))
+                .collect(Collectors.toSet())
+        );
+
+        response.addAll(personNodeFTS.findAnyPersonsMatching(String.format("*%s*", query)).stream().
+                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.person))
                 .collect(Collectors.toSet())
         );
 
@@ -397,8 +407,8 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 50));
         bindParams.put("orgId", orgId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
-                "MATCH (:Organisation {id: $orgId})-[:ORG_PERSON]-(p:Person) " +
-                        "MATCH (p)-[ref:ORG_PERSON]-(o:Organisation) return o, ref, p LIMIT $limit")
+                "MATCH (:Organisation {id: $orgId})-[:ORG_PERSON|CONFLICT]-(p:Person) " +
+                        "MATCH (p)-[ref:ORG_PERSON|CONFLICT]-(o:Organisation) return o, ref, p LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -416,16 +426,21 @@ public class GraphRest {
 
     @GetMapping("/api/graphs/persons/{personId}/relationships")
     public String getPersonQuery(
+            @RequestParam(value = "reqType", required = false, defaultValue = "org") String reqType,
             @RequestParam(value = "max", required = false, defaultValue = "50") String max,
             @PathVariable String personId
     ) {
         Map<String, Object> bindParams = new HashMap<>();
         bindParams.put("limit", getLimit(max, 100));
         bindParams.put("personId", personId);
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+
+        String reqStr = reqType.equals("org") ?
                 "MATCH (p:Person {id: $personId})-[ref:ORG_PERSON|CONFLICT]-(o:Organisation) " +
-                        "return p, ref, o LIMIT $limit")
-                .bindAll(bindParams);
+                        "RETURN p, ref, o LIMIT $limit" :
+                "MATCH (p:Person {id: $personId})-[ref:CONFLICT|REL_PERSON]-(c:Client) " +
+                        "RETURN p, ref, c LIMIT $limit";
+
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(reqStr).bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {

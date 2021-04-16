@@ -100,12 +100,23 @@ public class GraphRest {
     }
 
     @GetMapping("/api/graphs/_search/persons")
-    public List<GenericIDNameFTSResponse> findAnyPersonQuery(@RequestParam String query) {
+    public List<GenericIDNameFTSResponse> findAnyPersonQuery(
+            @RequestParam String query,
+            @RequestParam(required = false, defaultValue = "false") Boolean details
+    ) {
         if (query.isEmpty()) return new ArrayList<>();
-        return personNodeFTS.findAnyPersonsMatching(String.format("%s*", query))
-                .stream()
-                .map(GenericIDNameFTSResponse::new)
-                .collect(Collectors.toList());
+        if (details) {
+            return personNodeFTS.findAnyPersonsMatchingWithDetails(String.format("%s*", query))
+                    .stream()
+                    .map(n -> new GraphDetailedSearchResponseDAO(n, NodeTypeEnum.person))
+                    .collect(Collectors.toList());
+        } else {
+            return personNodeFTS.findAnyPersonsMatching(String.format("%s*", query))
+                    .stream()
+                    .map(n -> new GraphSearchResponseDAO(n, NodeTypeEnum.person))
+                    .collect(Collectors.toList());
+        }
+
     }
 
     @GetMapping("/api/graphs/_search/organisations")
@@ -133,45 +144,47 @@ public class GraphRest {
      * Return client or org nodes that match the current search
      * <p>
      * Currently performs 6x searches and then returns the most relevant results ... so not remotely efficient
+     * <p>
+     * TODO this will currently deadlock in high load situations ... need to rewrite to a single query
      *
      * @param query The search parameters
      * @return List of top responses, ordered by best -> worst match
      */
     @GetMapping("/api/graphs/_search")
-    public List<GraphSearchResponseDAO> findAnyClientOrOrgQuery(@RequestParam String query) {
+    public List<GraphDetailedSearchResponseDAO> findAnyClientOrOrgQuery(@RequestParam String query) {
         if (query.isEmpty()) return new ArrayList<>();
-        Set<GraphSearchResponseDAO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
+        Set<GraphDetailedSearchResponseDAO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
                 .stream()
-                .map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.client))
+                .map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.client))
                 .collect(Collectors.toSet());
 
         response.addAll(clientNodeFTS.findAnyClientsMatching(query, 5)
                 .stream()
-                .map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.client))
+                .map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.client))
                 .collect(Collectors.toSet()));
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
-                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet())
         );
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
-                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet())
         );
 
-        response.addAll(personNodeFTS.findAnyPersonsMatching(query).stream().
-                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.person))
+        response.addAll(personNodeFTS.findAnyPersonsMatchingWithDetails(query).stream().
+                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.person))
                 .collect(Collectors.toSet())
         );
 
-        response.addAll(personNodeFTS.findAnyPersonsMatching(String.format("*%s*", query)).stream().
-                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.person))
+        response.addAll(personNodeFTS.findAnyPersonsMatchingWithDetails(String.format("*%s*", query)).stream().
+                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.person))
                 .collect(Collectors.toSet())
         );
 
         return response.stream()
-                .sorted(Comparator.comparing(GraphSearchResponseDAO::getScore).reversed())
+                .sorted(Comparator.comparing(GraphDetailedSearchResponseDAO::getScore).reversed())
                 .limit(10)
                 .collect(Collectors.toList());
     }

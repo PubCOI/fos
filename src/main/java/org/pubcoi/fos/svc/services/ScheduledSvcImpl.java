@@ -1,11 +1,12 @@
 package org.pubcoi.fos.svc.services;
 
 import com.opencorporates.schemas.OCCompanySchema;
+import info.debatty.java.stringsimilarity.NGram;
 import org.pubcoi.cdm.cf.ReferenceTypeE;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.svc.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
+import org.pubcoi.fos.svc.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
@@ -15,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +25,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
 
     final AwardsMDBRepo awardsMDBRepo;
     final OCCompaniesRepo ocCompanies;
+    final OCRestSvc ocRestSvc;
     final RestTemplate restTemplate;
     final OrganisationsMDBRepo orgMDBRepo;
     final TasksRepo tasksRepo;
@@ -35,23 +36,17 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     public ScheduledSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
             OCCompaniesRepo ocCompanies,
-            RestTemplate restTemplate,
+            OCRestSvc ocRestSvc, RestTemplate restTemplate,
             OrganisationsMDBRepo orgMDBRepo,
             OrganisationsGraphRepo orgGraphRepo,
             TasksRepo tasksRepo
     ) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.ocCompanies = ocCompanies;
+        this.ocRestSvc = ocRestSvc;
         this.restTemplate = restTemplate;
         this.orgMDBRepo = orgMDBRepo;
         this.tasksRepo = tasksRepo;
-    }
-
-    String companyRequestURL;
-
-    @PostConstruct
-    public void setup() {
-        companyRequestURL = String.format("https://api.opencorporates.com/companies/gb/%%s?api_token=%s", apiToken);
     }
 
     /**
@@ -61,22 +56,70 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     public void populateFosOrgsMDBFromAwards() {
         awardsMDBRepo.findAll()
                 .forEach(award -> {
-                    FosOrganisation organisation = (award.getOrgReferenceType().equals(ReferenceTypeE.COMPANIES_HOUSE)) ?
-                            new FosCanonicalOrg("gb", award.getOrgReference()) :
-                            new FosNonCanonicalOrg(award);
+
+                    // as it turns out ... contracts finder doesn't always have the correct company number :(
+                    // so we have to do a sense check ...
+                    OCCompanySchema companySchema = (null != award.getOrgReferenceType() && award.getOrgReferenceType().equals(ReferenceTypeE.COMPANIES_HOUSE)) ?
+                            getCompany(award.getOrgReference(), JurisdictionEnum.gb) : null;
+
+                    FosOrganisation org = (null == companySchema) ? new FosNonCanonicalOrg(award) :
+                            new FosCanonicalOrg(JurisdictionEnum.gb.toString(), companySchema.getCompanyNumber());
+
+                    if (org instanceof FosCanonicalOrg) {
+                        // of course, companySchema is implicitly not null
+                        if (isSimilar(award.getSupplierName(), companySchema.getName())) {
+                            org.setVerified(true);
+                        } else {
+                            logger.warn(
+                                    "Supplier name {} does not match company name {} in Companies House",
+                                    award.getSupplierName(), companySchema.getName()
+                            );
+                        }
+                    }
 
                     // save new org if it doesn't exist
-                    if (!orgMDBRepo.existsById(organisation.getId())) {
-                        if (!(organisation instanceof FosCanonicalOrg)) {
-                            logger.debug("Not seen this org before: Generating {} task for {}", FosTaskType.resolve_company, organisation);
-                            tasksRepo.save(new DRTask(FosTaskType.resolve_company, organisation));
+                    if (!orgMDBRepo.existsById(org.getId())) {
+                        if (!(org instanceof FosCanonicalOrg) || !org.getVerified()) {
+                            logger.debug(
+                                    "Generating {} task for {}", FosTaskType.resolve_company, org
+                            );
+                            tasksRepo.save(new DRTask(FosTaskType.resolve_company, org));
                         }
-                        orgMDBRepo.save(organisation);
+                        orgMDBRepo.save(org);
                     }
 
                     // save award with org
-                    awardsMDBRepo.save(award.setFosOrganisation(organisation));
+                    awardsMDBRepo.save(award.setFosOrganisation(org));
                 });
+    }
+
+    /**
+     * Gets a company locally, or looks it up on OpenCorporates if it's not found (via a cached search)
+     *
+     * @param companyReference the company number
+     * @param jurisdiction     at present, only GB
+     * @return {@link OCCompanySchema} if the company exists, otherwise null
+     */
+    OCCompanySchema getCompany(String companyReference, JurisdictionEnum jurisdiction) {
+        // see if the company exists on our DB first
+        OCCompanySchema mdbCompany = ocCompanies.findByCompanyNumberAndJurisdictionCode(companyReference, jurisdiction.toString());
+        if (null != mdbCompany) return mdbCompany;
+
+        // then see if it exists on OC
+        OCWrapper companyLookup = ocRestSvc.getCompany(companyReference, jurisdiction);
+        if (null != companyLookup.getResults() && null != companyLookup.getResults().getCompany()) {
+            ocCompanies.save(companyLookup.getResults().getCompany());
+        }
+        return (null != companyLookup.getResults()) ? companyLookup.getResults().getCompany() : null;
+    }
+
+    boolean isSimilar(String in1, String in2) {
+        NGram nGram = new NGram(4);
+        String str1 = in1.toLowerCase();
+        String str2 = in2.toLowerCase();
+        double similarity = 1 - nGram.distance(str1, str2);
+        logger.debug("Similarity of '{}' and '{}' is reported as {}", str1, str2, similarity);
+        return similarity > 0.90;
     }
 
     /**
@@ -94,8 +137,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
                 awards.forEach(award -> {
                     populateFromOC(((FosCanonicalOrg) award.getFosOrganisation()).getReference());
                 });
-            }
-            else {
+            } else {
                 CFAward award = awards.stream().findAny().orElseThrow();
                 populateFromOC(((FosCanonicalOrg) award.getFosOrganisation()).getReference());
             }
@@ -109,7 +151,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
      */
     void populateFromOC(String companyRef) {
         logger.debug("Populating data for {}", companyRef);
-        OCWrapper response = restTemplate.getForObject(String.format(companyRequestURL, companyRef), OCWrapper.class);
+        OCWrapper response = ocRestSvc.getCompany(companyRef, JurisdictionEnum.gb);
         if (null != response) {
             OCCompanySchema company = response.getResults().getCompany();
             ocCompanies.save(company);

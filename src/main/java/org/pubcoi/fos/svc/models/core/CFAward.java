@@ -39,7 +39,7 @@ public class CFAward {
     public CFAward() {}
 
     public CFAward(FullNotice notice, AwardDetailParentType.AwardDetail awardDetail) {
-        this.id = awardDetail.getAwardGuid();
+        this.id = awardDetail.getAwardGuid().toLowerCase();
         this.noticeId = awardDetail.getNoticeId();
         this.valueMin = (null != notice.getNotice().getValueLow()) ? notice.getNotice().getValueLow().longValue() : null;
         this.valueMax = (null != notice.getNotice().getValueHigh()) ? notice.getNotice().getValueHigh().longValue() : null;

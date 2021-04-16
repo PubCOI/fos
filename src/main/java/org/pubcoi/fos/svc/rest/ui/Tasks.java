@@ -13,7 +13,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.rest.UI;
-import org.pubcoi.fos.svc.services.OCCompanySearch;
+import org.pubcoi.fos.svc.services.OCRestSvc;
 import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
 import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class Tasks {
     final ClientsGraphRepo clientGRepo;
     final OrganisationsMDBRepo orgMDBRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
-    final OCCompanySearch ocCompanySearch;
+    final OCRestSvc ocRestSvc;
 
     public Tasks(
             TasksRepo tasksRepo,
@@ -45,14 +45,14 @@ public class Tasks {
             ClientsGraphRepo clientGRepo,
             OrganisationsMDBRepo orgMDBRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
-            OCCompanySearch ocCompanySearch) {
+            OCRestSvc ocRestSvc) {
         this.tasksRepo = tasksRepo;
         this.transactionOrch = transactionOrch;
         this.userRepo = userRepo;
         this.clientGRepo = clientGRepo;
         this.orgMDBRepo = orgMDBRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
-        this.ocCompanySearch = ocCompanySearch;
+        this.ocRestSvc = ocRestSvc;
     }
 
     /**
@@ -73,7 +73,7 @@ public class Tasks {
         FosUser user = userRepo.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
         OrganisationNode org = organisationsGraphRepo.findOrgNotHydratingPersons(requestDAO.getCompanyId()).orElseThrow();
-        OCWrapper wrapper = ocCompanySearch.doSearch(org.getName());
+        OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
         return wrapper.getResults().getCompanies().stream()
                 .map(company -> new VerifyCompanySearchResponse(company))
                 .collect(Collectors.toList());

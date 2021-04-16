@@ -11,6 +11,8 @@ public abstract class FosOrganisation implements FosEntity {
 
     Boolean hidden = false;
 
+    Boolean verified = false;
+
     public String getId() {
         return id;
     }
@@ -26,6 +28,20 @@ public abstract class FosOrganisation implements FosEntity {
     @Override
     public FosOrganisation setHidden(Boolean hidden) {
         this.hidden = hidden;
+        return this;
+    }
+
+    public FosOrganisation setId(String id) {
+        this.id = id;
+        return this;
+    }
+
+    public Boolean getVerified() {
+        return verified;
+    }
+
+    public FosOrganisation setVerified(Boolean verified) {
+        this.verified = verified;
         return this;
     }
 }

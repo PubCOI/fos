@@ -22,7 +22,7 @@ public class FosNonCanonicalOrg extends FosOrganisation {
     public static String resolveId(CFAward award) {
         return String.format("hash:%s", DigestUtils.md5DigestAsHex(
                 (normalise(award.getOrgReference()) +
-                        normalise(award.getOrgReferenceType().toString()) +
+                        normalise(null != award.getOrgReferenceType() ? award.getOrgReferenceType().toString() : "") +
                         normalise(award.getSupplierName()) +
                         normalise(award.getSupplierAddress())
                 ).getBytes()));
@@ -31,7 +31,7 @@ public class FosNonCanonicalOrg extends FosOrganisation {
     public FosNonCanonicalOrg(CFAward award) {
         this.id = resolveId(award);
         this.reference = award.getOrgReference();
-        this.referenceType = award.getOrgReferenceType().toString();
+        this.referenceType = (null != award.getOrgReferenceType()) ? award.getOrgReferenceType().toString() : null;
         this.companyName = award.getSupplierName();
         this.companyAddress = award.getSupplierAddress();
     }

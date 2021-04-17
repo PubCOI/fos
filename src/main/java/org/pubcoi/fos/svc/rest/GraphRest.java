@@ -35,6 +35,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.pubcoi.fos.svc.rest.UI.checkAuth;
+
 @RestController
 public class GraphRest {
     private static final Logger logger = LoggerFactory.getLogger(GraphRest.class);
@@ -307,8 +309,10 @@ public class GraphRest {
     @PutMapping("/api/graphs/clients/{clientId}/relationships")
     public ClientNodeDAO addRelationship(
             @PathVariable String clientId,
-            @RequestBody AddRelationshipDAO addRelationshipDAO
+            @RequestBody AddRelationshipDAO addRelationshipDAO,
+            @RequestHeader("authToken") String authToken
     ) {
+        checkAuth(authToken);
         logger.debug("Adding relationship for client: {}", addRelationshipDAO);
         ClientNode client = clientSvc.getClientNode(clientId);
         client.getPersons().add(new ClientPersonLink(
@@ -324,8 +328,10 @@ public class GraphRest {
     @PutMapping("/api/graphs/persons/{personId}/relationships")
     public PersonNodeDAO addRelationshipForPerson(
             @PathVariable String personId,
-            @RequestBody AddRelationshipDAO addRelationshipDAO
+            @RequestBody AddRelationshipDAO addRelationshipDAO,
+            @RequestHeader("authToken") String authToken
     ) {
+        checkAuth(authToken);
         logger.debug("Adding relationship for person: {}", addRelationshipDAO);
         OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(addRelationshipDAO.getRelId()).orElseThrow();
         logger.debug("Found {}", org);
@@ -421,8 +427,8 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 50));
         bindParams.put("orgId", orgId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
-                "MATCH (:Organisation {id: $orgId})-[:ORG_PERSON|CONFLICT]-(p:Person) " +
-                        "MATCH (p)-[ref:ORG_PERSON|CONFLICT]-(o:Organisation) return o, ref, p LIMIT $limit")
+                "MATCH (:Organisation {id: $orgId})-[:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(p) " +
+                        "MATCH (p)-[ref:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(o:Organisation) return o, ref, p LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -469,6 +475,15 @@ public class GraphRest {
         List<OrganisationNode> links = personsSvc.getOrgPersonLinks(personId);
         PersonNode person = personsSvc.getPersonGraphObject(personId);
         return new PersonNodeDAO(person, links);
+    }
+
+    @PutMapping("/api/graphs/persons/{personId}/populate")
+    public String populatePersonRecord(
+            @PathVariable String personId,
+            @RequestHeader("authToken") String authToken
+    ) {
+        checkAuth(authToken);
+        return "OK";
     }
 
     private int getLimit(String limit, int hardLimit) {

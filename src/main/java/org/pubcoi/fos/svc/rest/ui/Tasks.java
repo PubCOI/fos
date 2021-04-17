@@ -11,6 +11,7 @@ import org.pubcoi.fos.svc.mdb.TasksRepo;
 import org.pubcoi.fos.svc.mdb.UserObjectFlagRepo;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dao.*;
+import org.pubcoi.fos.svc.models.dao.tasks.UpdateNodeDAO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
@@ -136,7 +137,7 @@ public class Tasks {
     }
 
     @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
-    public UpdateClientDAO updateClientDAO(
+    public UpdateNodeDAO updateClientDAO(
             @PathVariable FosUITasks taskType,
             @RequestHeader String authToken,
             @RequestBody RequestWithAuth req
@@ -161,7 +162,7 @@ public class Tasks {
             });
 
             markTaskCompleted(req.getTaskId(), user);
-            return new UpdateClientDAO().setResponse("Resolved task: marked node as canonical");
+            return new UpdateNodeDAO().setResponse("Resolved task: marked node as canonical");
         }
 
         if (taskType == FosUITasks.link_clientNode_to_parentClientNode) {
@@ -176,7 +177,7 @@ public class Tasks {
 
             markTaskCompleted(req.getTaskId(), user);
 
-            return new UpdateClientDAO().setResponse(String.format(
+            return new UpdateNodeDAO().setResponse(String.format(
                     "Resolved task: linked %s to %s", req.getSource(), req.getTarget()
             ));
         }
@@ -188,7 +189,7 @@ public class Tasks {
 
             DRTask task = tasksRepo.getByTaskTypeAndEntity(FosTaskType.resolve_company, orgMDBRepo.findById(req.getSource()).orElseThrow());
             if (null == task) {
-                throw new FosBadRequestException("Unable to find a task");
+                throw new FosBadRequestException("Unable to find relevant task");
             }
 
             // looking up target ensures we have it in db
@@ -200,6 +201,8 @@ public class Tasks {
                     .orElse(organisationsGraphRepo.save(new OrganisationNode(companySchema)));
 
             transactionOrch.exec(FosTransactionBuilder.resolveCompany(source, target, user, null));
+            markTaskCompleted(task.getId(), user);
+            return new UpdateNodeDAO().setResponse(String.format("Linked %s to %s", source.getId(), target.getId()));
         }
 
         throw new FosBadRequestException("Unable to find request type");

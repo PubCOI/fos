@@ -3,6 +3,7 @@ package org.pubcoi.fos.svc.rest;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.opencorporates.schemas.OCCompanySchema;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -22,10 +23,9 @@ import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
-import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.svc.mdb.FosUserRepo;
-import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
+import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.mdb.*;
+import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
@@ -34,6 +34,8 @@ import org.pubcoi.fos.svc.models.dao.es.ESAggregationDTO;
 import org.pubcoi.fos.svc.models.dao.es.ESResponseWrapperDTO;
 import org.pubcoi.fos.svc.models.dao.es.ESResult;
 import org.pubcoi.fos.svc.models.dao.es.ESSingleResponseDTO;
+import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,18 +75,27 @@ public class UI {
     final ScheduledSvc scheduledSvc;
     final GraphSvc graphSvc;
     final ApplicationStatusBean applicationStatus;
+    final UserObjectFlagRepo userObjectFlagRepo;
+    final OCCompaniesRepo ocCompaniesRepo;
+    final OrganisationsGraphRepo organisationsGraphRepo;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
             NoticesMDBRepo noticesMDBRepo,
-            NoticesSvc noticesSvc, AwardsMDBRepo awardsMDBRepo,
+            NoticesSvc noticesSvc,
+            AwardsMDBRepo awardsMDBRepo,
             ClientsGraphRepo clientGRepo,
             FosUserRepo userRepo,
             TransactionOrchestrationSvc transactionOrch,
             RestHighLevelClient esClient,
             S3Services s3Services,
             AwardsSvc awardsSvc,
-            ScheduledSvc scheduledSvc, GraphSvc graphSvc, ApplicationStatusBean applicationStatus) {
+            ScheduledSvc scheduledSvc,
+            GraphSvc graphSvc,
+            ApplicationStatusBean applicationStatus,
+            UserObjectFlagRepo userObjectFlagRepo,
+            OCCompaniesRepo ocCompaniesRepo,
+            OrganisationsGraphRepo organisationsGraphRepo) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -98,6 +109,9 @@ public class UI {
         this.scheduledSvc = scheduledSvc;
         this.graphSvc = graphSvc;
         this.applicationStatus = applicationStatus;
+        this.userObjectFlagRepo = userObjectFlagRepo;
+        this.ocCompaniesRepo = ocCompaniesRepo;
+        this.organisationsGraphRepo = organisationsGraphRepo;
     }
 
     @GetMapping("/api/awards")
@@ -254,5 +268,44 @@ public class UI {
         } catch (FirebaseAuthException e) {
             throw new FosUnauthorisedException();
         }
+    }
+
+    @PutMapping("/api/ui/flags/{type}/{objectId}")
+    public String updateFlag(
+            @RequestHeader("authToken") String authToken,
+            @PathVariable String objectId,
+            @PathVariable String type
+    ) {
+        String uid = checkAuth(authToken).getUid();
+        FosUser user = userRepo.getByUid(uid);
+        userObjectFlagRepo.save(new UserObjectFlag(objectId, user));
+        if (type.equals("organisation")) {
+            // if item is not already in db, add it
+            if (!ocCompaniesRepo.existsById(objectId)) {
+                // todo - put into separate thread
+                scheduledSvc.getCompany(objectId);
+            }
+            // should now be in MDB repo, check if it's in graph
+            if (ocCompaniesRepo.existsById(objectId)) {
+                OCCompanySchema companySchema = ocCompaniesRepo.findById(objectId).orElseThrow();
+                if (!organisationsGraphRepo.existsByJurisdictionAndReference(companySchema.getJurisdictionCode(), companySchema.getCompanyNumber())) {
+                    OrganisationNode node = organisationsGraphRepo.save(new OrganisationNode(companySchema));
+                    logger.info("Created new org {} in graph", node);
+                }
+            }
+        }
+        return String.format("Flagged item %s", objectId);
+    }
+
+    @DeleteMapping("/api/ui/flags/{type}/{objectId}")
+    public String deleteFlag(
+            @RequestHeader("authToken") String authToken,
+            @PathVariable String objectId,
+            @PathVariable String type
+    ) {
+        String uid = checkAuth(authToken).getUid();
+        FosUser user = userRepo.getByUid(uid);
+        userObjectFlagRepo.delete(new UserObjectFlag(objectId, user));
+        return String.format("Removed flag on item %s", objectId);
     }
 }

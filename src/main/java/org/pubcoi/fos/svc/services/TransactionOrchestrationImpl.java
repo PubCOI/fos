@@ -3,9 +3,11 @@ package org.pubcoi.fos.svc.services;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
+import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.TransactionMDBRepo;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.transactions.FosTransaction;
 import org.pubcoi.fos.svc.transactions.TransactionFactory;
 import org.slf4j.Logger;
@@ -25,17 +27,19 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
     final TransactionMDBRepo transactionRepo;
     final NoticesGraphRepo noticesGRepo;
     final ClientsGraphRepo clientsGraphRepo;
+    final OrganisationsGraphRepo orgGraphRepo;
 
     TransactionOrchestrationImpl(
             TransactionFactory tcf,
             TransactionMDBRepo transactionRepo,
             NoticesGraphRepo noticesGRepo,
-            ClientsGraphRepo clientsGraphRepo
-    ) {
+            ClientsGraphRepo clientsGraphRepo,
+            OrganisationsGraphRepo orgGraphRepo) {
         this.tcf = tcf;
         this.transactionRepo = transactionRepo;
         this.noticesGRepo = noticesGRepo;
         this.clientsGraphRepo = clientsGraphRepo;
+        this.orgGraphRepo = orgGraphRepo;
     }
 
     @Override
@@ -43,22 +47,22 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
     public synchronized boolean exec(FosTransaction metaTransaction) {
         switch (metaTransaction.getTransactionType()) {
             case link_source_to_parent_clientNode:
-                ClientNode fromNode = clientsGraphRepo.findClientHydratingNotices(
+                ClientNode s2p_fromNode = clientsGraphRepo.findClientHydratingNotices(
                         metaTransaction.getSource().getId()).orElseThrow();
-                ClientNode toNode = clientsGraphRepo.findClientHydratingNotices(
+                ClientNode s2p_toNode = clientsGraphRepo.findClientHydratingNotices(
                         metaTransaction.getTarget().getId()).orElseThrow();
 
-                if (!toNode.getCanonical()) {
+                if (!s2p_toNode.getCanonical()) {
                     throw new FosBadRequestException("Parent ClientNode is not canonical");
                 }
-                if (fromNode.getCanonical()) {
+                if (s2p_fromNode.getCanonical()) {
                     throw new FosBadRequestException("Child ClientNode cannot be canonical");
                 }
 
-                transactionRepo.save(tcf.linkClientToParent(fromNode, toNode, metaTransaction).exec().withMeta(metaTransaction));
-                transactionRepo.save(tcf.copyNotices(fromNode, toNode).exec().withMeta(metaTransaction));
-                transactionRepo.save(tcf.hideRelPublished(fromNode).exec().withMeta(metaTransaction));
-                transactionRepo.save(tcf.hideNode(fromNode).exec().withMeta(metaTransaction));
+                transactionRepo.save(tcf.linkClientToParent(s2p_fromNode, s2p_toNode, metaTransaction).exec().withMeta(metaTransaction));
+                transactionRepo.save(tcf.copyNotices(s2p_fromNode, s2p_toNode).exec().withMeta(metaTransaction));
+                transactionRepo.save(tcf.hideRelPublished(s2p_fromNode).exec().withMeta(metaTransaction));
+                transactionRepo.save(tcf.hideNode(s2p_fromNode).exec().withMeta(metaTransaction));
 
                 logger.info("Completed transaction {}", metaTransaction.getId());
                 transactionRepo.save(metaTransaction);
@@ -71,6 +75,21 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
                         }
                 );
                 transactionRepo.save(metaTransaction);
+                return true;
+
+            case link_org_to_canonical:
+                OrganisationNode o2c_fromNode = orgGraphRepo
+                        .findOrgHydratingPersons(metaTransaction.getSource().getId())
+                        .orElse(orgGraphRepo.findOrgNotHydratingPersons(metaTransaction.getSource().getId()).orElseThrow());
+                OrganisationNode o2c_toNode = orgGraphRepo
+                        .findOrgHydratingPersons(metaTransaction.getTarget().getId())
+                        .orElse(orgGraphRepo.findOrgNotHydratingPersons(metaTransaction.getTarget().getId()).orElseThrow());
+
+                if (!o2c_toNode.isVerified()) {
+                    throw new FosBadRequestException("Target node must be verified");
+                }
+
+                transactionRepo.save(tcf.linkOrgToParent(o2c_fromNode, o2c_toNode, metaTransaction).exec().withMeta(metaTransaction));
                 return true;
 
             default:

@@ -3,6 +3,7 @@ package org.pubcoi.fos.svc.transactions;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.springframework.lang.Nullable;
 
 public class FosTransactionBuilder {
@@ -36,4 +37,17 @@ public class FosTransactionBuilder {
                 .setNotes(notes);
     }
 
+    public static FosTransaction resolveCompany(
+            OrganisationNode source,
+            OrganisationNode target,
+            FosUser currentUser,
+            @Nullable String notes
+    ) {
+        return new FosTransaction()
+                .setTransactionType(FosTransactionType.link_org_to_canonical)
+                .setSource(new NodeReference(source))
+                .setTarget(new NodeReference(target))
+                .setUid(currentUser.getUid())
+                .setNotes(notes);
+    }
 }

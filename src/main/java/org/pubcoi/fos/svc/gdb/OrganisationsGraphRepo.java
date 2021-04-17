@@ -21,4 +21,6 @@ public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode
             "RETURN p, rel AS ORG_PERSON, o AS ORGANISATION")
     List<OrganisationNode> findAllByPerson(String personId);
 
+    boolean existsByJurisdictionAndReference(String jurisdiction, String reference);
+
 }

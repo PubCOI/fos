@@ -8,9 +8,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public abstract class FosOrganisation implements FosEntity {
     @Id
     String id;
-
+    String jurisdiction;
+    String companyName;
+    String companyAddress;
+    String referenceType;
+    String reference;
     Boolean hidden = false;
-
     Boolean verified = false;
 
     public String getId() {
@@ -42,6 +45,51 @@ public abstract class FosOrganisation implements FosEntity {
 
     public FosOrganisation setVerified(Boolean verified) {
         this.verified = verified;
+        return this;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public FosOrganisation setCompanyName(String companyName) {
+        this.companyName = companyName;
+        return this;
+    }
+
+    public String getCompanyAddress() {
+        return companyAddress;
+    }
+
+    public FosOrganisation setCompanyAddress(String companyAddress) {
+        this.companyAddress = companyAddress;
+        return this;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public FosOrganisation setReference(String reference) {
+        this.reference = reference;
+        return this;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
+    }
+
+    public FosOrganisation setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
+        return this;
+    }
+
+    public String getJurisdiction() {
+        return jurisdiction;
+    }
+
+    public FosOrganisation setJurisdiction(String jurisdiction) {
+        this.jurisdiction = jurisdiction;
         return this;
     }
 }

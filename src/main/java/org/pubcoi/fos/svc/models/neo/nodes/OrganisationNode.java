@@ -1,5 +1,8 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
+import com.opencorporates.schemas.OCCompanySchema;
+import org.pubcoi.fos.svc.models.core.FosOrganisation;
+import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.springframework.data.neo4j.core.schema.DynamicLabels;
@@ -17,6 +20,8 @@ public class OrganisationNode implements FosEntity {
 
     @Id
     String id;
+    String jurisdiction;
+    String reference;
     String name;
     Boolean verified;
     Boolean hidden = false;
@@ -31,6 +36,26 @@ public class OrganisationNode implements FosEntity {
     List<OrgPersonLink> orgPersons = new ArrayList<>();
 
     public OrganisationNode() {}
+
+    public OrganisationNode(FosOrganisation org) {
+        this.id = org.getId();
+        this.jurisdiction = org.getJurisdiction();
+        this.reference = org.getReference();
+        this.name = org.getCompanyName();
+        this.verified = org.getVerified();
+    }
+
+    public OrganisationNode(OCCompanySchema ocCompany) {
+        this.id = String.format("%s:%s", ocCompany.getJurisdictionCode(), ocCompany.getCompanyNumber());
+        this.jurisdiction = ocCompany.getJurisdictionCode();
+        this.reference = ocCompany.getCompanyNumber();
+        this.name = ocCompany.getName();
+        this.verified = true;
+    }
+
+    public OrganisationNode(NodeReference target) {
+        this.id = target.getId();
+    }
 
     public String getName() {
         return name;
@@ -110,6 +135,24 @@ public class OrganisationNode implements FosEntity {
 
     public OrganisationNode setOrgPersons(List<OrgPersonLink> orgPersons) {
         this.orgPersons = orgPersons;
+        return this;
+    }
+
+    public String getJurisdiction() {
+        return jurisdiction;
+    }
+
+    public OrganisationNode setJurisdiction(String jurisdiction) {
+        this.jurisdiction = jurisdiction;
+        return this;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public OrganisationNode setReference(String reference) {
+        this.reference = reference;
         return this;
     }
 }

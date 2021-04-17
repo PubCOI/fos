@@ -1,7 +1,6 @@
 package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.apache.commons.lang3.StringUtils;
 import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
@@ -76,19 +75,9 @@ public class Debug {
         return ocCompanies.findAll();
     }
 
-    @GetMapping("/api/debug/add-companies")
-    public void addCompanies() {
-        scheduledSvc.populateFosOrgsMDBFromAwards();
-    }
-
-    @PutMapping("/api/debug/companies/all")
+    @GetMapping("/api/debug/populate-companies")
     public void populateCompanies() {
-        scheduledSvc.populateOCCompaniesFromFosOrgs(true);
-    }
-
-    @PutMapping("/api/debug/companies/one")
-    public void populateOneCompany() {
-        scheduledSvc.populateOCCompaniesFromFosOrgs(false);
+        scheduledSvc.populateFosOrgsMDBFromAwards();
     }
 
     @DeleteMapping("/api/debug/clear-graphs")
@@ -110,7 +99,6 @@ public class Debug {
 
     @PutMapping("/api/debug/populate-all")
     public void populateAll() {
-        addCompanies();
         populateCompanies();
         populateGraph();
         logger.info("Complete");
@@ -123,14 +111,19 @@ public class Debug {
 
     /**
      * DEBUG CLASS
-     *
+     * <p>
      * calls list of companies
      * pulls back an officer
      * inserts officer and links to company
      */
     @PutMapping("/api/debug/populate-office-bearers")
     public void populateOfficeBearers() {
-        ocCompanies.findAll().forEach(companySchema -> {
+        organisationsGraphRepo.findAll().forEach(organisationNode -> {
+            if (null == organisationNode.getReference() || null == organisationNode.getJurisdiction()) {
+                logger.info("{} not an OC node, skipping", organisationNode);
+                return;
+            }
+            OCCompanySchema companySchema = ocCompanies.findByCompanyNumberAndJurisdictionCode(organisationNode.getReference(), organisationNode.getJurisdiction());
             companySchema.getOfficers().forEach(officer -> {
                 logger.debug("Looking up details for officer {}", getUID(officer.getOfficer().getId()));
                 // warning don't use in production - won't add people to two different companies
@@ -147,25 +140,8 @@ public class Debug {
                     orgOpt = organisationsGraphRepo.findOrgNotHydratingPersons(orgId);
                 }
 
-                // if it's still empty it may be the formatting is wrong
-                if (orgOpt.isEmpty()) {
-                    final String altId = getAlternativeId(companySchema);
-                    logger.warn("Having to look up using alternative ID {}", altId);
-
-                    orgOpt = organisationsGraphRepo.findOrgHydratingPersons(altId);
-                    if (orgOpt.isEmpty()) {
-                        orgOpt = organisationsGraphRepo.findOrgNotHydratingPersons(altId);
-                    }
-
-                    if (orgOpt.isEmpty()) {
-                        // screw it
-                        throw new RuntimeException();
-                    }
-                }
-
                 // null
                 OrganisationNode org = orgOpt.get();
-
 
                 OrgPersonLink orgPersonLink = new OrgPersonLink(
                         new PersonNode(
@@ -186,32 +162,7 @@ public class Debug {
                     org.getOrgPersons().add(orgPersonLink);
                     organisationsGraphRepo.save(org);
                 }
-                // }
             });
-        });
-    }
-
-    // TODO quick fix - needs properly fixed on import!
-    private String getAlternativeId(OCCompanySchema companySchema) {
-        // if starts with a zero, drop them
-        // otherwise pad
-        return (companySchema.getCompanyNumber().startsWith("0") ?
-                String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber().replaceFirst("^0+(?!$)", "")) :
-                String.format("%s:%s", companySchema.getJurisdictionCode(), StringUtils.leftPad(companySchema.getCompanyNumber(), 8, "0")));
-    }
-
-    @PutMapping("/api/debug/verify-all-oc")
-    public void verifyAllOC() {
-        organisationsGraphRepo.findAll().forEach(org -> {
-            if (org.getId().startsWith("gb:")) {
-                OrganisationNode organisationNode = organisationsGraphRepo.findOrgHydratingPersons(org.getId()).orElse(
-                        organisationsGraphRepo.findOrgNotHydratingPersons(org.getId()).orElseThrow()
-                );
-                if (ocCompanies.existsByCompanyNumber(org.getId().split(":")[1])) {
-                    logger.debug(String.format("Updating %s to mark as verified", organisationNode.getId()));
-                    organisationsGraphRepo.save(organisationNode.setVerified(true));
-                }
-            }
         });
     }
 

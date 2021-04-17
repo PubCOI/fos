@@ -395,9 +395,10 @@ public class GraphRest {
     public String getSpecificOrganisationForSearchResult(@PathVariable String orgId) {
         Map<String, Object> bindParams = new HashMap<>();
         bindParams.put("orgId", orgId);
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("match (o:Organisation)-[ref:AWARDED_TO]-(a:Award) " +
-                "WHERE o.id = $orgId " +
-                "RETURN a, ref, o").bindAll(bindParams);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH (o:Organisation) WHERE o.id = $orgId " +
+                        "OPTIONAL MATCH (o:Organisation)-[ref:AWARDED_TO]-(a:Award) " +
+                        "RETURN o, ref, a").bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {

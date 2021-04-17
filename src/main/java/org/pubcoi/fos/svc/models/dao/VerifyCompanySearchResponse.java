@@ -10,6 +10,7 @@ public class VerifyCompanySearchResponse {
     String address;
     URI chUrl;
     URI ocUrl;
+    Boolean flagged = false;
 
     public VerifyCompanySearchResponse(OCCompanySchemaWrapper company) {
         if (null == company || null == company.getCompany()) return;
@@ -62,6 +63,15 @@ public class VerifyCompanySearchResponse {
 
     public VerifyCompanySearchResponse setOcUrl(URI ocUrl) {
         this.ocUrl = ocUrl;
+        return this;
+    }
+
+    public Boolean getFlagged() {
+        return flagged;
+    }
+
+    public VerifyCompanySearchResponse setFlagged(Boolean flagged) {
+        this.flagged = flagged;
         return this;
     }
 }

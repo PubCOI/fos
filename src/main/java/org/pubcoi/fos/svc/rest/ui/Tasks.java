@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.rest.ui;
 
+import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
@@ -7,6 +8,7 @@ import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.mdb.FosUserRepo;
 import org.pubcoi.fos.svc.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.mdb.TasksRepo;
+import org.pubcoi.fos.svc.mdb.UserObjectFlagRepo;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
@@ -14,7 +16,9 @@ import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.rest.UI;
 import org.pubcoi.fos.svc.services.OCRestSvc;
+import org.pubcoi.fos.svc.services.ScheduledSvc;
 import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
+import org.pubcoi.fos.svc.services.Utils;
 import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +41,8 @@ public class Tasks {
     final OrganisationsMDBRepo orgMDBRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
     final OCRestSvc ocRestSvc;
+    final UserObjectFlagRepo objectFlagsRepo;
+    final ScheduledSvc scheduledSvc;
 
     public Tasks(
             TasksRepo tasksRepo,
@@ -45,7 +51,7 @@ public class Tasks {
             ClientsGraphRepo clientGRepo,
             OrganisationsMDBRepo orgMDBRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
-            OCRestSvc ocRestSvc) {
+            OCRestSvc ocRestSvc, UserObjectFlagRepo objectFlagsRepo, ScheduledSvc scheduledSvc) {
         this.tasksRepo = tasksRepo;
         this.transactionOrch = transactionOrch;
         this.userRepo = userRepo;
@@ -53,6 +59,8 @@ public class Tasks {
         this.orgMDBRepo = orgMDBRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
         this.ocRestSvc = ocRestSvc;
+        this.objectFlagsRepo = objectFlagsRepo;
+        this.scheduledSvc = scheduledSvc;
     }
 
     /**
@@ -67,8 +75,6 @@ public class Tasks {
             @RequestBody VerifyCompanySearchRequestDAO requestDAO,
             @RequestHeader String authToken
     ) {
-        // TODO ADD OC CACHE
-        // reduce calls to OC via a cache
         String uid = UI.checkAuth(authToken).getUid();
         FosUser user = userRepo.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
@@ -76,6 +82,9 @@ public class Tasks {
         OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
         return wrapper.getResults().getCompanies().stream()
                 .map(company -> new VerifyCompanySearchResponse(company))
+                .peek(response -> {
+                    response.setFlagged(objectFlagsRepo.existsByEntityIdAndUid(response.getId(), user.getUid()));
+                })
                 .collect(Collectors.toList());
     }
 
@@ -170,6 +179,27 @@ public class Tasks {
             return new UpdateClientDAO().setResponse(String.format(
                     "Resolved task: linked %s to %s", req.getSource(), req.getTarget()
             ));
+        }
+
+        if (taskType == FosUITasks.verify_company) {
+            if (null == req.getSource() || null == req.getTarget()) {
+                throw new FosBadRequestException("Source and target must be populated");
+            }
+
+            DRTask task = tasksRepo.getByTaskTypeAndEntity(FosTaskType.resolve_company, orgMDBRepo.findById(req.getSource()).orElseThrow());
+            if (null == task) {
+                throw new FosBadRequestException("Unable to find a task");
+            }
+
+            // looking up target ensures we have it in db
+            OCCompanySchema companySchema = scheduledSvc.getCompany(req.getTarget());
+
+            OrganisationNode source = organisationsGraphRepo.findById(req.getSource()).orElseThrow();
+            OrganisationNode target = organisationsGraphRepo
+                    .findById(Utils.convertOCCompanyToGraphID(req.getTarget()))
+                    .orElse(organisationsGraphRepo.save(new OrganisationNode(companySchema)));
+
+            transactionOrch.exec(FosTransactionBuilder.resolveCompany(source, target, user, null));
         }
 
         throw new FosBadRequestException("Unable to find request type");

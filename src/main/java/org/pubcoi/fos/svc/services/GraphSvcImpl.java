@@ -108,10 +108,8 @@ public class GraphSvcImpl implements GraphSvc {
                     // if it's verified, use the OFFICIAL name for the company (not whatever is in Contracts Finder)
                     String companyName = (verified) ? ocCompany.orElseThrow().getName() : award.getSupplierName();
 
-                    OrganisationNode orgNode = orgGraphRepo.findById(org.getId()).orElse(new OrganisationNode()
-                            .setId(org.getId())
-                            .setVerified(verified)
-                            .setName(companyName)
+                    OrganisationNode orgNode = orgGraphRepo.findById(org.getId()).orElse(
+                            new OrganisationNode(org)
                     );
                     logger.debug("Saving org node: {}", orgNode);
                     orgGraphRepo.save(orgNode);

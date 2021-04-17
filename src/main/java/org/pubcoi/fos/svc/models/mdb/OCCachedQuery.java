@@ -9,6 +9,8 @@ import java.time.OffsetDateTime;
 @Document(collection = "oc_cached_queries")
 public class OCCachedQuery {
 
+    static final String REDACTED = "redacted";
+
     @Id
     String id;
     OffsetDateTime requestDT;
@@ -26,11 +28,12 @@ public class OCCachedQuery {
     }
 
     public static String redact(String queryURL) {
-        return queryURL.replaceAll("(api_token=.[^&]+)", "api_token=redacted");
+        return queryURL.replaceAll("(api_token=.[^&]+)", String.format("api_token=%s", REDACTED));
     }
 
     public static String getHash(String queryURL) {
-        return DigestUtils.sha1Hex(queryURL);
+        String queryStr = queryURL.contains(REDACTED) ? queryURL : redact(queryURL);
+        return DigestUtils.sha1Hex(queryStr);
     }
 
     public OffsetDateTime getRequestDT() {

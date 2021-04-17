@@ -14,11 +14,6 @@ public class FosNonCanonicalOrg extends FosOrganisation {
     FosNonCanonicalOrg() {
     }
 
-    String companyName;
-    String companyAddress;
-    String referenceType;
-    String reference;
-
     public static String resolveId(CFAward award) {
         return String.format("hash:%s", DigestUtils.md5DigestAsHex(
                 (normalise(award.getOrgReference()) +
@@ -34,42 +29,6 @@ public class FosNonCanonicalOrg extends FosOrganisation {
         this.referenceType = (null != award.getOrgReferenceType()) ? award.getOrgReferenceType().toString() : null;
         this.companyName = award.getSupplierName();
         this.companyAddress = award.getSupplierAddress();
-    }
-
-    public String getCompanyName() {
-        return companyName;
-    }
-
-    public FosNonCanonicalOrg setCompanyName(String companyName) {
-        this.companyName = companyName;
-        return this;
-    }
-
-    public String getCompanyAddress() {
-        return companyAddress;
-    }
-
-    public FosNonCanonicalOrg setCompanyAddress(String companyAddress) {
-        this.companyAddress = companyAddress;
-        return this;
-    }
-
-    public String getReferenceType() {
-        return referenceType;
-    }
-
-    public FosNonCanonicalOrg setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
-        return this;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public FosNonCanonicalOrg setReference(String reference) {
-        this.reference = reference;
-        return this;
     }
 
     @Override

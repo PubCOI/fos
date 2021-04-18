@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
+import org.pubcoi.fos.svc.repos.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.springframework.stereotype.Service;
 

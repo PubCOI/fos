@@ -2,7 +2,7 @@ package org.pubcoi.fos.svc.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.pubcoi.fos.svc.mdb.OCCachedQueryRepo;
+import org.pubcoi.fos.svc.repos.mdb.OCCachedQueryRepo;
 import org.pubcoi.fos.svc.models.mdb.OCCachedQuery;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.slf4j.Logger;

@@ -6,8 +6,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 
 @SpringBootApplication
-@EnableMongoRepositories(basePackages = "org.pubcoi.fos.svc.mdb")
-@EnableNeo4jRepositories(basePackages = "org.pubcoi.fos.svc.gdb")
+@EnableMongoRepositories(basePackages = "org.pubcoi.fos.svc.repos.mdb")
+@EnableNeo4jRepositories(basePackages = "org.pubcoi.fos.svc.repos.gdb")
 public class Boot {
     public static void main(String[] args) {
         SpringApplication.run(Boot.class);

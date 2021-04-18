@@ -1,4 +1,4 @@
-package org.pubcoi.fos.svc.gdb;
+package org.pubcoi.fos.svc.repos.gdb;
 
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;

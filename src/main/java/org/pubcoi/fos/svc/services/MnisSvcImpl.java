@@ -2,8 +2,8 @@ package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.cdm.mnis.MnisMembersType;
-import org.pubcoi.fos.svc.mdb.MnisInterestsCacheRepo;
-import org.pubcoi.fos.svc.mdb.MnisMembersRepo;
+import org.pubcoi.fos.svc.repos.mdb.MnisInterestsCacheRepo;
+import org.pubcoi.fos.svc.repos.mdb.MnisMembersRepo;
 import org.pubcoi.fos.svc.models.core.MnisInterestsCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,7 @@
 package org.pubcoi.fos.svc.transactions;
 
-import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.springframework.stereotype.Service;

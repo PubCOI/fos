@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.transactions;
 
-import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;

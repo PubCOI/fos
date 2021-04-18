@@ -1,10 +1,10 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.gdb.NoticesGraphRepo;
-import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.mdb.TransactionMDBRepo;
+import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.NoticesGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.mdb.TransactionMDBRepo;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;

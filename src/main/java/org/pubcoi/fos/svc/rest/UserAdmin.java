@@ -5,7 +5,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
-import org.pubcoi.fos.svc.mdb.FosUserRepo;
+import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.dao.UpdateProfileRequestDAO;
 import org.pubcoi.fos.svc.models.dao.UserLoginDAO;

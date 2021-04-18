@@ -1,9 +1,9 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.gdb.AwardsGraphRepo;
-import org.pubcoi.fos.svc.mdb.AwardsMDBRepo;
-import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
+import org.pubcoi.fos.svc.repos.gdb.AwardsGraphRepo;
+import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
+import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;

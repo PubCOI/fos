@@ -1,4 +1,4 @@
-package org.pubcoi.fos.svc.mdb;
+package org.pubcoi.fos.svc.repos.mdb;
 
 import org.pubcoi.fos.svc.transactions.FosTransaction;
 import org.springframework.data.mongodb.repository.MongoRepository;

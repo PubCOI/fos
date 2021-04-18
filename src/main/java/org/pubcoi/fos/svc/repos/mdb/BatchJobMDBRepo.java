@@ -1,4 +1,4 @@
-package org.pubcoi.fos.svc.mdb;
+package org.pubcoi.fos.svc.repos.mdb;
 
 
 import org.pubcoi.cdm.batch.BatchJob;

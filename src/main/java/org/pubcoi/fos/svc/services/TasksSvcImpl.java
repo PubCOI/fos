@@ -1,6 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.mdb.TasksRepo;
+import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

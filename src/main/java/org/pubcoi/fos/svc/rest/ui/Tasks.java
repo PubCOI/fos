@@ -1,20 +1,37 @@
+/*
+ * Copyright (c) 2021 PubCOI.org. This file is part of Fos@PubCOI.
+ *
+ * Fos@PubCOI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Fos@PubCOI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.pubcoi.fos.svc.rest.ui;
 
 import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
-import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
-import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
-import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
-import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dao.*;
 import org.pubcoi.fos.svc.models.dao.tasks.UpdateNodeDAO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
+import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
+import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
+import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
+import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
 import org.pubcoi.fos.svc.rest.UI;
 import org.pubcoi.fos.svc.services.OCRestSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
@@ -83,9 +100,7 @@ public class Tasks {
         OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
         return wrapper.getResults().getCompanies().stream()
                 .map(company -> new VerifyCompanySearchResponse(company))
-                .peek(response -> {
-                    response.setFlagged(objectFlagsRepo.existsByEntityIdAndUid(response.getId(), user.getUid()));
-                })
+                .peek(response -> response.setFlagged(objectFlagsRepo.existsByEntityIdAndUid(response.getId(), user.getUid())))
                 .collect(Collectors.toList());
     }
 
@@ -105,14 +120,12 @@ public class Tasks {
                                     "Verify details for entity: %s", clientNode.get().getName())
                             );
                         }
-                    }
-                    else if (task.getTaskType().equals(FosTaskType.resolve_company)) {
+                    } else if (task.getTaskType().equals(FosTaskType.resolve_company)) {
                         logger.debug("Resolving task details for entity {}", task.getEntity());
                         Optional<FosOrganisation> org = orgMDBRepo.findById(task.getEntity());
                         if (org.isPresent()) {
-                            task.setDescription(String.format("Verify details for company: %s", ((FosNonCanonicalOrg)org.get()).getCompanyName()));
-                        }
-                        else {
+                            task.setDescription(String.format("Verify details for company: %s", org.get().getCompanyName()));
+                        } else {
                             logger.warn("Unable to resolve task for entity {}", task.getEntity());
                             task = null;
                         }

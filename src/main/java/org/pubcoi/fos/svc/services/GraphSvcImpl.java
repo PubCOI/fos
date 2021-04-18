@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2021 PubCOI.org. This file is part of Fos@PubCOI.
+ *
+ * Fos@PubCOI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Fos@PubCOI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.pubcoi.fos.svc.services;
 
 import com.opencorporates.schemas.OCCompanySchema;
@@ -7,17 +24,17 @@ import org.pubcoi.cdm.cf.AdditionalDetailsType;
 import org.pubcoi.cdm.fos.AttachmentFactory;
 import org.pubcoi.cdm.fos.BatchJobFactory;
 import org.pubcoi.fos.svc.exceptions.FosException;
-import org.pubcoi.fos.svc.repos.gdb.AwardsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.NoticesGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.repos.mdb.*;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.repos.gdb.AwardsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.NoticesGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.mdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -130,8 +147,7 @@ public class GraphSvcImpl implements GraphSvc {
                 } catch (FosException e) {
                     logger.error("Unable to insert entry into graph: is source MDB fully populated?");
                 }
-            }
-            else {
+            } else {
                 logger.debug("Unable to find OC entry for {}", award.getSupplierName());
             }
         });
@@ -169,8 +185,7 @@ public class GraphSvcImpl implements GraphSvc {
                         logger.debug("Awards size: {}", notice.getAwards().size());
                         if (!notice.getAwards().contains(award)) {
                             noticesGRepo.save(notice.addAward(award));
-                        }
-                        else {
+                        } else {
                             logger.debug("Did not add {} to {} (already exists)", award.getId(), notice.getId());
                         }
                     });

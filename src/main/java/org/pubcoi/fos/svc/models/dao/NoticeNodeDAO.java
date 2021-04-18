@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2021 PubCOI.org. This file is part of Fos@PubCOI.
+ *
+ * Fos@PubCOI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Fos@PubCOI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.pubcoi.fos.svc.models.dao;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -34,11 +51,9 @@ public class NoticeNodeDAO {
         }
         if (null != notice.getNotice() && null != notice.getNotice().getTitle() && notice.getNotice().getTitle().length() > 10) {
             this.description = notice.getNotice().getTitle();
-        }
-        else if (null != notice.getNotice() && null != notice.getNotice().getDescription() && notice.getNotice().getDescription().length() > 10) {
+        } else if (null != notice.getNotice() && null != notice.getNotice().getDescription() && notice.getNotice().getDescription().length() > 10) {
             this.description = notice.getNotice().getDescription();
-        }
-        else if (null != notice.getNotice() && null != notice.getNotice().getCpvDescription() && notice.getNotice().getCpvDescription().length() > 10) {
+        } else if (null != notice.getNotice() && null != notice.getNotice().getCpvDescription() && notice.getNotice().getCpvDescription().length() > 10) {
             this.description = notice.getNotice().getCpvDescription();
         }
     }

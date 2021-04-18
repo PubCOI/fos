@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.gdb.PersonsGraphRepo;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -21,7 +22,9 @@ public class PersonsSvcImpl implements PersonsSvc {
 
     @Override
     public PersonNode getPersonGraphObject(String personId) {
-        return personsGraphRepo.findById(personId).orElseThrow();
+        return personsGraphRepo.findById(personId).orElseThrow(() -> new FosRuntimeException(
+                String.format("Unable to find person ID %s in graph", personId)
+        ));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.pubcoi.fos.svc.services;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 
 import java.util.regex.Matcher;
@@ -21,6 +22,10 @@ public class Utils {
         Matcher m = ocCompanyPattern.matcher(objectId);
         if (!m.matches()) throw new FosRuntimeException("Object ID " + objectId + " does not match expected pattern");
         return (String.format("%s:%s", m.group(1), m.group(2)));
+    }
+
+    public static String parliamentaryId(Integer id) {
+        return DigestUtils.sha1Hex(String.format("parliament:%d", id));
     }
 }
 

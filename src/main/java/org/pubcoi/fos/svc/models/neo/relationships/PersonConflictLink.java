@@ -1,7 +1,10 @@
 package org.pubcoi.fos.svc.models.neo.relationships;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.pubcoi.cdm.mnis.MnisMemberType;
+import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
@@ -10,6 +13,8 @@ import org.springframework.data.neo4j.core.schema.TargetNode;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+
+import static org.pubcoi.fos.svc.services.Utils.parliamentaryId;
 
 @RelationshipProperties
 public class PersonConflictLink {
@@ -34,11 +39,16 @@ public class PersonConflictLink {
             FosEntity target, String relationshipType, String relationshipSubtype,
             String transactionId
     ) {
-        this.id = String.format("%s_%s", personId, target.getId());
+        this.id = DigestUtils.sha1Hex(String.format("%s_%s", personId, target.getId()));
         this.target = target;
         this.relationshipType = relationshipType;
         this.relationshipSubtype = relationshipSubtype;
         this.transactions.add(transactionId);
+    }
+
+    public PersonConflictLink(MnisMemberType memberType, DeclaredInterest interest) {
+        this.id = DigestUtils.sha1Hex(String.format("%s_%s", parliamentaryId(memberType.getMemberId()), interest.getId()));
+        this.target = interest;
     }
 
     public String getId() {

@@ -1,7 +1,10 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
+import org.pubcoi.fos.svc.services.Utils;
+import org.springframework.data.neo4j.core.schema.DynamicLabels;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
@@ -20,23 +23,34 @@ public class PersonNode implements FosEntity {
     String id;
     Boolean hidden = false;
     String ocId;
+    Integer parliamentaryId;
     String commonName;
     String occupation;
     String nationality;
     Set<String> transactions = new HashSet<>();
-
+    @DynamicLabels
+    Set<String> labels = new HashSet<>();
     @Relationship("CONFLICT")
     List<PersonConflictLink> conflicts = new ArrayList<>();
 
     PersonNode() {}
 
-    public PersonNode(String openCorporatesId, String name, String occupation, String nationality, String transactionId) {
-        this.id = DigestUtils.sha1Hex(String.format("oc:%s", openCorporatesId));
+    public PersonNode(PersonNodeType personNodeType, String openCorporatesId, String name, String occupation, String nationality, String transactionId) {
         this.ocId = openCorporatesId;
+        this.id = DigestUtils.sha1Hex(String.format("oc:%s", openCorporatesId));
+        this.labels.add(personNodeType.name());
         this.commonName = name;
         this.occupation = occupation;
         this.nationality = nationality;
         this.transactions.add(transactionId);
+    }
+
+    public PersonNode(MnisMemberType memberType) {
+        this.parliamentaryId = memberType.getMemberId();
+        this.id = Utils.parliamentaryId(memberType.getMemberId());
+        this.occupation = String.format("politician: Member_Id %d", memberType.getMemberId());
+        this.labels.add(PersonNodeType.Politician.name());
+        this.commonName = memberType.getFullTitle();
     }
 
     public PersonNode(String name) {
@@ -44,8 +58,22 @@ public class PersonNode implements FosEntity {
         this.commonName = name;
     }
 
+    public Integer getParliamentaryId() {
+        return parliamentaryId;
+    }
+
+    public PersonNode setParliamentaryId(Integer parliamentaryId) {
+        this.parliamentaryId = parliamentaryId;
+        return this;
+    }
+
     public String getId() {
         return id;
+    }
+
+    public PersonNode setId(String id) {
+        this.id = id;
+        return this;
     }
 
     @Override
@@ -56,11 +84,6 @@ public class PersonNode implements FosEntity {
     @Override
     public FosEntity setHidden(Boolean hidden) {
         this.hidden = hidden;
-        return this;
-    }
-
-    public PersonNode setId(String id) {
-        this.id = id;
         return this;
     }
 

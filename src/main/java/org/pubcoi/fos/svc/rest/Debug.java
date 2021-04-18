@@ -1,34 +1,44 @@
 package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.svc.gdb.ClientNodeFTS;
-import org.pubcoi.fos.svc.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.gdb.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.gdb.PersonsGraphRepo;
-import org.pubcoi.fos.svc.mdb.AttachmentMDBRepo;
-import org.pubcoi.fos.svc.mdb.NoticesMDBRepo;
-import org.pubcoi.fos.svc.mdb.OCCompaniesRepo;
-import org.pubcoi.fos.svc.mdb.TasksRepo;
+import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
+import org.pubcoi.cdm.mnis.MnisInterestType;
+import org.pubcoi.cdm.mnis.MnisMemberType;
+import org.pubcoi.cdm.mnis.MnisMembersType;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.gdb.*;
+import org.pubcoi.fos.svc.mdb.*;
+import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNodeType;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
+import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.GraphSvc;
+import org.pubcoi.fos.svc.services.MnisSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
 import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.pubcoi.fos.svc.services.Utils.parliamentaryId;
 
 @Profile("debug")
 @RestController
@@ -46,6 +56,9 @@ public class Debug {
     final ClientsGraphRepo clientsGraphRepo;
     final PersonsGraphRepo personsGraphRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
+    final MnisMembersRepo mnisMembersRepo;
+    final MnisSvc mnisSvc;
+    final DeclaredInterestRepo declaredInterestRepo;
 
     public Debug(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -56,7 +69,11 @@ public class Debug {
             ClientNodeFTS clientNodeFTS,
             TransactionOrchestrationSvc transactionOrchestrationSvc,
             TasksRepo tasksRepo,
-            ClientsGraphRepo clientsGraphRepo, PersonsGraphRepo personsGraphRepo, OrganisationsGraphRepo organisationsGraphRepo) {
+            ClientsGraphRepo clientsGraphRepo,
+            PersonsGraphRepo personsGraphRepo,
+            OrganisationsGraphRepo organisationsGraphRepo,
+            MnisMembersRepo mnisMembersRepo,
+            MnisSvc mnisSvc, DeclaredInterestRepo declaredInterestRepo) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
@@ -68,6 +85,9 @@ public class Debug {
         this.clientsGraphRepo = clientsGraphRepo;
         this.personsGraphRepo = personsGraphRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
+        this.mnisMembersRepo = mnisMembersRepo;
+        this.mnisSvc = mnisSvc;
+        this.declaredInterestRepo = declaredInterestRepo;
     }
 
     @GetMapping("/api/oc-companies")
@@ -145,6 +165,7 @@ public class Debug {
 
                 OrgPersonLink orgPersonLink = new OrgPersonLink(
                         new PersonNode(
+                                PersonNodeType.OfficeBearer,
                                 getUID(officer.getOfficer().getId()),
                                 officer.getOfficer().getName(),
                                 officer.getOfficer().getOccupation(),
@@ -164,6 +185,68 @@ public class Debug {
                 }
             });
         });
+    }
+
+    @PostMapping("/api/datasets/politicians")
+    public String uploadContracts(MultipartHttpServletRequest request) {
+        MultipartFile file = request.getFile("file");
+        if (null == file) {
+            throw new FosBadRequestException("Empty file");
+        }
+        try {
+            JAXBContext context = JAXBContext.newInstance(MnisMembersType.class);
+            Unmarshaller u = context.createUnmarshaller();
+            MnisMembersType array = (MnisMembersType) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
+            for (MnisMemberType mnisMemberType : array.getMember()) {
+                logger.debug("Adding member {}", mnisMemberType.getMemberId());
+                mnisMembersRepo.save(mnisMemberType);
+            }
+        } catch (IOException | JAXBException e) {
+            throw new FosException("Unable to read file stream");
+        }
+        return "ok";
+    }
+
+    @GetMapping("/api/datasets/politicians/populate-100")
+    public String populateOnePolitician() {
+        mnisMembersRepo.findAll().stream()
+                .filter(p -> null == p.getInterests())
+                .limit(100)
+                .forEach(m -> mnisSvc.populateInterestsForMember(m.getMemberId()));
+        return "ok";
+    }
+
+    @GetMapping("/api/datasets/politicians/populate-graph")
+    public void populatePolGraph() {
+        mnisMembersRepo.findAll()
+                .forEach(m -> {
+                    PersonNode p = new PersonNode(m);
+                    if (!personsGraphRepo.existsByParliamentaryId(m.getMemberId())) {
+                        logger.debug("Saving person {}", p);
+                        personsGraphRepo.save(p);
+                    }
+                    boolean changed = false;
+                    for (MnisInterestCategoryType mnisInterestCategoryType : m.getInterests().getCategory()) {
+                        for (MnisInterestType mnisInterestType : mnisInterestCategoryType.getInterest()) {
+                            if (!declaredInterestRepo.existsById(parliamentaryId(mnisInterestType.getId()))) {
+                                logger.debug("Adding conflict {} to person {}", mnisInterestType.getId(), p.getId());
+                                PersonConflictLink conflictLink = new PersonConflictLink(m, new DeclaredInterest(mnisInterestType));
+                                if (null != mnisInterestType.getCreated()) {
+                                    conflictLink.setStartDT(mnisInterestType.getCreated().toZonedDateTime());
+                                }
+                                if (null != mnisInterestType.getDeleted()) {
+                                    conflictLink.setEndDT(mnisInterestType.getDeleted().toZonedDateTime());
+                                }
+                                p.getConflicts().add(conflictLink);
+                                changed = true;
+                            }
+                        }
+                    }
+                    if (changed) {
+                        logger.debug("Saving changes to {}", p.getId());
+                        personsGraphRepo.save(p);
+                    }
+                });
     }
 
     private LocalDate getDate(Object date) {

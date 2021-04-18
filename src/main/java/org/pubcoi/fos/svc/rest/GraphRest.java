@@ -426,9 +426,13 @@ public class GraphRest {
         Map<String, Object> bindParams = new HashMap<>();
         bindParams.put("limit", getLimit(max, 50));
         bindParams.put("orgId", orgId);
+        // if the org is verified or has a LEGAL_ENTITY then it should be marked as 'resolved'
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (:Organisation {id: $orgId})-[:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(p) " +
-                        "MATCH (p)-[ref:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(o:Organisation) return o, ref, p LIMIT $limit")
+                        "MATCH (p)-[ref:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(o:Organisation) " +
+                        "WITH o, exists((o)-[:LEGAL_ENTITY]-()) as o_resolved, ref, p, exists((p)-[:LEGAL_ENTITY]-()) as p_resolved " +
+                        "RETURN {identity: id(o), labels: labels(o), properties: o{.*, resolved: o_resolved}} as o, " +
+                        "ref, {identity: id(p), labels: labels(p), properties: p{.*, resolved: p_resolved}} as p LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());

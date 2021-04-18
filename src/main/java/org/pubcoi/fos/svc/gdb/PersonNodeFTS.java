@@ -20,9 +20,8 @@ public interface PersonNodeFTS extends CrudRepository<PersonNode, String> {
     @Query("CALL db.index.fulltext.queryNodes(\"persons-fts\", $query) " +
             "YIELD node, score " +
             "MATCH(p:Person {id: node.id})-[rel:ORG_PERSON]-(o:Organisation) " +
-            "CALL apoc.create.setProperty(node, \"details\", [o.name]) " +
-            "YIELD node AS populated " +
-            "RETURN populated, populated.id, populated.details AS details, node.commonName AS name, score")
+            "WITH {identity: id(node), labels: labels(node), properties: node{.*, details: [o.name], score: score}} as populated " +
+            "RETURN populated, populated.node.id AS id, populated.node details AS details, populated.node.commonName AS name, populated.node.score AS score")
     List<GraphFTSDetailedResponse> findAnyPersonsMatchingWithDetails(String query);
 
 }

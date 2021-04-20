@@ -17,11 +17,8 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.cdm.pw.RegisterEntryType;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.cdm.pw.PWRootType;
 
-public interface MnisSvc {
-    void populateInterestsForMember(Integer memberId);
-
-    void addInterestsToES(RegisterEntryType entryType, String datasetName) throws FosCoreException;
+public interface XslSvc {
+    PWRootType cleanPWData(String pwRootType);
 }

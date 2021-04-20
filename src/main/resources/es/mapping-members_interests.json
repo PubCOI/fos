@@ -1,0 +1,143 @@
+{
+  "members_interests": {
+    "mappings": {
+      "properties": {
+        "_class": {
+          "type": "keyword"
+        },
+        "category": {
+          "type": "long"
+        },
+        "categoryDescription": {
+          "type": "keyword"
+        },
+        "datasets": {
+          "type": "keyword"
+        },
+        "donation": {
+          "type": "boolean"
+        },
+        "fullTitle": {
+          "type": "text",
+          "analyzer": "members_analyzer"
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "interestHashId": {
+          "type": "keyword"
+        },
+        "parliamentaryId": {
+          "type": "long"
+        },
+        "personId": {
+          "type": "keyword"
+        },
+        "pwPersonId": {
+          "type": "keyword"
+        },
+        "registered": {
+          "type": "date",
+          "format": "epoch_millis"
+        },
+        "text": {
+          "type": "text",
+          "analyzer": "interests_analyzer",
+          "search_analyzer": "autocomplete_search"
+        },
+        "valueMax": {
+          "type": "float"
+        },
+        "valueMin": {
+          "type": "float"
+        },
+        "valueSum": {
+          "type": "float"
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "1",
+        "number_of_replicas": "1",
+        "analysis": {
+          "filter": {
+            "general_stop_words": {
+              "type": "stop",
+              "stopwords": [
+                "a",
+                "an",
+                "and",
+                "as",
+                "at",
+                "be",
+                "but",
+                "by",
+                "for",
+                "had",
+                "has",
+                "have",
+                "he",
+                "her",
+                "him",
+                "his",
+                "how",
+                "i",
+                "if",
+                "in",
+                "is",
+                "it",
+                "me",
+                "my",
+                "no",
+                "of",
+                "on",
+                "or",
+                "so",
+                "some",
+                "such",
+                "than",
+                "that",
+                "the",
+                "then",
+                "these",
+                "this",
+                "those",
+                "to",
+                "we",
+                "who",
+                "''s"
+              ]
+            }
+          },
+          "analyzer": {
+            "interests_analyzer": {
+              "tokenizer": "autocomplete",
+              "filter": [
+                "asciifolding",
+                "lowercase",
+                "general_stop_words"
+              ]
+            },
+            "autocomplete_search": {
+              "tokenizer": "lowercase"
+            },
+            "members_analyzer": {
+              "tokenizer": "autocomplete"
+            }
+          },
+          "tokenizer": {
+            "autocomplete": {
+              "type": "edge_ngram",
+              "min_gram": 2,
+              "max_gram": 12,
+              "token_chars": [
+                "letter"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

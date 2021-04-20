@@ -15,13 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.repos.es;
 
-import org.pubcoi.cdm.pw.RegisterEntryType;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.fos.svc.models.es.PersonDeclaredInterest;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
-public interface MnisSvc {
-    void populateInterestsForMember(Integer memberId);
-
-    void addInterestsToES(RegisterEntryType entryType, String datasetName) throws FosCoreException;
+public interface PersonDeclaredInterestESRepo extends ElasticsearchRepository<PersonDeclaredInterest, String> {
 }

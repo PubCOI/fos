@@ -75,3 +75,11 @@ Verify:
 ```
 SHOW INDEXES
 ```
+
+ES index creation
+
+```$bash
+cat mapping-members_interests.json | \
+    jq '.members_interests' | curl -H "Content-Type: application/json" \
+    "http://127.0.0.1:9200/members_interests" -XPUT -d@-
+```

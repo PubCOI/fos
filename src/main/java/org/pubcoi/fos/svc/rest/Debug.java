@@ -22,7 +22,10 @@ import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.cdm.mnis.MnisMembersType;
+import org.pubcoi.cdm.pw.PWRootType;
+import org.pubcoi.cdm.pw.RegisterEntryType;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -32,14 +35,14 @@ import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.repos.gdb.*;
 import org.pubcoi.fos.svc.repos.mdb.*;
-import org.pubcoi.fos.svc.services.GraphSvc;
-import org.pubcoi.fos.svc.services.MnisSvc;
-import org.pubcoi.fos.svc.services.ScheduledSvc;
-import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
+import org.pubcoi.fos.svc.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -51,6 +54,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,6 +80,8 @@ public class Debug {
     final MnisMembersRepo mnisMembersRepo;
     final MnisSvc mnisSvc;
     final DeclaredInterestRepo declaredInterestRepo;
+    final XslSvc xslSvc;
+    final RestTemplate restTemplate;
 
     public Debug(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -90,7 +96,10 @@ public class Debug {
             PersonsGraphRepo personsGraphRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
             MnisMembersRepo mnisMembersRepo,
-            MnisSvc mnisSvc, DeclaredInterestRepo declaredInterestRepo) {
+            MnisSvc mnisSvc,
+            DeclaredInterestRepo declaredInterestRepo,
+            XslSvc xslSvc,
+            RestTemplate restTemplate) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
@@ -105,7 +114,15 @@ public class Debug {
         this.mnisMembersRepo = mnisMembersRepo;
         this.mnisSvc = mnisSvc;
         this.declaredInterestRepo = declaredInterestRepo;
+        this.xslSvc = xslSvc;
+        this.restTemplate = restTemplate;
     }
+
+    @Value("${pubcoi.fos.apis.parliament.commons-list}")
+    String commonsDataURL;
+
+    @Value("${pubcoi.fos.apis.parliament.lords-list}")
+    String lordsDataURL;
 
     @GetMapping("/api/oc-companies")
     public List<OCCompanySchema> getCompanies() {
@@ -204,8 +221,25 @@ public class Debug {
         });
     }
 
+    /**
+     * This is taking data from PublicWhip data dumps
+     * @return OK if successful
+     */
+    @PostMapping("/api/datasets/members-interests")
+    public String uploadMembersInterests(@RequestBody String input, @RequestParam("dataset") String dataset) {
+        PWRootType cleaned = xslSvc.cleanPWData(input);
+        for (RegisterEntryType register : cleaned.getRegisters()) {
+            try {
+                mnisSvc.addInterestsToES(register, dataset);
+            } catch (FosCoreException e) {
+                throw new FosException();
+            }
+        }
+        return "ok";
+    }
+
     @PostMapping("/api/datasets/politicians")
-    public String uploadContracts(MultipartHttpServletRequest request) {
+    public String uploadMnisData(MultipartHttpServletRequest request) {
         MultipartFile file = request.getFile("file");
         if (null == file) {
             throw new FosBadRequestException("Empty file");
@@ -214,7 +248,7 @@ public class Debug {
             JAXBContext context = JAXBContext.newInstance(MnisMembersType.class);
             Unmarshaller u = context.createUnmarshaller();
             MnisMembersType array = (MnisMembersType) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
-            for (MnisMemberType mnisMemberType : array.getMember()) {
+            for (MnisMemberType mnisMemberType : array.getMembers()) {
                 logger.debug("Adding member {}", mnisMemberType.getMemberId());
                 mnisMembersRepo.save(mnisMemberType);
             }
@@ -224,11 +258,41 @@ public class Debug {
         return "ok";
     }
 
-    @GetMapping("/api/datasets/politicians/populate-100")
+    /**
+     *
+     * Used to do an initial load of politician data (names etc)
+     */
+    @PostMapping("/api/datasets/politicians/bootstrap")
+    public void bootstrapPolData() {
+
+        logger.info("Loading data from commons endpoint");
+        loadMembersData(commonsDataURL);
+
+        logger.info("Loading data from lords endpoint");
+        loadMembersData(lordsDataURL);
+
+        logger.info("Done");
+    }
+
+    private void loadMembersData(String dataUrl) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_XML));
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<MnisMembersType> commonsResponse = restTemplate
+                .exchange(dataUrl, HttpMethod.GET, entity, MnisMembersType.class);
+        if (null != commonsResponse.getBody()) {
+            for (MnisMemberType member : commonsResponse.getBody().getMembers()) {
+                if (!mnisMembersRepo.existsById(member.getMemberId())) {
+                    mnisMembersRepo.save(member);
+                }
+            }
+        }
+    }
+
+    @GetMapping("/api/datasets/politicians/populate-interests")
     public String populateOnePolitician() {
         mnisMembersRepo.findAll().stream()
                 .filter(p -> null == p.getInterests())
-                .limit(100)
                 .forEach(m -> mnisSvc.populateInterestsForMember(m.getMemberId()));
         return "ok";
     }
@@ -243,16 +307,16 @@ public class Debug {
                         personsGraphRepo.save(p);
                     }
                     boolean changed = false;
-                    for (MnisInterestCategoryType mnisInterestCategoryType : m.getInterests().getCategory()) {
-                        for (MnisInterestType mnisInterestType : mnisInterestCategoryType.getInterest()) {
+                    for (MnisInterestCategoryType mnisInterestCategoryType : m.getInterests().getCategories()) {
+                        for (MnisInterestType mnisInterestType : mnisInterestCategoryType.getInterests()) {
                             if (!declaredInterestRepo.existsById(parliamentaryId(mnisInterestType.getId()))) {
                                 logger.debug("Adding conflict {} to person {}", mnisInterestType.getId(), p.getId());
                                 PersonConflictLink conflictLink = new PersonConflictLink(m, new DeclaredInterest(mnisInterestType));
-                                if (null != mnisInterestType.getCreated()) {
-                                    conflictLink.setStartDT(mnisInterestType.getCreated().toZonedDateTime());
+                                if (null != mnisInterestType.getCreatedDT()) {
+                                    conflictLink.setStartDT(mnisInterestType.getCreatedDT().toZonedDateTime());
                                 }
-                                if (null != mnisInterestType.getDeleted()) {
-                                    conflictLink.setEndDT(mnisInterestType.getDeleted().toZonedDateTime());
+                                if (null != mnisInterestType.getDeletedDT()) {
+                                    conflictLink.setEndDT(mnisInterestType.getDeletedDT().toZonedDateTime());
                                 }
                                 p.getConflicts().add(conflictLink);
                                 changed = true;

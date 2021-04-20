@@ -15,13 +15,17 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.exceptions;
 
-import org.pubcoi.cdm.pw.RegisterEntryType;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public interface MnisSvc {
-    void populateInterestsForMember(Integer memberId);
+public class FosCoreException extends Exception {
+    private static final Logger logger = LoggerFactory.getLogger(FosCoreException.class);
 
-    void addInterestsToES(RegisterEntryType entryType, String datasetName) throws FosCoreException;
+    public FosCoreException(String message) {
+        super(message);
+        logger.error("Exception: {}", message);
+    }
+
 }

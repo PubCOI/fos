@@ -21,4 +21,8 @@ public class FosRuntimeException extends RuntimeException {
     public FosRuntimeException(String message) {
         super(message);
     }
+
+    public FosRuntimeException(String message, Throwable e) {
+        super(message, e);
+    }
 }

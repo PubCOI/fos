@@ -15,10 +15,17 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.repos.es;
+package org.pubcoi.fos.svc.models.es;
 
-import org.pubcoi.fos.svc.models.es.PersonDeclaredInterestESType;
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.pubcoi.cdm.mnis.MnisMemberType;
+import org.pubcoi.cdm.pw.RegisterCategoryType;
+import org.pubcoi.cdm.pw.RegisterRecordType;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public interface PersonDeclaredInterestESRepo extends ElasticsearchRepository<PersonDeclaredInterestESType, String> {
+@Document(collection = "members_interests")
+public class PersonDeclaredInterestMDBType extends PersonDeclaredInterest implements DeclaredInterest {
+    PersonDeclaredInterestMDBType() {}
+    protected PersonDeclaredInterestMDBType(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
+        super(member, category, item, datasetName);
+    }
 }

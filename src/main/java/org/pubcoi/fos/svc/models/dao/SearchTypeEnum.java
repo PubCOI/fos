@@ -15,10 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.repos.es;
+package org.pubcoi.fos.svc.models.dao;
 
-import org.pubcoi.fos.svc.models.es.PersonDeclaredInterestESType;
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+public enum SearchTypeEnum {
 
-public interface PersonDeclaredInterestESRepo extends ElasticsearchRepository<PersonDeclaredInterestESType, String> {
+    attachments, interests
+
 }

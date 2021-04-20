@@ -230,12 +230,22 @@ public class Debug {
         PWRootType cleaned = xslSvc.cleanPWData(input);
         for (RegisterEntryType register : cleaned.getRegisters()) {
             try {
-                mnisSvc.addInterestsToES(register, dataset);
+                mnisSvc.addInterestsToMDB(register, dataset);
             } catch (FosCoreException e) {
                 throw new FosException();
             }
         }
         return "ok";
+    }
+
+    @PostMapping("/api/datasets/members-interests/reindex")
+    public void reindexInterests() {
+        mnisSvc.reindex();
+    }
+
+    @PostMapping("/api/datasets/members-interests/reanalyse")
+    public void reanalyseInterests() {
+        mnisSvc.reanalyse();
     }
 
     @PostMapping("/api/datasets/politicians")

@@ -17,9 +17,23 @@
         "donation": {
           "type": "boolean"
         },
+        "donorName": {
+          "type": "text",
+          "analyzer": "names_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
         "fullTitle": {
           "type": "text",
-          "analyzer": "members_analyzer"
+          "analyzer": "names_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
         },
         "id": {
           "type": "keyword"
@@ -122,7 +136,7 @@
             "autocomplete_search": {
               "tokenizer": "lowercase"
             },
-            "members_analyzer": {
+            "names_analyzer": {
               "tokenizer": "autocomplete"
             }
           },

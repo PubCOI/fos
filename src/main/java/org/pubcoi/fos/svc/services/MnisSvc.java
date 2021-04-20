@@ -23,5 +23,9 @@ import org.pubcoi.fos.svc.exceptions.FosCoreException;
 public interface MnisSvc {
     void populateInterestsForMember(Integer memberId);
 
-    void addInterestsToES(RegisterEntryType entryType, String datasetName) throws FosCoreException;
+    void addInterestsToMDB(RegisterEntryType entryType, String datasetName) throws FosCoreException;
+
+    void reindex();
+
+    void reanalyse();
 }

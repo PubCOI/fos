@@ -41,12 +41,12 @@ public class PersonDeclaredInterestFactory {
         validDatasets.addAll(Arrays.asList(datasetsList.split(",")));
     }
 
-    public PersonDeclaredInterest create(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
+    public PersonDeclaredInterest createMDB(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
         // check dataset is valid
         if (!validDatasets.contains(datasetName)) {
             throw new IllegalArgumentException("Dataset name is not valid");
         }
-        return new PersonDeclaredInterest(member, category, item, datasetName);
+        return new PersonDeclaredInterestMDBType(member, category, item, datasetName);
     }
 
 }

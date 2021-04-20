@@ -83,3 +83,22 @@ cat mapping-members_interests.json | \
     jq '.members_interests' | curl -H "Content-Type: application/json" \
     "http://127.0.0.1:9200/members_interests" -XPUT -d@-
 ```
+
+Pulling data in
+
+```
+cat twfy-data.html | sed -E 's/.+(regmem20[0-9]{2}-[0-9]{2}-[0-9]{2}.xml).+/\1/g' | \
+    grep regmem | xargs -I{} curl -O "https://www.theyworkforyou.com/pwdata/scrapedxml/regmem/{}
+
+# then (on mac at least)
+noglob find . -name *.xml -exec gsed -i 's/encoding="ISO-8859-1/encoding="UTF-8/g' {} \;
+
+for file in *.xml; do
+    iconv -f ISO-8859-1 -t UTF-8 "$file" > "$file".utf && mv "$file".utf "$file"
+done
+
+# and post ...
+for file in *.xml ; do curl \
+    "http://127.0.0.1:8084/api/datasets/members-interests?dataset=$file" -XPOST -d@"$file" \
+    -v -H "Content-Type: application/xml" ; done
+```

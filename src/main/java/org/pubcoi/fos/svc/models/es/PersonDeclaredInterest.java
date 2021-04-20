@@ -27,7 +27,6 @@ import org.pubcoi.fos.svc.services.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -44,8 +43,7 @@ import java.util.regex.Pattern;
  * do more powerful aggregation etc on ES than in Neo4j ... also the text searching
  * is a bit more flexible this way
  */
-@Document(indexName = "members_interests")
-public class PersonDeclaredInterest {
+public abstract class PersonDeclaredInterest implements DeclaredInterest {
     private static final Logger logger = LoggerFactory.getLogger(PersonDeclaredInterest.class);
 
     private static String genericDateRegex = "([0-9]{1,2} (?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) [1-2][0-9]{3})";
@@ -53,6 +51,7 @@ public class PersonDeclaredInterest {
     private static Pattern registeredDatePattern = Pattern.compile(String.format("registered %s", genericDateRegex), Pattern.CASE_INSENSITIVE);
     private static Pattern updatedDatePattern = Pattern.compile(String.format("updated %s", genericDateRegex), Pattern.CASE_INSENSITIVE);
     private static Pattern donationPattern = Pattern.compile("name of donor: ", Pattern.CASE_INSENSITIVE);
+    private static Pattern donorPattern = Pattern.compile("name of donor:(.+)(?:address)", Pattern.CASE_INSENSITIVE);
     private static DateTimeFormatter dtfLong = DateTimeFormatter.ofPattern("d MMMM yyyy");
     private static DateTimeFormatter dtfShort = DateTimeFormatter.ofPattern("d MMM yyyy");
 
@@ -79,6 +78,7 @@ public class PersonDeclaredInterest {
     Integer category;
     String categoryDescription;
     Boolean donation = false;
+    String donorName;
     Set<String> datasets = new HashSet<>();
     Float valueMin;
     Float valueMax;
@@ -102,10 +102,10 @@ public class PersonDeclaredInterest {
         this.category = category.getCategoryType();
         this.categoryDescription = category.getCategoryName();
         this.datasets.add(datasetName);
-        parseText();
+        analyseText();
     }
 
-    private void parseText() {
+    public PersonDeclaredInterest analyseText() {
         Matcher valueMatcher = currencyExtractor.matcher(this.text);
         Boolean matched = false;
         Float lowest = null;
@@ -136,6 +136,11 @@ public class PersonDeclaredInterest {
         while (donationMatcher.find()) {
             this.donation = true;
         }
+        Matcher donorMatcher = donorPattern.matcher(this.text);
+        while (donorMatcher.find()) {
+            this.donorName = donorMatcher.group(1).strip();
+        }
+        return this;
     }
 
     private LocalDate getDate(Pattern pattern, String inputText) {
@@ -361,6 +366,15 @@ public class PersonDeclaredInterest {
 
     public PersonDeclaredInterest setFullTitle(String fullTitle) {
         this.fullTitle = fullTitle;
+        return this;
+    }
+
+    public String getDonorName() {
+        return donorName;
+    }
+
+    public PersonDeclaredInterest setDonorName(String donorName) {
+        this.donorName = donorName;
         return this;
     }
 }

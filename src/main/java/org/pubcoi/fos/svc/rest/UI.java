@@ -43,6 +43,7 @@ import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
+import org.pubcoi.fos.svc.models.dao.SearchTypeEnum;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.dao.es.ESAggregationDTO;
 import org.pubcoi.fos.svc.models.dao.es.ESResponseWrapperDTO;
@@ -206,7 +207,8 @@ public class UI {
 
     @PostMapping("/api/search")
     public ESResponseWrapperDTO doSearch(
-            @RequestBody SearchRequestDAO searchRequestDAO
+            @RequestBody SearchRequestDAO searchRequestDAO,
+            @RequestParam("type") SearchTypeEnum searchType
     ) throws Exception {
         SearchRequest request = new SearchRequest().indices("attachments");
         SearchSourceBuilder sb = new SearchSourceBuilder();

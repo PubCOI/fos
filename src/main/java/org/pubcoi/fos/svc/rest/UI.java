@@ -43,7 +43,6 @@ import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
-import org.pubcoi.fos.svc.models.dao.SearchTypeEnum;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
 import org.pubcoi.fos.svc.models.dao.es.ESAggregationDTO;
 import org.pubcoi.fos.svc.models.dao.es.ESResponseWrapperDTO;
@@ -72,6 +71,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -205,10 +205,9 @@ public class UI {
         return new AttachmentDAO(attachment);
     }
 
-    @PostMapping("/api/search")
+    @PostMapping("/api/search/attachments")
     public ESResponseWrapperDTO doSearch(
-            @RequestBody SearchRequestDAO searchRequestDAO,
-            @RequestParam("type") SearchTypeEnum searchType
+            @RequestBody SearchRequestDAO searchRequestDAO
     ) throws Exception {
         SearchRequest request = new SearchRequest().indices("attachments");
         SearchSourceBuilder sb = new SearchSourceBuilder();
@@ -235,18 +234,25 @@ public class UI {
 
     private ESResponseWrapperDTO aggregatedResults(SearchResponse response) {
         ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
-        wrapper.setCount(response.getAggregations().asList().size());
-
         ((ParsedStringTerms) response.getAggregations().get("attachments")).getBuckets().forEach(bucket -> {
-            final Attachment attachment = attachmentMDBRepo.findById(bucket.getKeyAsString()).orElseThrow(() -> new FosBadRequestException("Attachment not found"));
-            final FullNotice notice = noticesMDBRepo.findById(attachment.getNoticeId()).orElseThrow(() -> new FosBadRequestException(String.format("Notice %s not found", attachment.getNoticeId())));
+            final Optional<Attachment> attachment = attachmentMDBRepo.findById(bucket.getKeyAsString());
+            if (attachment.isEmpty()) {
+                logger.trace("Unable to find attachment {}, skipping from search result", bucket.getKeyAsString());
+                return;
+            }
 
-            ESResult aggregationDTO = new ESAggregationDTO(attachment, notice);
+            final Optional<FullNotice> notice = noticesMDBRepo.findById(attachment.get().getNoticeId());
+            if (notice.isEmpty()) {
+                logger.trace("Unable to find notice {}, skipping from search result", bucket.getKeyAsString());
+                return;
+            }
+
+            ESResult aggregationDTO = new ESAggregationDTO(attachment.get(), notice.get());
             aggregationDTO.setHits(bucket.getDocCount());
 
             // only add max of 3 results from each document / 'bucket'
             Arrays.stream(response.getHits().getHits())
-                    .filter(hit -> hit.getSourceAsMap().get(FosESFields.ATTACHMENT_ID).equals(attachment.getId())).limit(3)
+                    .filter(hit -> hit.getSourceAsMap().get(FosESFields.ATTACHMENT_ID).equals(attachment.get().getId())).limit(3)
                     .forEach(page -> {
                         if (null != page.getHighlightFields().get("content")) {
                             Arrays.stream(page.getHighlightFields().get("content").getFragments())
@@ -256,23 +262,28 @@ public class UI {
 
             wrapper.getResults().add(aggregationDTO);
         });
+        wrapper.setCount(wrapper.getResults().size());
         return wrapper;
     }
 
     private ESResponseWrapperDTO singleResults(SearchResponse response) {
         ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
-        wrapper.setCount(response.getHits().getHits().length);
-
         Arrays.stream(response.getHits().getHits())
                 .forEach((SearchHit hit) -> {
                     final String noticeId = (String) hit.getSourceAsMap().get(FosESFields.NOTICE_ID);
-                    final FullNotice notice = noticesMDBRepo.findById(noticeId).orElseThrow(() -> new FosBadRequestException(String.format("Notice %s not found", noticeId)));
+                    final Optional<FullNotice> notice = noticesMDBRepo.findById(noticeId);
+                    if (notice.isEmpty()) {
+                        logger.trace("Unable to find notice {}, skipping from search result", noticeId);
+                        return;
+                    }
+
                     wrapper.getResults().add(
-                            new ESSingleResponseDTO(notice)
+                            new ESSingleResponseDTO(notice.get())
                                     .setPageNumber((Integer) hit.getSourceAsMap().get(FosESFields.PAGE_NUMBER))
                                     .setAttachmentId((String) hit.getSourceAsMap().get(FosESFields.ATTACHMENT_ID))
                     );
                 });
+        wrapper.setCount(wrapper.getResults().size());
         return wrapper;
     }
 

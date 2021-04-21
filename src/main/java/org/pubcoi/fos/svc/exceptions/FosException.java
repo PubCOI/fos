@@ -17,24 +17,31 @@
 
 package org.pubcoi.fos.svc.exceptions;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 public class FosException extends ResponseStatusException {
+    private static final Logger logger = LoggerFactory.getLogger(FosException.class);
 
     public FosException() {
         super(HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("Exception, returning 500");
     }
 
     public FosException(String message) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
+        logger.error("Exception, returning 500: {}", message);
     }
 
     public FosException(HttpStatus status, String message) {
         super(status, message);
+        logger.error("Exception, returning {}: {}", status, message);
     }
 
     public FosException(HttpStatus status) {
         super(status);
+        logger.error("Exception, returning {}", status);
     }
 }

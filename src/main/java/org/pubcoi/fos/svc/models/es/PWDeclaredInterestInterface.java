@@ -15,10 +15,15 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.repos.mdb;
+package org.pubcoi.fos.svc.models.es;
 
-import org.pubcoi.fos.svc.models.es.PersonDeclaredInterestMDBType;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import java.util.Collection;
 
-public interface PersonDeclaredInterestMDBRepo extends MongoRepository<PersonDeclaredInterestMDBType, String> {
+public interface PWDeclaredInterestInterface {
+
+    String getId();
+
+    Collection<? extends String> getFlags();
+
+    Collection<? extends String> getDatasets();
 }

@@ -37,8 +37,17 @@ public class FosMongoConfiguration {
     public MongoCustomConversions mongoCustomConversions() {
         return new MongoCustomConversions(Arrays.asList(
                 new OffsetDateTimeReadConverter(),
-                new OffsetDateTimeWriteConverter()
+                new OffsetDateTimeWriteConverter(),
+                new ClassConverter()
         ));
+    }
+
+    static class ClassConverter implements Converter<Class, String> {
+
+        @Override
+        public String convert(Class source) {
+            return source == null ? null : source.getCanonicalName();
+        }
     }
 
     static class OffsetDateTimeWriteConverter implements Converter<OffsetDateTime, Date> {

@@ -25,7 +25,7 @@ import org.springframework.data.neo4j.core.schema.Node;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.pubcoi.fos.svc.services.Utils.parliamentaryId;
+import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 
 @Node(primaryLabel = "Interest")
 public class DeclaredInterest implements FosEntity {
@@ -45,7 +45,7 @@ public class DeclaredInterest implements FosEntity {
     DeclaredInterest() {}
 
     public DeclaredInterest(MnisInterestType interestType) {
-        this.id = parliamentaryId(interestType.getId());
+        this.id = mnisIdHash(interestType.getId());
         this.text = interestType.getRegisteredInterest();
     }
 

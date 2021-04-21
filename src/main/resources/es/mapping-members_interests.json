@@ -5,15 +5,6 @@
         "_class": {
           "type": "keyword"
         },
-        "category": {
-          "type": "long"
-        },
-        "categoryDescription": {
-          "type": "keyword"
-        },
-        "datasets": {
-          "type": "keyword"
-        },
         "donation": {
           "type": "boolean"
         },
@@ -26,7 +17,25 @@
             }
           }
         },
-        "fullTitle": {
+        "id": {
+          "type": "keyword"
+        },
+        "pwInterestId": {
+          "type": "keyword"
+        },
+        "mnisCategory": {
+          "type": "long"
+        },
+        "mnisCategoryDescription": {
+          "type": "keyword"
+        },
+        "mnisInterestId": {
+          "type": "long"
+        },
+        "mnisPersonId": {
+          "type": "long"
+        },
+        "personFullName": {
           "type": "text",
           "analyzer": "names_analyzer",
           "fields": {
@@ -35,35 +44,35 @@
             }
           }
         },
-        "id": {
+        "personNodeId": {
           "type": "keyword"
         },
-        "interestHashId": {
-          "type": "keyword"
-        },
-        "parliamentaryId": {
+        "pwCategory": {
           "type": "long"
         },
-        "personId": {
+        "pwCategoryDescription": {
           "type": "keyword"
         },
         "pwPersonId": {
           "type": "keyword"
         },
-        "registered": {
+        "registeredDate": {
           "type": "date",
           "format": "epoch_millis"
+        },
+        "source": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
         },
         "text": {
           "type": "text",
           "analyzer": "interests_analyzer",
           "search_analyzer": "autocomplete_search"
-        },
-        "valueMax": {
-          "type": "float"
-        },
-        "valueMin": {
-          "type": "float"
         },
         "valueSum": {
           "type": "float"

@@ -17,9 +17,12 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
+import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.cdm.mnis.MnisMembersType;
 import org.pubcoi.cdm.pw.RegisterCategoryType;
@@ -29,10 +32,11 @@ import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.core.MnisInterestsCache;
 import org.pubcoi.fos.svc.models.es.*;
-import org.pubcoi.fos.svc.repos.es.PersonDeclaredInterestESRepo;
+import org.pubcoi.fos.svc.repos.es.MembersInterestsESRepo;
 import org.pubcoi.fos.svc.repos.mdb.MnisInterestsCacheRepo;
 import org.pubcoi.fos.svc.repos.mdb.MnisMembersRepo;
-import org.pubcoi.fos.svc.repos.mdb.PersonDeclaredInterestMDBRepo;
+import org.pubcoi.fos.svc.repos.mdb.ParentRecordTypeMDBRepo;
+import org.pubcoi.fos.svc.repos.mdb.PWDeclaredInterestMDBRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,10 +59,11 @@ public class MnisSvcImpl implements MnisSvc {
 
     final MnisMembersRepo mnisMembersRepo;
     final MnisInterestsCacheRepo mnisInterestsCacheRepo;
-    final PersonDeclaredInterestESRepo declaredInterestESRepo;
-    final PersonDeclaredInterestMDBRepo declaredInterestMDBRepo;
+    final MembersInterestsESRepo membersInterestsESRepo;
+    final PWDeclaredInterestMDBRepo pwDeclaredInterestMDBRepo;
     final RestTemplate restTemplate;
-    final PersonDeclaredInterestFactory declaredInterestFactory;
+    final PWDeclaredInterestFactory declaredInterestFactory;
+    final ParentRecordTypeMDBRepo parentRecordTypeMDBRepo;
     Map<String, Integer> pwToMemberLookup = new HashMap<>();
     Map<Integer, String> memberToPwLookup = new HashMap<>();
 
@@ -106,15 +111,18 @@ public class MnisSvcImpl implements MnisSvc {
 
     public MnisSvcImpl(MnisMembersRepo mnisMembersRepo,
                        MnisInterestsCacheRepo mnisInterestsCacheRepo,
-                       PersonDeclaredInterestESRepo declaredInterestESRepo,
-                       PersonDeclaredInterestMDBRepo declaredInterestMDBRepo, RestTemplate restTemplate,
-                       PersonDeclaredInterestFactory declaredInterestFactory) {
+                       MembersInterestsESRepo membersInterestsESRepo,
+                       PWDeclaredInterestMDBRepo pwDeclaredInterestMDBRepo,
+                       RestTemplate restTemplate,
+                       PWDeclaredInterestFactory declaredInterestFactory,
+                       ParentRecordTypeMDBRepo parentRecordTypeMDBRepo) {
         this.mnisMembersRepo = mnisMembersRepo;
         this.mnisInterestsCacheRepo = mnisInterestsCacheRepo;
-        this.declaredInterestESRepo = declaredInterestESRepo;
-        this.declaredInterestMDBRepo = declaredInterestMDBRepo;
+        this.membersInterestsESRepo = membersInterestsESRepo;
+        this.pwDeclaredInterestMDBRepo = pwDeclaredInterestMDBRepo;
         this.restTemplate = restTemplate;
         this.declaredInterestFactory = declaredInterestFactory;
+        this.parentRecordTypeMDBRepo = parentRecordTypeMDBRepo;
     }
 
     @Override
@@ -152,8 +160,7 @@ public class MnisSvcImpl implements MnisSvc {
                 logger.error(String.format("Unable to find member ID %s (%s)", entryType.getPersonId(), entryType.getMemberName()));
                 return;
             }
-        }
-        else {
+        } else {
             Optional<MnisMemberType> mdbMember = mnisMembersRepo.findById(memberId);
             if (mdbMember.isEmpty()) {
                 logger.error("Unable to find member {} ({}) in MDB", memberId, entryType.getMemberName());
@@ -166,12 +173,16 @@ public class MnisSvcImpl implements MnisSvc {
 
         for (RegisterCategoryType category : entryType.getCategories()) {
             for (RegisterRecordType record : category.getRecords()) {
+                String parentRecordId = hashOf(member, entryType, record);
+                record.setId(parentRecordId);
+                parentRecordTypeMDBRepo.save(record);
                 for (RegisterRecordType.RegisterRecordItem item : record.getItems()) {
                     if (item.getValue().equalsIgnoreCase("nil")) {
                         logger.info("Entry for {} ({}) is nil, skipping", entryType.getPersonId(), member.getFullTitle());
                     } else {
-                        PersonDeclaredInterest declaredInterest = declaredInterestFactory.createMDB(member, category, item, datasetName);
+                        PWDeclaredInterest declaredInterest = declaredInterestFactory.createMDB(member, category, item, datasetName);
                         declaredInterest.getFlags().addAll(flags);
+                        declaredInterest.setParentRecordId(parentRecordId);
                         upsertInterestIntoMDB(declaredInterest);
 //                        addToES(member, category, item, datasetName, flags);
                     }
@@ -180,30 +191,73 @@ public class MnisSvcImpl implements MnisSvc {
         }
     }
 
+    /**
+     * Generates a hash of the record
+     *
+     * @param member    member so as to include ID in hash
+     * @param entryType entrytype so as to include dt
+     * @return a sha1 hash that can be used to refer back to the record
+     */
+    private String hashOf(MnisMemberType member, RegisterEntryType entryType, RegisterRecordType recordType) {
+        StringBuilder sb = new StringBuilder();
+
+        for (RegisterRecordType.RegisterRecordItem item : recordType.getItems()) {
+            sb.append(item.getValue().toUpperCase().replaceAll("[^A-Z0-9]", ""));
+        }
+
+        return DigestUtils.sha1Hex(String.format(
+                "%s:%s:%s", member.getMemberId(), entryType.getDate(), sb.toString()
+        ).getBytes());
+    }
+
     @Override
     public void reindex() {
         AtomicInteger count = new AtomicInteger(0);
-        float totalDocs = declaredInterestMDBRepo.findAll().size();
-        declaredInterestMDBRepo.findAll().forEach(interest -> {
-            int current = count.getAndIncrement();
-            if (current % 100 == 0) {
-                logger.debug("Reindexed {} documents ({}%)", current, String.format("%.2f", (current == 0) ? 0 : (current / totalDocs) * 100.0));
+        AtomicInteger insertions = new AtomicInteger(0);
+        float totalDocs = pwDeclaredInterestMDBRepo.findAll().size() + mnisMembersRepo.findAll().size();
+        pwDeclaredInterestMDBRepo.findAll().forEach(interest -> {
+            logProgress(count, totalDocs);
+            MnisMemberType pwMember = mnisMembersRepo.findById(interest.getMnisPersonId()).orElseThrow();
+            membersInterestsESRepo.save(new MemberInterest(pwMember, interest));
+            logInsertions(insertions);
+        });
+        mnisMembersRepo.findAll().forEach(member -> {
+            logProgress(count, totalDocs);
+            for (MnisInterestCategoryType category : member.getInterests().getCategories()) {
+                for (MnisInterestType interest : category.getInterests()) {
+                    membersInterestsESRepo.save(new MemberInterest(member, category, interest));
+                    logInsertions(insertions);
+                }
             }
-            declaredInterestESRepo.save(PersonDeclaredInterestESType.asESType(interest));
         });
         logger.debug("Finished reindexing {} documents", count.get());
+        logger.debug("Upserted {} documents in total", insertions.get());
+    }
+
+    private void logProgress(AtomicInteger count, float totalDocs) {
+        int current = count.getAndIncrement();
+        if (current % 100 == 0) {
+            logger.debug("Reindexed {} documents ({}%)", current, String.format("%.2f", (current == 0) ? 0 : (current / totalDocs) * 100.0));
+        }
+    }
+
+    private void logInsertions(AtomicInteger count) {
+        int current = count.incrementAndGet();
+        if (current % 100 == 0) {
+            logger.debug("Upserted {} documents", current);
+        }
     }
 
     @Override
     public void reanalyse() {
         AtomicInteger count = new AtomicInteger(0);
-        float totalDocs = declaredInterestMDBRepo.findAll().size();
-        declaredInterestMDBRepo.findAll().forEach(interest -> {
+        float totalDocs = pwDeclaredInterestMDBRepo.findAll().size();
+        pwDeclaredInterestMDBRepo.findAll().forEach(interest -> {
             int current = count.getAndIncrement();
             if (current % 100 == 0) {
                 logger.debug("Reanalysed {} documents ({}%)", current, String.format("%.2f", (current == 0) ? 0 : (current / totalDocs) * 100.0));
             }
-            declaredInterestMDBRepo.save((PersonDeclaredInterestMDBType) interest.analyseText());
+            pwDeclaredInterestMDBRepo.save((PWDeclaredInterestMDBType) interest.analyseText());
         });
         logger.debug("Finished reanalysing {} documents", count.get());
     }
@@ -212,19 +266,14 @@ public class MnisSvcImpl implements MnisSvc {
     // for reference, ~10k records causes ~200k updates (where the same interest appears multiple times across
     // different datasets)
     // ... if we weren't trying to merge, we could skip this and go straight to indexing on ES
-    private void upsertInterestIntoMDB(PersonDeclaredInterest newInterest) {
-        Optional<PersonDeclaredInterestMDBType> oldInterest = declaredInterestMDBRepo.findById(newInterest.getId());
+    private void upsertInterestIntoMDB(PWDeclaredInterest newInterest) {
+        Optional<PWDeclaredInterestMDBType> oldInterest = pwDeclaredInterestMDBRepo.findById(newInterest.getId());
         // we want to merge flags and datasets
         if (oldInterest.isPresent()) {
             newInterest.getFlags().addAll(oldInterest.get().getFlags());
             newInterest.getDatasets().addAll(oldInterest.get().getDatasets());
         }
-        declaredInterestMDBRepo.save((PersonDeclaredInterestMDBType) newInterest);
-    }
-
-    private void addToES(PersonDeclaredInterest newInterest) {
-        declaredInterestESRepo.save(PersonDeclaredInterestESType.asESType(newInterest));
-        logger.debug("Created interest {}", newInterest.getId());
+        pwDeclaredInterestMDBRepo.save((PWDeclaredInterestMDBType) newInterest);
     }
 
 }

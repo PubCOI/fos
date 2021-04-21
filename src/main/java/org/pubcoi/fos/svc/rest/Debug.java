@@ -59,7 +59,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.pubcoi.fos.svc.services.Utils.parliamentaryId;
+import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 
 @Profile("debug")
 @RestController
@@ -319,7 +319,7 @@ public class Debug {
                     boolean changed = false;
                     for (MnisInterestCategoryType mnisInterestCategoryType : m.getInterests().getCategories()) {
                         for (MnisInterestType mnisInterestType : mnisInterestCategoryType.getInterests()) {
-                            if (!declaredInterestRepo.existsById(parliamentaryId(mnisInterestType.getId()))) {
+                            if (!declaredInterestRepo.existsById(mnisIdHash(mnisInterestType.getId()))) {
                                 logger.debug("Adding conflict {} to person {}", mnisInterestType.getId(), p.getId());
                                 PersonConflictLink conflictLink = new PersonConflictLink(m, new DeclaredInterest(mnisInterestType));
                                 if (null != mnisInterestType.getCreatedDT()) {

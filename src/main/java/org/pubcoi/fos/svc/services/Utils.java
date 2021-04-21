@@ -41,7 +41,12 @@ public class Utils {
         return (String.format("%s:%s", m.group(1), m.group(2)));
     }
 
-    public static String parliamentaryId(Integer id) {
+    /**
+     * Note the MNIS ID is considered the 'canonical' id for any politicians on this system
+     * @param id the Member Naming Information Service (MNIS) ID
+     * @return a hash of the MNIS ID
+     */
+    public static String mnisIdHash(Integer id) {
         return DigestUtils.sha1Hex(String.format("parliament:%d", id));
     }
 }

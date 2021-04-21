@@ -31,7 +31,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static org.pubcoi.fos.svc.services.Utils.parliamentaryId;
+import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 
 @RelationshipProperties
 public class PersonConflictLink {
@@ -64,7 +64,7 @@ public class PersonConflictLink {
     }
 
     public PersonConflictLink(MnisMemberType memberType, DeclaredInterest interest) {
-        this.id = DigestUtils.sha1Hex(String.format("%s_%s", parliamentaryId(memberType.getMemberId()), interest.getId()));
+        this.id = DigestUtils.sha1Hex(String.format("%s_%s", mnisIdHash(memberType.getMemberId()), interest.getId()));
         this.target = interest;
     }
 

@@ -22,20 +22,20 @@ import org.pubcoi.cdm.pw.RegisterCategoryType;
 import org.pubcoi.cdm.pw.RegisterRecordType;
 import org.springframework.data.elasticsearch.annotations.Document;
 
-@Document(indexName = "members_interests")
-public class PersonDeclaredInterestESType extends PersonDeclaredInterest implements DeclaredInterest {
-    PersonDeclaredInterestESType() {}
-    protected PersonDeclaredInterestESType(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
+@Document(indexName = "pw_interests")
+public class PWDeclaredInterestESType extends PWDeclaredInterest implements PWDeclaredInterestInterface {
+    PWDeclaredInterestESType() {}
+    protected PWDeclaredInterestESType(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
         super(member, category, item, datasetName);
     }
 
-    public PersonDeclaredInterestESType(PersonDeclaredInterest type) {
+    public PWDeclaredInterestESType(PWDeclaredInterest type) {
         this.id = type.getId();
         this.personId = type.getPersonId();
         this.interestId = type.getInterestId();
         this.interestHashId = type.getInterestHashId();
         this.pwPersonId = type.getPwPersonId();
-        this.parliamentaryId = type.getParliamentaryId();
+        this.mnisPersonId = type.getMnisPersonId();
         this.fullTitle = type.getFullTitle();
         this.text = type.getText();
         this.registered = type.getRegistered();
@@ -52,7 +52,7 @@ public class PersonDeclaredInterestESType extends PersonDeclaredInterest impleme
         this.flags.addAll(type.getFlags());
     }
 
-    public static PersonDeclaredInterestESType asESType(PersonDeclaredInterest type) {
-        return (type instanceof PersonDeclaredInterestESType) ? (PersonDeclaredInterestESType) type : new PersonDeclaredInterestESType(type);
+    public static PWDeclaredInterestESType asESType(PWDeclaredInterest type) {
+        return (type instanceof PWDeclaredInterestESType) ? (PWDeclaredInterestESType) type : new PWDeclaredInterestESType(type);
     }
 }

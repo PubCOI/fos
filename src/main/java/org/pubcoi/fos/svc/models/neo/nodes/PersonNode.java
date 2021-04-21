@@ -64,7 +64,7 @@ public class PersonNode implements FosEntity {
 
     public PersonNode(MnisMemberType memberType) {
         this.parliamentaryId = memberType.getMemberId();
-        this.id = Utils.parliamentaryId(memberType.getMemberId());
+        this.id = Utils.mnisIdHash(memberType.getMemberId());
         this.occupation = String.format("politician: Member_Id %d", memberType.getMemberId());
         this.labels.add(PersonNodeType.Politician.name());
         this.commonName = memberType.getFullTitle();

@@ -15,15 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.models.es;
+package org.pubcoi.fos.svc.repos.es;
 
-import java.util.Collection;
+import org.pubcoi.fos.svc.models.es.MemberInterest;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
-public interface DeclaredInterest {
-
-    String getId();
-
-    Collection<? extends String> getFlags();
-
-    Collection<? extends String> getDatasets();
+public interface MembersInterestsESRepo extends ElasticsearchRepository<MemberInterest, String> {
 }

@@ -15,10 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.repos.es;
+package org.pubcoi.fos.svc.repos.mdb;
 
-import org.pubcoi.fos.svc.models.es.PersonDeclaredInterestESType;
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.pubcoi.fos.svc.models.es.PWDeclaredInterestMDBType;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface PersonDeclaredInterestESRepo extends ElasticsearchRepository<PersonDeclaredInterestESType, String> {
+public interface PWDeclaredInterestMDBRepo extends MongoRepository<PWDeclaredInterestMDBType, String> {
 }

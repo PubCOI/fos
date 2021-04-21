@@ -43,8 +43,8 @@ import java.util.regex.Pattern;
  * do more powerful aggregation etc on ES than in Neo4j ... also the text searching
  * is a bit more flexible this way
  */
-public abstract class PersonDeclaredInterest implements DeclaredInterest {
-    private static final Logger logger = LoggerFactory.getLogger(PersonDeclaredInterest.class);
+public abstract class PWDeclaredInterest implements PWDeclaredInterestInterface {
+    private static final Logger logger = LoggerFactory.getLogger(PWDeclaredInterest.class);
 
     private static String genericDateRegex = "([0-9]{1,2} (?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?) [1-2][0-9]{3})";
     private static Pattern currencyExtractor = Pattern.compile("£((?:([0-9]+))?(?:,)?(?:([0-9]+))?(?:,)?(?:([0-9]+))?(?:,)?(?:([0-9]+))?(?:\\.)?(?:([0-9]+)))");
@@ -69,7 +69,10 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
     // if data is from publicwhip, they use a different person ID than the Member_Id
     // example: uk.org.publicwhip/person/123456
     String pwPersonId;
-    Integer parliamentaryId;
+    Integer mnisPersonId;
+    // the ENTIRE record is stored elsewhere to allow full context of item to be sought if so desired
+    // ID is hash of a canonicalised form ...
+    String parentRecordId;
     String fullTitle;
     String text;
     LocalDate registered;
@@ -85,18 +88,18 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
     Float valueSum;
     Set<String> flags = new HashSet<>();
 
-    PersonDeclaredInterest() {
+    PWDeclaredInterest() {
     }
 
-    protected PersonDeclaredInterest(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
+    protected PWDeclaredInterest(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
         String c14n = canonicalize(item.getValue());
         this.id = DigestUtils.sha1Hex(String.format("%s:%s:%s", member.getMemberId(), category.getCategoryType(), DigestUtils.sha1Hex(c14n)));
-        this.personId = Utils.parliamentaryId(member.getMemberId());
+        this.personId = Utils.mnisIdHash(member.getMemberId());
         // if the entry moves to another category we don't necessarily care ... so just keep hash to member id + c14n
         this.interestHashId = DigestUtils.sha1Hex(String.format("%s:%s", member.getMemberId(), this.id));
         // note this is populated by an earlier call
         this.pwPersonId = member.getPwId();
-        this.parliamentaryId = member.getMemberId();
+        this.mnisPersonId = member.getMemberId();
         this.fullTitle = member.getFullTitle();
         this.text = item.getValue();
         this.category = category.getCategoryType();
@@ -105,7 +108,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         analyseText();
     }
 
-    public PersonDeclaredInterest analyseText() {
+    public PWDeclaredInterest analyseText() {
         Matcher valueMatcher = currencyExtractor.matcher(this.text);
         Boolean matched = false;
         Float lowest = null;
@@ -173,7 +176,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return id;
     }
 
-    public PersonDeclaredInterest setId(String id) {
+    public PWDeclaredInterest setId(String id) {
         this.id = id;
         return this;
     }
@@ -182,7 +185,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return personId;
     }
 
-    public PersonDeclaredInterest setPersonId(String personId) {
+    public PWDeclaredInterest setPersonId(String personId) {
         this.personId = personId;
         return this;
     }
@@ -191,7 +194,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return interestHashId;
     }
 
-    public PersonDeclaredInterest setInterestHashId(String interestHashId) {
+    public PWDeclaredInterest setInterestHashId(String interestHashId) {
         this.interestHashId = interestHashId;
         return this;
     }
@@ -200,7 +203,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return text;
     }
 
-    public PersonDeclaredInterest setText(String text) {
+    public PWDeclaredInterest setText(String text) {
         this.text = text;
         return this;
     }
@@ -209,7 +212,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return pwPersonId;
     }
 
-    public PersonDeclaredInterest setPwPersonId(String pwPersonId) {
+    public PWDeclaredInterest setPwPersonId(String pwPersonId) {
         this.pwPersonId = pwPersonId;
         return this;
     }
@@ -218,7 +221,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return fromDate;
     }
 
-    public PersonDeclaredInterest setFromDate(Date fromDate) {
+    public PWDeclaredInterest setFromDate(Date fromDate) {
         this.fromDate = fromDate;
         return this;
     }
@@ -227,7 +230,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return toDate;
     }
 
-    public PersonDeclaredInterest setToDate(Date toDate) {
+    public PWDeclaredInterest setToDate(Date toDate) {
         this.toDate = toDate;
         return this;
     }
@@ -236,7 +239,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return category;
     }
 
-    public PersonDeclaredInterest setCategory(Integer category) {
+    public PWDeclaredInterest setCategory(Integer category) {
         this.category = category;
         return this;
     }
@@ -245,7 +248,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return categoryDescription;
     }
 
-    public PersonDeclaredInterest setCategoryDescription(String categoryDescription) {
+    public PWDeclaredInterest setCategoryDescription(String categoryDescription) {
         this.categoryDescription = categoryDescription;
         return this;
     }
@@ -254,7 +257,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return donation;
     }
 
-    public PersonDeclaredInterest setDonation(Boolean donation) {
+    public PWDeclaredInterest setDonation(Boolean donation) {
         this.donation = donation;
         return this;
     }
@@ -263,7 +266,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return valueMin;
     }
 
-    public PersonDeclaredInterest setValueMin(Float valueMin) {
+    public PWDeclaredInterest setValueMin(Float valueMin) {
         this.valueMin = valueMin;
         return this;
     }
@@ -272,7 +275,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return interestId;
     }
 
-    public PersonDeclaredInterest setInterestId(Integer interestId) {
+    public PWDeclaredInterest setInterestId(Integer interestId) {
         this.interestId = interestId;
         return this;
     }
@@ -281,7 +284,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return datasets;
     }
 
-    public PersonDeclaredInterest setDatasets(Set<String> datasets) {
+    public PWDeclaredInterest setDatasets(Set<String> datasets) {
         this.datasets = datasets;
         return this;
     }
@@ -292,7 +295,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
 
         if (o == null || getClass() != o.getClass()) return false;
 
-        PersonDeclaredInterest that = (PersonDeclaredInterest) o;
+        PWDeclaredInterest that = (PWDeclaredInterest) o;
 
         return new EqualsBuilder()
                 .append(id, that.id)
@@ -308,7 +311,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
 
     @Override
     public String toString() {
-        return "PersonDeclaredInterest{" +
+        return "PWDeclaredInterest{" +
                 "id='" + id + '\'' +
                 ", personId='" + personId + '\'' +
                 ", pwPersonId='" + pwPersonId + '\'' +
@@ -319,7 +322,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return registered;
     }
 
-    public PersonDeclaredInterest setRegistered(LocalDate registered) {
+    public PWDeclaredInterest setRegistered(LocalDate registered) {
         this.registered = registered;
         return this;
     }
@@ -328,7 +331,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return valueMax;
     }
 
-    public PersonDeclaredInterest setValueMax(Float valueMax) {
+    public PWDeclaredInterest setValueMax(Float valueMax) {
         this.valueMax = valueMax;
         return this;
     }
@@ -337,17 +340,17 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return valueSum;
     }
 
-    public PersonDeclaredInterest setValueSum(Float valueSum) {
+    public PWDeclaredInterest setValueSum(Float valueSum) {
         this.valueSum = valueSum;
         return this;
     }
 
-    public Integer getParliamentaryId() {
-        return parliamentaryId;
+    public Integer getMnisPersonId() {
+        return mnisPersonId;
     }
 
-    public PersonDeclaredInterest setParliamentaryId(Integer parliamentaryId) {
-        this.parliamentaryId = parliamentaryId;
+    public PWDeclaredInterest setMnisPersonId(Integer mnisPersonId) {
+        this.mnisPersonId = mnisPersonId;
         return this;
     }
 
@@ -355,7 +358,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return flags;
     }
 
-    public PersonDeclaredInterest setFlags(Set<String> flags) {
+    public PWDeclaredInterest setFlags(Set<String> flags) {
         this.flags = flags;
         return this;
     }
@@ -364,7 +367,7 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return fullTitle;
     }
 
-    public PersonDeclaredInterest setFullTitle(String fullTitle) {
+    public PWDeclaredInterest setFullTitle(String fullTitle) {
         this.fullTitle = fullTitle;
         return this;
     }
@@ -373,8 +376,17 @@ public abstract class PersonDeclaredInterest implements DeclaredInterest {
         return donorName;
     }
 
-    public PersonDeclaredInterest setDonorName(String donorName) {
+    public PWDeclaredInterest setDonorName(String donorName) {
         this.donorName = donorName;
+        return this;
+    }
+
+    public String getParentRecordId() {
+        return parentRecordId;
+    }
+
+    public PWDeclaredInterest setParentRecordId(String parentRecordId) {
+        this.parentRecordId = parentRecordId;
         return this;
     }
 }

@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class PersonDeclaredInterestFactory {
+public class PWDeclaredInterestFactory {
 
     @Value("${pubcoi.fos.interests.datasets}")
     String datasetsList;
@@ -41,12 +41,12 @@ public class PersonDeclaredInterestFactory {
         validDatasets.addAll(Arrays.asList(datasetsList.split(",")));
     }
 
-    public PersonDeclaredInterest createMDB(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
+    public PWDeclaredInterest createMDB(MnisMemberType member, RegisterCategoryType category, RegisterRecordType.RegisterRecordItem item, String datasetName) {
         // check dataset is valid
         if (!validDatasets.contains(datasetName)) {
             throw new IllegalArgumentException("Dataset name is not valid");
         }
-        return new PersonDeclaredInterestMDBType(member, category, item, datasetName);
+        return new PWDeclaredInterestMDBType(member, category, item, datasetName);
     }
 
 }

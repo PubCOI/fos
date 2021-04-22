@@ -15,17 +15,18 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.core;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
+public class RequestPDFDTO {
 
-import java.util.List;
+    String attachmentId;
 
-public interface NoticesSvc {
-    void addNotice(FullNotice notice, String currentUser);
+    public String getAttachmentId() {
+        return attachmentId;
+    }
 
-    NoticeNodeDTO getNoticeDTO(String noticeId);
-
-    List<FullNotice> getNoticesByClientId(String clientId);
+    public RequestPDFDTO setAttachmentId(String attachmentId) {
+        this.attachmentId = attachmentId;
+        return this;
+    }
 }

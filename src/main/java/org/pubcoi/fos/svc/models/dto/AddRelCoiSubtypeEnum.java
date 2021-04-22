@@ -15,17 +15,22 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
-
-import java.util.List;
-
-public interface NoticesSvc {
-    void addNotice(FullNotice notice, String currentUser);
-
-    NoticeNodeDTO getNoticeDTO(String noticeId);
-
-    List<FullNotice> getNoticesByClientId(String clientId);
+public enum AddRelCoiSubtypeEnum {
+    director,
+    shareholder,
+    management_consultant,
+    secondary_income,
+    expenses,
+    spouse,
+    relative,
+    friend,
+    financial,
+    business_partner,
+    lobbying,
+    advocate,
+    professional_body,
+    voluntary,
+    trustee,
 }

@@ -47,11 +47,11 @@ import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.models.core.FosUser;
-import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
-import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
-import org.pubcoi.fos.svc.models.dao.AwardDAO;
-import org.pubcoi.fos.svc.models.dao.TransactionDAO;
-import org.pubcoi.fos.svc.models.dao.es.*;
+import org.pubcoi.fos.svc.models.core.SearchRequestDTO;
+import org.pubcoi.fos.svc.models.dto.AttachmentDTO;
+import org.pubcoi.fos.svc.models.dto.AwardDTO;
+import org.pubcoi.fos.svc.models.dto.TransactionDTO;
+import org.pubcoi.fos.svc.models.dto.es.*;
 import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -103,6 +103,7 @@ public class UI {
     final OCCompaniesRepo ocCompaniesRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
     final MnisMembersRepo mnisMembersRepo;
+    final MnisSvc mnisSvc;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -121,7 +122,8 @@ public class UI {
             UserObjectFlagRepo userObjectFlagRepo,
             OCCompaniesRepo ocCompaniesRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
-            MnisMembersRepo mnisMembersRepo) {
+            MnisMembersRepo mnisMembersRepo,
+            MnisSvc mnisSvc) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -139,6 +141,7 @@ public class UI {
         this.ocCompaniesRepo = ocCompaniesRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
         this.mnisMembersRepo = mnisMembersRepo;
+        this.mnisSvc = mnisSvc;
     }
 
     final ObjectMapper esSearchResponseObjectMapper = new ObjectMapper();
@@ -150,21 +153,21 @@ public class UI {
     }
 
     @GetMapping("/api/awards")
-    public List<AwardDAO> getContractAwards() {
-        return awardsMDBRepo.findAll().stream().map(AwardDAO::new).collect(Collectors.toList());
+    public List<AwardDTO> getContractAwards() {
+        return awardsMDBRepo.findAll().stream().map(AwardDTO::new).collect(Collectors.toList());
     }
 
     @GetMapping("/api/transactions")
-    public List<TransactionDAO> getTransactions() {
+    public List<TransactionDTO> getTransactions() {
         return transactionOrch.getTransactions();
     }
 
     @PutMapping("/api/transactions")
-    public String playbackTransactions(@RequestBody List<TransactionDAO> transactions) {
+    public String playbackTransactions(@RequestBody List<TransactionDTO> transactions) {
         AtomicBoolean hasErrors = new AtomicBoolean(false);
         AtomicInteger numErrors = new AtomicInteger(0);
         transactions.stream()
-                .sorted(Comparator.comparing(TransactionDAO::getTransactionDT))
+                .sorted(Comparator.comparing(TransactionDTO::getTransactionDT))
                 .forEachOrdered(transaction -> {
                     boolean success = transactionOrch.exec(transaction);
                     if (!success) {
@@ -215,46 +218,53 @@ public class UI {
     }
 
     @GetMapping("/api/attachments/{attachmentId}/metadata")
-    public AttachmentDAO getAttachmentMetadata(
+    public AttachmentDTO getAttachmentMetadata(
             @PathVariable String attachmentId
     ) {
         Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
-        return new AttachmentDAO(attachment);
+        return new AttachmentDTO(attachment);
+    }
+
+
+    @GetMapping("/api/interests/{mnisMemberId}")
+    public MemberInterestsDTO getInterests(@PathVariable Integer mnisMemberId) {
+        return mnisSvc.getInterestsDTOForMember(mnisMemberId);
     }
 
     @PostMapping("/api/search/interests")
     public ESResponseWrapperDTO doSearchInterests(
-            @RequestBody SearchRequestDAO searchRequestDAO
+            @RequestBody SearchRequestDTO searchRequestDTO
     ) throws Exception {
         SearchRequest request = new SearchRequest().indices("members_interests");
         SearchSourceBuilder sb = new SearchSourceBuilder();
         sb.query(
-                QueryBuilders.matchQuery("text", null == searchRequestDAO.getQ() ? "" : searchRequestDAO.getQ())
+                QueryBuilders.matchQuery("text", null == searchRequestDTO.getQ() ? "" : searchRequestDTO.getQ())
+                .fuzziness(Fuzziness.AUTO)
         );
         sb.aggregation(AggregationBuilders.terms("personFullName").field("personFullName.keyword")
                 .subAggregation(AggregationBuilders.topHits("top_hits").highlighter(new HighlightBuilder()
                         .preTags("<mark>")
                         .postTags("</mark>")
                         .field("text")
-                ))
+                ).size(5))
         );
         request.source(sb);
         SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
         ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
         ((ParsedStringTerms) response.getAggregations().get("personFullName")).getBuckets().forEach(bucket -> {
-            InterestSearchResponseDAO interestWrapper = new InterestSearchResponseDAO(bucket.getKeyAsString());
+            InterestSearchResponseDTO interestWrapper = new InterestSearchResponseDTO(bucket.getKeyAsString());
             for (Aggregation aggregation : bucket.getAggregations()) {
                 if (aggregation instanceof ParsedTopHits) {
                     for (SearchHit hit : ((ParsedTopHits) aggregation).getHits()) {
                         try {
                             MemberInterest interest = esSearchResponseObjectMapper.readValue(hit.getSourceAsString(), MemberInterest.class);
-                            InterestSearchResponseHitDAO searchResponseDAO = new InterestSearchResponseHitDAO(interest);
+                            InterestSearchResponseHitDTO searchResponseDTO = new InterestSearchResponseHitDTO(interest);
                             if (null != hit.getHighlightFields().get("text")) {
                                 for (Text fragment : hit.getHighlightFields().get("text").getFragments()) {
-                                    searchResponseDAO.getFragments().add(fragment.string());
+                                    searchResponseDTO.getFragments().add(fragment.string());
                                 }
                             }
-                            interestWrapper.getTopHits().add(searchResponseDAO);
+                            interestWrapper.getTopHits().add(searchResponseDTO);
                             // save us doing a separate member lookup just to retrieve the ID
                             if (null == interestWrapper.getMnisPersonId()) {
                                 interestWrapper.setMnisPersonId(interest.getMnisPersonId());
@@ -274,25 +284,25 @@ public class UI {
 
     @PostMapping("/api/search/attachments")
     public ESResponseWrapperDTO doSearch(
-            @RequestBody SearchRequestDAO searchRequestDAO
+            @RequestBody SearchRequestDTO searchRequestDTO
     ) throws Exception {
         SearchRequest request = new SearchRequest().indices("attachments");
         SearchSourceBuilder sb = new SearchSourceBuilder();
         sb.query(
                 QueryBuilders
-                        .matchQuery("content", null == searchRequestDAO.getQ() ? "" : searchRequestDAO.getQ())
+                        .matchQuery("content", null == searchRequestDTO.getQ() ? "" : searchRequestDTO.getQ())
                         .fuzziness(Fuzziness.AUTO))
                 .highlighter(new HighlightBuilder()
                         .preTags("<mark>")
                         .postTags("</mark>")
                         .field("content")
                 );
-        if (searchRequestDAO.getGroupResults()) {
+        if (searchRequestDTO.getGroupResults()) {
             sb.aggregation(AggregationBuilders.terms("attachments").field(FosESFields.ATTACHMENT_ID));
         }
         request.source(sb);
 
-        if (searchRequestDAO.getGroupResults()) {
+        if (searchRequestDTO.getGroupResults()) {
             return aggregatedResults(esClient.search(request, RequestOptions.DEFAULT));
         } else {
             return singleResults(esClient.search(request, RequestOptions.DEFAULT));

@@ -63,7 +63,8 @@ public class MemberInterest {
     Float valueSum;
     SourceEnum source;
 
-    MemberInterest() {}
+    MemberInterest() {
+    }
 
     public MemberInterest(MnisMemberType member, MnisInterestCategoryType category, MnisInterestType interest) {
         this(member);

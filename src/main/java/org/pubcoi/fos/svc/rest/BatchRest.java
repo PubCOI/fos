@@ -17,8 +17,8 @@
 
 package org.pubcoi.fos.svc.rest;
 
-import org.pubcoi.fos.svc.models.dao.BatchJobRecentExecDAO;
-import org.pubcoi.fos.svc.models.dao.BatchJobStepDAO;
+import org.pubcoi.fos.svc.models.dto.BatchJobRecentExecDTO;
+import org.pubcoi.fos.svc.models.dto.BatchJobStepDTO;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.context.annotation.Profile;
@@ -44,14 +44,14 @@ public class BatchRest {
     }
 
     @GetMapping("/api/batch/jobs/executions")
-    public List<BatchJobRecentExecDAO> execution(
+    public List<BatchJobRecentExecDTO> execution(
             @RequestParam(value = "start", required = false, defaultValue = "0") Integer start) {
-        ArrayList<BatchJobRecentExecDAO> recentExecutions = new ArrayList<>();
+        ArrayList<BatchJobRecentExecDTO> recentExecutions = new ArrayList<>();
         return jobExplorer.findJobInstancesByJobName("process_attachment", start, 10).stream()
                 .map(instance -> jobExplorer.getJobExecution(instance.getInstanceId()))
                 .filter(Objects::nonNull)
                 .map(job -> {
-                    BatchJobRecentExecDAO execution = new BatchJobRecentExecDAO()
+                    BatchJobRecentExecDTO execution = new BatchJobRecentExecDTO()
                             .setJobId(job.getJobId())
                             .setAttachmentId(job.getJobParameters().getString("attachment_id"))
                             .setStatus(job.getStatus())
@@ -60,7 +60,7 @@ public class BatchRest {
                                     OffsetDateTime.ofInstant(job.getEndTime().toInstant(), ZoneOffset.UTC)
                             );
                     for (StepExecution stepExecution : job.getStepExecutions()) {
-                        execution.getSteps().add(new BatchJobStepDAO()
+                        execution.getSteps().add(new BatchJobStepDTO()
                                 .setId(stepExecution.getId())
                                 .setStepName(stepExecution.getStepName())
                                 .setStartTime(OffsetDateTime.ofInstant(stepExecution.getStartTime().toInstant(), ZoneOffset.UTC))

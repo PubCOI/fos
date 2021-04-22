@@ -19,6 +19,7 @@ package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.cdm.pw.RegisterEntryType;
 import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.fos.svc.models.dto.es.MemberInterestsDTO;
 
 public interface MnisSvc {
     void populateInterestsForMember(Integer memberId);
@@ -28,4 +29,6 @@ public interface MnisSvc {
     void reindex();
 
     void reanalyse();
+
+    MemberInterestsDTO getInterestsDTOForMember(Integer mnisMemberId);
 }

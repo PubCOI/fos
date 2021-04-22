@@ -15,28 +15,38 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto;
 
-import org.pubcoi.fos.svc.models.dto.AttachmentDTO;
-import org.pubcoi.fos.svc.repos.mdb.AttachmentMDBRepo;
-import org.springframework.stereotype.Service;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.pubcoi.fos.svc.models.core.FosUser;
 
-import java.util.List;
-import java.util.stream.Collectors;
+public class UserProfileDTO {
 
-@Service
-public class AttachmentSvcImpl implements AttachmentSvc {
+    String displayName;
+    String uid;
 
-    final AttachmentMDBRepo attachmentMDBRepo;
+    public UserProfileDTO() {}
 
-    public AttachmentSvcImpl(AttachmentMDBRepo attachmentMDBRepo) {
-        this.attachmentMDBRepo = attachmentMDBRepo;
+    public UserProfileDTO(FosUser user) {
+        this.displayName = user.getDisplayName();
+        this.uid = DigestUtils.sha1Hex(user.getUid());
     }
 
-    @Override
-    public List<AttachmentDTO> findAttachmentsByNoticeId(String noticeId) {
-        return attachmentMDBRepo.findByNoticeId(noticeId).stream()
-                .map(AttachmentDTO::new)
-                .collect(Collectors.toList());
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public UserProfileDTO setDisplayName(String displayName) {
+        this.displayName = displayName;
+        return this;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public UserProfileDTO setUid(String uid) {
+        this.uid = uid;
+        return this;
     }
 }

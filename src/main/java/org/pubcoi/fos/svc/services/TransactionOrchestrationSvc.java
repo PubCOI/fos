@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.models.dao.TransactionDAO;
+import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.transactions.FosTransaction;
 
 import java.util.List;
@@ -30,9 +30,9 @@ public interface TransactionOrchestrationSvc {
 
     boolean exec(FosTransaction metaTransaction);
 
-    boolean exec(TransactionDAO transaction);
+    boolean exec(TransactionDTO transaction);
 
-    List<TransactionDAO> getTransactions();
+    List<TransactionDTO> getTransactions();
 
     void clearTransactions();
 }

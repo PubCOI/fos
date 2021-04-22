@@ -20,5 +20,8 @@ package org.pubcoi.fos.svc.repos.es;
 import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
+import java.util.List;
+
 public interface MembersInterestsESRepo extends ElasticsearchRepository<MemberInterest, String> {
+    List<MemberInterest> findByMnisPersonId(Integer mnisPersonId);
 }

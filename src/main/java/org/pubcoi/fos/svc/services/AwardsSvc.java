@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.svc.models.core.CFAward;
-import org.pubcoi.fos.svc.models.dao.AwardDAO;
+import org.pubcoi.fos.svc.models.dto.AwardDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 
 import java.util.List;
@@ -28,9 +28,9 @@ public interface AwardsSvc {
 
     void addAward(CFAward cfAward, String currentUser);
 
-    Set<AwardDAO> getAwardsForNotice(String noticeID);
+    Set<AwardDTO> getAwardsForNotice(String noticeID);
 
-    AwardDAO getAwardDetailsDAOWithAttachments(String awardId);
+    AwardDTO getAwardDetailsDTOWithAttachments(String awardId);
 
     List<AwardNode> getAwardsForOrg(String orgId);
 }

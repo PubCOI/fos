@@ -31,12 +31,17 @@ import org.pubcoi.cdm.pw.RegisterRecordType;
 import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.core.MnisInterestsCache;
-import org.pubcoi.fos.svc.models.es.*;
+import org.pubcoi.fos.svc.models.dto.es.MemberInterestDTO;
+import org.pubcoi.fos.svc.models.dto.es.MemberInterestsDTO;
+import org.pubcoi.fos.svc.models.es.MemberInterest;
+import org.pubcoi.fos.svc.models.es.PWDeclaredInterest;
+import org.pubcoi.fos.svc.models.es.PWDeclaredInterestFactory;
+import org.pubcoi.fos.svc.models.es.PWDeclaredInterestMDBType;
 import org.pubcoi.fos.svc.repos.es.MembersInterestsESRepo;
 import org.pubcoi.fos.svc.repos.mdb.MnisInterestsCacheRepo;
 import org.pubcoi.fos.svc.repos.mdb.MnisMembersRepo;
-import org.pubcoi.fos.svc.repos.mdb.ParentRecordTypeMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.PWDeclaredInterestMDBRepo;
+import org.pubcoi.fos.svc.repos.mdb.ParentRecordTypeMDBRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +57,7 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 public class MnisSvcImpl implements MnisSvc {
@@ -260,6 +266,18 @@ public class MnisSvcImpl implements MnisSvc {
             pwDeclaredInterestMDBRepo.save((PWDeclaredInterestMDBType) interest.analyseText());
         });
         logger.debug("Finished reanalysing {} documents", count.get());
+    }
+
+    @Override
+    public MemberInterestsDTO getInterestsDTOForMember(Integer mnisMemberId) {
+        MnisMemberType memberType = mnisMembersRepo.findById(mnisMemberId).orElseThrow();
+        MemberInterestsDTO interestsDTO = new MemberInterestsDTO(memberType);
+
+        interestsDTO.getInterests().addAll(membersInterestsESRepo.findByMnisPersonId(mnisMemberId)
+                .stream()
+                .map(MemberInterestDTO::new)
+                .collect(Collectors.toList()));
+        return interestsDTO;
     }
 
     // we're adding to MDB first as it's quicker than indexing on ES (particularly at the point of waiting to commit)

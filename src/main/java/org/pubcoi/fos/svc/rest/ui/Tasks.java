@@ -21,8 +21,9 @@ import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.models.core.*;
-import org.pubcoi.fos.svc.models.dao.*;
-import org.pubcoi.fos.svc.models.dao.tasks.UpdateNodeDAO;
+import org.pubcoi.fos.svc.models.dto.*;
+import org.pubcoi.fos.svc.models.dto.tasks.TaskDTO;
+import org.pubcoi.fos.svc.models.dto.tasks.UpdateNodeDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
@@ -83,20 +84,20 @@ public class Tasks {
 
     /**
      * Searches OpenCorporates for companies matching a particular set of terms
-     * @param requestDAO the request object
+     * @param requestDTO the request object
      * @param authToken the user auth token
      * @return a set of matching results
      *
      */
     @PostMapping("/api/ui/tasks/verify_company/_search")
     public List<VerifyCompanySearchResponse> doCompanyVerifySearch(
-            @RequestBody VerifyCompanySearchRequestDAO requestDAO,
+            @RequestBody VerifyCompanySearchRequestDTO requestDTO,
             @RequestHeader String authToken
     ) {
         String uid = UI.checkAuth(authToken).getUid();
         FosUser user = userRepo.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
-        OrganisationNode org = organisationsGraphRepo.findOrgNotHydratingPersons(requestDAO.getCompanyId()).orElseThrow();
+        OrganisationNode org = organisationsGraphRepo.findOrgNotHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
         OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
         return wrapper.getResults().getCompanies().stream()
                 .map(company -> new VerifyCompanySearchResponse(company))
@@ -105,10 +106,10 @@ public class Tasks {
     }
 
     @GetMapping("/api/ui/tasks")
-    public List<TaskDAO> getTasks(@RequestParam(value = "completed", defaultValue = "false") Boolean completed) {
+    public List<TaskDTO> getTasks(@RequestParam(value = "completed", defaultValue = "false") Boolean completed) {
         return tasksRepo.findAll().stream()
                 .filter(t -> t.getCompleted().equals(completed))
-                .map(TaskDAO::new)
+                .map(TaskDTO::new)
                 .peek(task -> {
                     if (task.getTaskType().equals(FosTaskType.resolve_client)) {
                         Optional<ClientNode> clientNode = clientGRepo.findByIdEquals(task.getEntity());
@@ -135,22 +136,22 @@ public class Tasks {
     }
 
     @PutMapping("/api/ui/tasks")
-    public CreateTaskResponseDAO createTask(
-            @RequestBody CreateTaskRequestDAO createTask,
+    public CreateTaskResponseDTO createTask(
+            @RequestBody CreateTaskRequestDTO createTask,
             @RequestHeader("authToken") String authToken
     ) {
         UI.checkAuth(authToken);
         logger.debug("{}", createTask);
-        return new CreateTaskResponseDAO().setTaskId(UUID.randomUUID().toString());
+        return new CreateTaskResponseDTO().setTaskId(UUID.randomUUID().toString());
     }
 
     @GetMapping("/api/ui/tasks/{taskType}/{refId}")
-    public ResolveClientDAO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
-        return new ResolveClientDAO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
+    public ResolveClientDTO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
+        return new ResolveClientDTO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
     }
 
     @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
-    public UpdateNodeDAO updateClientDAO(
+    public UpdateNodeDTO updateClientDTO(
             @PathVariable FosUITasks taskType,
             @RequestHeader String authToken,
             @RequestBody RequestWithAuth req
@@ -175,7 +176,7 @@ public class Tasks {
             });
 
             markTaskCompleted(req.getTaskId(), user);
-            return new UpdateNodeDAO().setResponse("Resolved task: marked node as canonical");
+            return new UpdateNodeDTO().setResponse("Resolved task: marked node as canonical");
         }
 
         if (taskType == FosUITasks.link_clientNode_to_parentClientNode) {
@@ -190,7 +191,7 @@ public class Tasks {
 
             markTaskCompleted(req.getTaskId(), user);
 
-            return new UpdateNodeDAO().setResponse(String.format(
+            return new UpdateNodeDTO().setResponse(String.format(
                     "Resolved task: linked %s to %s", req.getSource(), req.getTarget()
             ));
         }
@@ -215,7 +216,7 @@ public class Tasks {
 
             transactionOrch.exec(FosTransactionBuilder.resolveCompany(source, target, user, null));
             markTaskCompleted(task.getId(), user);
-            return new UpdateNodeDAO().setResponse(String.format("Linked %s to %s", source.getId(), target.getId()));
+            return new UpdateNodeDTO().setResponse(String.format("Linked %s to %s", source.getId(), target.getId()));
         }
 
         throw new FosBadRequestException("Unable to find request type");

@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.models.dao.TransactionDAO;
+import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
@@ -114,15 +114,15 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
     }
 
     @Override
-    public boolean exec(TransactionDAO transaction) {
+    public boolean exec(TransactionDTO transaction) {
         return false;
     }
 
     @Override
-    public List<TransactionDAO> getTransactions() {
+    public List<TransactionDTO> getTransactions() {
         return transactionRepo.findAll().stream()
                 .sorted(Comparator.comparing(FosTransaction::getTransactionDT))
-                .map(TransactionDAO::new)
+                .map(TransactionDTO::new)
                 .collect(Collectors.toList());
     }
 

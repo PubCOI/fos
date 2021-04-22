@@ -15,17 +15,21 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto.tasks;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
+/*
+ Used when returning the ClientNode and OrganisationNode tasks to the user after transaction execution
+ */
+public class UpdateNodeDTO {
 
-import java.util.List;
+    String response;
 
-public interface NoticesSvc {
-    void addNotice(FullNotice notice, String currentUser);
+    public String getResponse() {
+        return response;
+    }
 
-    NoticeNodeDTO getNoticeDTO(String noticeId);
-
-    List<FullNotice> getNoticesByClientId(String clientId);
+    public UpdateNodeDTO setResponse(String response) {
+        this.response = response;
+        return this;
+    }
 }

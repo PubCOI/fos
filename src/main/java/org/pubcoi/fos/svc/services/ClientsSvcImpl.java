@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.svc.exceptions.ItemNotFoundException;
-import org.pubcoi.fos.svc.models.dao.ClientNodeDAO;
+import org.pubcoi.fos.svc.models.dto.ClientNodeDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
@@ -34,8 +34,8 @@ public class ClientsSvcImpl implements ClientsSvc {
     }
 
     @Override
-    public ClientNodeDAO getClientNodeDAO(String clientID) {
-        return new ClientNodeDAO(getClientNode(clientID));
+    public ClientNodeDTO getClientNodeDTO(String clientID) {
+        return new ClientNodeDTO(getClientNode(clientID));
     }
 
     @Override

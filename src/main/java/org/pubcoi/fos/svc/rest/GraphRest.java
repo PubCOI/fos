@@ -26,10 +26,10 @@ import org.neo4j.driver.internal.InternalNode;
 import org.neo4j.driver.internal.InternalRelationship;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.models.dao.*;
-import org.pubcoi.fos.svc.models.dao.fts.GenericIDNameFTSResponse;
-import org.pubcoi.fos.svc.models.dao.neo.InternalNodeSerializer;
-import org.pubcoi.fos.svc.models.dao.neo.InternalRelationshipSerializer;
+import org.pubcoi.fos.svc.models.dto.*;
+import org.pubcoi.fos.svc.models.dto.fts.GenericIDNameFTSResponse;
+import org.pubcoi.fos.svc.models.dto.neo.InternalNodeSerializer;
+import org.pubcoi.fos.svc.models.dto.neo.InternalRelationshipSerializer;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -127,12 +127,12 @@ public class GraphRest {
         if (details) {
             return personNodeFTS.findAnyPersonsMatchingWithDetails(String.format("%s*", query))
                     .stream()
-                    .map(n -> new GraphDetailedSearchResponseDAO(n, NodeTypeEnum.person))
+                    .map(n -> new GraphDetailedSearchResponseDTO(n, NodeTypeEnum.person))
                     .collect(Collectors.toList());
         } else {
             return personNodeFTS.findAnyPersonsMatching(String.format("%s*", query))
                     .stream()
-                    .map(n -> new GraphSearchResponseDAO(n, NodeTypeEnum.person))
+                    .map(n -> new GraphSearchResponseDTO(n, NodeTypeEnum.person))
                     .collect(Collectors.toList());
         }
 
@@ -144,12 +144,12 @@ public class GraphRest {
 
         // open / wildcard
         Set<GenericIDNameFTSResponse> responses = orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
-                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                map(r -> new GraphSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet());
 
         // entire token
         responses.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
-                map(r -> new GraphSearchResponseDAO(r, NodeTypeEnum.organisation))
+                map(r -> new GraphSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet()));
 
         // now sort
@@ -170,40 +170,40 @@ public class GraphRest {
      * @return List of top responses, ordered by best -> worst match
      */
     @GetMapping("/api/graphs/_search")
-    public List<GraphDetailedSearchResponseDAO> findAnyClientOrOrgQuery(@RequestParam String query) {
+    public List<GraphDetailedSearchResponseDTO> findAnyClientOrOrgQuery(@RequestParam String query) {
         if (query.isEmpty()) return new ArrayList<>();
-        Set<GraphDetailedSearchResponseDAO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
+        Set<GraphDetailedSearchResponseDTO> response = clientNodeFTS.findAnyClientsMatching(String.format("*%s*", query), 5)
                 .stream()
-                .map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.client))
+                .map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.client))
                 .collect(Collectors.toSet());
 
         response.addAll(clientNodeFTS.findAnyClientsMatching(query, 5)
                 .stream()
-                .map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.client))
+                .map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.client))
                 .collect(Collectors.toSet()));
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
-                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.organisation))
+                map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet())
         );
 
         response.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
-                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.organisation))
+                map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet())
         );
 
         response.addAll(personNodeFTS.findAnyPersonsMatchingWithDetails(query).stream().
-                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.person))
+                map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.person))
                 .collect(Collectors.toSet())
         );
 
         response.addAll(personNodeFTS.findAnyPersonsMatchingWithDetails(String.format("*%s*", query)).stream().
-                map(r -> new GraphDetailedSearchResponseDAO(r, NodeTypeEnum.person))
+                map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.person))
                 .collect(Collectors.toSet())
         );
 
         return response.stream()
-                .sorted(Comparator.comparing(GraphDetailedSearchResponseDAO::getScore).reversed())
+                .sorted(Comparator.comparing(GraphDetailedSearchResponseDTO::getScore).reversed())
                 .limit(10)
                 .collect(Collectors.toList());
     }
@@ -232,8 +232,8 @@ public class GraphRest {
      * @return The award object
      */
     @GetMapping("/api/graphs/awards/{awardId}/metadata")
-    public AwardDAO getAward(@PathVariable String awardId) {
-        return awardsSvc.getAwardDetailsDAOWithAttachments(awardId);
+    public AwardDTO getAward(@PathVariable String awardId) {
+        return awardsSvc.getAwardDetailsDTOWithAttachments(awardId);
     }
 
     @GetMapping("/api/graphs/awards/{awardId}/children")
@@ -296,12 +296,12 @@ public class GraphRest {
     }
 
     @GetMapping("/api/graphs/clients/{clientId}/metadata")
-    public ClientNodeDAO getClient(@PathVariable String clientId) {
-        ClientNodeDAO clientNodeDAO = clientSvc.getClientNodeDAO(clientId);
+    public ClientNodeDTO getClient(@PathVariable String clientId) {
+        ClientNodeDTO clientNodeDTO = clientSvc.getClientNodeDTO(clientId);
         for (FullNotice notice : noticesSvc.getNoticesByClientId(clientId)) {
-            clientNodeDAO.getNotices().add(new NoticeNodeDAO(notice));
+            clientNodeDTO.getNotices().add(new NoticeNodeDTO(notice));
         }
-        return clientNodeDAO;
+        return clientNodeDTO;
     }
 
     @GetMapping("/api/graphs/clients/{clientId}/relationships")
@@ -324,33 +324,33 @@ public class GraphRest {
     }
 
     @PutMapping("/api/graphs/clients/{clientId}/relationships")
-    public ClientNodeDAO addRelationship(
+    public ClientNodeDTO addRelationship(
             @PathVariable String clientId,
-            @RequestBody AddRelationshipDAO addRelationshipDAO,
+            @RequestBody AddRelationshipDTO addRelationshipDTO,
             @RequestHeader("authToken") String authToken
     ) {
         checkAuth(authToken);
-        logger.debug("Adding relationship for client: {}", addRelationshipDAO);
+        logger.debug("Adding relationship for client: {}", addRelationshipDTO);
         ClientNode client = clientSvc.getClientNode(clientId);
         client.getPersons().add(new ClientPersonLink(
-                new PersonNode(addRelationshipDAO.getRelName()),
-                addRelationshipDAO.getCoiType().toString(),
-                addRelationshipDAO.getCoiSubtype().toString(),
+                new PersonNode(addRelationshipDTO.getRelName()),
+                addRelationshipDTO.getCoiType().toString(),
+                addRelationshipDTO.getCoiSubtype().toString(),
                 clientId, UUID.randomUUID().toString()
         ));
         clientSvc.save(client);
-        return new ClientNodeDAO(client);
+        return new ClientNodeDTO(client);
     }
 
     @PutMapping("/api/graphs/persons/{personId}/relationships")
-    public PersonNodeDAO addRelationshipForPerson(
+    public PersonNodeDTO addRelationshipForPerson(
             @PathVariable String personId,
-            @RequestBody AddRelationshipDAO addRelationshipDAO,
+            @RequestBody AddRelationshipDTO addRelationshipDTO,
             @RequestHeader("authToken") String authToken
     ) {
         checkAuth(authToken);
-        logger.debug("Adding relationship for person: {}", addRelationshipDAO);
-        OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(addRelationshipDAO.getRelId()).orElseThrow();
+        logger.debug("Adding relationship for person: {}", addRelationshipDTO);
+        OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(addRelationshipDTO.getRelId()).orElseThrow();
         logger.debug("Found {}", org);
 
         PersonNode personNode = personsSvc.getPersonGraphObject(personId);
@@ -358,23 +358,23 @@ public class GraphRest {
         // generate link first, then check if it exists ...
         PersonConflictLink conflictLink = new PersonConflictLink(
                 personId, org,
-                addRelationshipDAO.getCoiType().toString(), addRelationshipDAO.getCoiSubtype().toString(),
+                addRelationshipDTO.getCoiType().toString(), addRelationshipDTO.getCoiSubtype().toString(),
                 UUID.randomUUID().toString()
         );
 
         if (!personNode.getConflicts().contains(conflictLink)) {
             personNode.getConflicts().add(conflictLink);
         }
-        return new PersonNodeDAO(personsSvc.save(personNode));
+        return new PersonNodeDTO(personsSvc.save(personNode));
     }
 
     @GetMapping("/api/graphs/notices/{noticeId}/metadata")
-    public NoticeNodeDAO getNotice(@PathVariable String noticeId) {
-        NoticeNodeDAO noticeNodeDAO = noticesSvc.getNoticeDAO(noticeId);
-        for (AwardDAO awardDAO : awardsSvc.getAwardsForNotice(noticeId)) {
-            noticeNodeDAO.addAward(awardDAO);
+    public NoticeNodeDTO getNotice(@PathVariable String noticeId) {
+        NoticeNodeDTO noticeNodeDTO = noticesSvc.getNoticeDTO(noticeId);
+        for (AwardDTO awardDTO : awardsSvc.getAwardsForNotice(noticeId)) {
+            noticeNodeDTO.addAward(awardDTO);
         }
-        return noticeNodeDAO;
+        return noticeNodeDTO;
     }
 
     @GetMapping("/api/graphs/notices/{noticeId}/children")
@@ -430,9 +430,9 @@ public class GraphRest {
     }
 
     @GetMapping("/api/graphs/organisations/{orgId}/metadata")
-    public OrganisationDAO getOrgMetadata(@PathVariable String orgId) {
+    public OrganisationDTO getOrgMetadata(@PathVariable String orgId) {
         OrganisationNode organisationNode = organisationsGraphRepo.findOrgNotHydratingPersons(orgId).orElseThrow();
-        return new OrganisationDAO(organisationNode);
+        return new OrganisationDTO(organisationNode);
     }
 
     @GetMapping("/api/graphs/organisations/{orgId}/relationships")
@@ -490,12 +490,12 @@ public class GraphRest {
     }
 
     @GetMapping("/api/graphs/persons/{personId}/metadata")
-    public PersonNodeDAO getPersonMetadata(
+    public PersonNodeDTO getPersonMetadata(
             @PathVariable String personId
     ) {
         List<OrganisationNode> links = personsSvc.getOrgPersonLinks(personId);
         PersonNode person = personsSvc.getPersonGraphObject(personId);
-        return new PersonNodeDAO(person, links);
+        return new PersonNodeDTO(person, links);
     }
 
     @PutMapping("/api/graphs/persons/{personId}/populate")

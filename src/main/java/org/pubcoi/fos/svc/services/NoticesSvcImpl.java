@@ -21,7 +21,7 @@ import org.pubcoi.cdm.cf.AwardDetailParentType;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.ItemNotFoundException;
 import org.pubcoi.fos.svc.models.core.CFAward;
-import org.pubcoi.fos.svc.models.dao.NoticeNodeDAO;
+import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
 import org.pubcoi.fos.svc.repos.gdb.NoticesGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
 import org.springframework.stereotype.Service;
@@ -59,8 +59,8 @@ public class NoticesSvcImpl implements NoticesSvc {
     }
 
     @Override
-    public NoticeNodeDAO getNoticeDAO(String noticeId) {
-        return new NoticeNodeDAO(noticesMDBRepo.findById(noticeId).orElseThrow(ItemNotFoundException::new));
+    public NoticeNodeDTO getNoticeDTO(String noticeId) {
+        return new NoticeNodeDTO(noticesMDBRepo.findById(noticeId).orElseThrow(ItemNotFoundException::new));
     }
 
     @Override

@@ -15,17 +15,27 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
+public class CreateTaskRequestDTO {
+    String type;
+    String id;
 
-import java.util.List;
+    public String getType() {
+        return type;
+    }
 
-public interface NoticesSvc {
-    void addNotice(FullNotice notice, String currentUser);
+    public CreateTaskRequestDTO setType(String type) {
+        this.type = type;
+        return this;
+    }
 
-    NoticeNodeDTO getNoticeDTO(String noticeId);
+    public String getId() {
+        return id;
+    }
 
-    List<FullNotice> getNoticesByClientId(String clientId);
+    public CreateTaskRequestDTO setId(String id) {
+        this.id = id;
+        return this;
+    }
 }

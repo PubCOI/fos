@@ -15,17 +15,28 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
+import org.pubcoi.fos.svc.models.dto.fts.GenericIDNameFTSResponse;
+import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;
 
-import java.util.List;
+public class GraphSearchResponseDTO extends GenericIDNameFTSResponse {
+    public GraphSearchResponseDTO() {
+    }
 
-public interface NoticesSvc {
-    void addNotice(FullNotice notice, String currentUser);
+    NodeTypeEnum type;
 
-    NoticeNodeDTO getNoticeDTO(String noticeId);
+    public GraphSearchResponseDTO(GraphFTSResponse response, NodeTypeEnum typeEnum) {
+        super(response);
+        this.type = typeEnum;
+    }
 
-    List<FullNotice> getNoticesByClientId(String clientId);
+    public NodeTypeEnum getType() {
+        return type;
+    }
+
+    public GraphSearchResponseDTO setType(NodeTypeEnum type) {
+        this.type = type;
+        return this;
+    }
 }

@@ -1,0 +1,168 @@
+/*
+ * Copyright (c) 2021 PubCOI.org. This file is part of Fos@PubCOI.
+ *
+ * Fos@PubCOI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Fos@PubCOI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package org.pubcoi.fos.svc.models.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.pubcoi.fos.svc.models.core.CFAward;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Used to return list of awards to the user
+ */
+public class AwardDTO {
+
+    @JsonView(Views.Summary.class)
+    String id;
+    @JsonView(Views.Summary.class)
+    String noticeId;
+    @JsonView(Views.Details.class)
+    String noticeTitle;
+    @JsonView(Views.Summary.class)
+    String organisation;
+    @JsonView(Views.Summary.class)
+    String supplierName;
+    @JsonView(Views.Details.class)
+    Long supplierNumTotalAwards;
+    @JsonView(Views.Details.class)
+    Long value;
+    @JsonView(Views.Details.class)
+    Long valueMin;
+    @JsonView(Views.Details.class)
+    Long valueMax;
+    @JsonView(Views.WithChildObjects.class)
+    List<AttachmentDTO> attachments = new ArrayList<>();
+
+    @JsonProperty("group_award")
+    boolean group;
+
+    public AwardDTO() {
+    }
+
+    public AwardDTO(CFAward award) {
+        this.id = award.getId();
+        this.noticeId = award.getNoticeId();
+        this.organisation = award.getClient();
+        this.supplierName = award.getSupplierName();
+        this.value = (null == award.getValue() ? 0 : award.getValue());
+        this.valueMin = (null == award.getValueMin() ? 0 : award.getValueMin());
+        this.valueMax = (null == award.getValueMax() ? 0 : award.getValueMax());
+        this.group = award.getGroup();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getOrganisation() {
+        return organisation;
+    }
+
+    public AwardDTO setId(String id) {
+        this.id = id;
+        return this;
+    }
+
+    public AwardDTO setOrganisation(String organisation) {
+        this.organisation = organisation;
+        return this;
+    }
+
+    public String getSupplierName() {
+        return supplierName;
+    }
+
+    public AwardDTO setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
+        return this;
+    }
+
+    public Long getValue() {
+        return value;
+    }
+
+    public AwardDTO setValue(Long value) {
+        this.value = value;
+        return this;
+    }
+
+    public Long getValueMin() {
+        return valueMin;
+    }
+
+    public AwardDTO setValueMin(Long valueMin) {
+        this.valueMin = valueMin;
+        return this;
+    }
+
+    public Long getValueMax() {
+        return valueMax;
+    }
+
+    public AwardDTO setValueMax(Long valueMax) {
+        this.valueMax = valueMax;
+        return this;
+    }
+
+    public String getNoticeId() {
+        return noticeId;
+    }
+
+    public AwardDTO setNoticeId(String noticeId) {
+        this.noticeId = noticeId;
+        return this;
+    }
+
+    public boolean isGroup() {
+        return group;
+    }
+
+    public AwardDTO setGroup(boolean group) {
+        this.group = group;
+        return this;
+    }
+
+    public List<AttachmentDTO> getAttachments() {
+        return attachments;
+    }
+
+    public AwardDTO setAttachments(List<AttachmentDTO> attachments) {
+        this.attachments = attachments;
+        return this;
+    }
+
+    public Long getSupplierNumTotalAwards() {
+        return supplierNumTotalAwards;
+    }
+
+    public AwardDTO setSupplierNumTotalAwards(Long supplierNumTotalAwards) {
+        this.supplierNumTotalAwards = supplierNumTotalAwards;
+        return this;
+    }
+
+    public String getNoticeTitle() {
+        return noticeTitle;
+    }
+
+    public AwardDTO setNoticeTitle(String noticeTitle) {
+        this.noticeTitle = noticeTitle;
+        return this;
+    }
+}

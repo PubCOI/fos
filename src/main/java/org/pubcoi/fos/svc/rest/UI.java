@@ -255,6 +255,10 @@ public class UI {
                                 }
                             }
                             interestWrapper.getTopHits().add(searchResponseDAO);
+                            // save us doing a separate member lookup just to retrieve the ID
+                            if (null == interestWrapper.getMnisPersonId()) {
+                                interestWrapper.setMnisPersonId(interest.getMnisPersonId());
+                            }
                         } catch (JsonProcessingException e) {
                             throw new FosException(e.getMessage(), e);
                         }

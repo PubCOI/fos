@@ -25,9 +25,7 @@ import java.util.List;
 public class ESResponseWrapperDTO {
 
     Long took;
-
     Integer count;
-
     List<ESResultInterface> results = new ArrayList<>();
 
     public ESResponseWrapperDTO() {

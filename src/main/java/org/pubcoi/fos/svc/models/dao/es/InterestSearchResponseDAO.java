@@ -24,6 +24,7 @@ import java.util.List;
 
 public class InterestSearchResponseDAO implements ESResultInterface {
 
+    Integer mnisPersonId;
     String personName;
     @JsonProperty("top_hits")
     List<InterestSearchResponseHitDAO> topHits = new ArrayList<>();
@@ -49,6 +50,15 @@ public class InterestSearchResponseDAO implements ESResultInterface {
 
     public InterestSearchResponseDAO setTopHits(List<InterestSearchResponseHitDAO> topHits) {
         this.topHits = topHits;
+        return this;
+    }
+
+    public Integer getMnisPersonId() {
+        return mnisPersonId;
+    }
+
+    public InterestSearchResponseDAO setMnisPersonId(Integer mnisPersonId) {
+        this.mnisPersonId = mnisPersonId;
         return this;
     }
 }

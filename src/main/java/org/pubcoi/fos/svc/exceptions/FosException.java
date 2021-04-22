@@ -44,4 +44,9 @@ public class FosException extends ResponseStatusException {
         super(status);
         logger.error("Exception, returning {}", status);
     }
+
+    public FosException(String message, Throwable e) {
+        super(HttpStatus.INTERNAL_SERVER_ERROR, message);
+        logger.error(e.getMessage(), e);
+    }
 }

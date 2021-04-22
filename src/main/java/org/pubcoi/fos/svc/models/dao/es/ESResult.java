@@ -26,7 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public abstract class ESResult {
+public abstract class ESResult implements ESResultInterface {
 
     private static final int MAX_CHARS = 100;
 

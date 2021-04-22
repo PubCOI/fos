@@ -17,51 +17,38 @@
 
 package org.pubcoi.fos.svc.models.dao.es;
 
-import org.elasticsearch.action.search.SearchResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ESResponseWrapperDTO {
+public class InterestSearchResponseDAO implements ESResultInterface {
 
-    Long took;
+    String personName;
+    @JsonProperty("top_hits")
+    List<InterestSearchResponseHitDAO> topHits = new ArrayList<>();
 
-    Integer count;
+    InterestSearchResponseDAO() {}
 
-    List<ESResultInterface> results = new ArrayList<>();
-
-    public ESResponseWrapperDTO() {
-
+    public InterestSearchResponseDAO(String name) {
+        this.personName = name;
     }
 
-    public ESResponseWrapperDTO(SearchResponse response) {
-        this.took = response.getTook().getMillis();
+    public String getPersonName() {
+        return personName;
     }
 
-    public Long getTook() {
-        return took;
-    }
-
-    public ESResponseWrapperDTO setTook(Long took) {
-        this.took = took;
+    public InterestSearchResponseDAO setPersonName(String personName) {
+        this.personName = personName;
         return this;
     }
 
-    public Integer getCount() {
-        return count;
+    public List<InterestSearchResponseHitDAO> getTopHits() {
+        return topHits;
     }
 
-    public ESResponseWrapperDTO setCount(Integer count) {
-        this.count = count;
-        return this;
-    }
-
-    public List<ESResultInterface> getResults() {
-        return results;
-    }
-
-    public ESResponseWrapperDTO setResults(List<ESResultInterface> results) {
-        this.results = results;
+    public InterestSearchResponseDAO setTopHits(List<InterestSearchResponseHitDAO> topHits) {
+        this.topHits = topHits;
         return this;
     }
 }

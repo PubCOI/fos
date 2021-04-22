@@ -22,7 +22,10 @@ import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.services.Utils;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.neo4j.core.schema.Id;
 
 import java.time.LocalDate;
@@ -34,17 +37,25 @@ public class MemberInterest {
 
     @Id
     String id;
+    @Field(type = FieldType.Keyword)
     String personNodeId;
+    @Field(type = FieldType.Keyword)
     Integer mnisInterestId;
+    @Field(type = FieldType.Keyword)
     String pwInterestId;
+    @Field(type = FieldType.Keyword)
     String pwPersonId;
+    @Field(type = FieldType.Keyword)
     Integer mnisPersonId;
     String personFullName;
     String text;
+    @Field(type = FieldType.Date, format = DateFormat.date)
     LocalDate registeredDate;
     Integer pwCategory;
+    @Field(type = FieldType.Keyword)
     String pwCategoryDescription;
     Integer mnisCategory;
+    @Field(type = FieldType.Keyword)
     String mnisCategoryDescription;
     Boolean donation;
     String donorName;

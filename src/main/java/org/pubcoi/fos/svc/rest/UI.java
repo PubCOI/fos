@@ -17,6 +17,10 @@
 
 package org.pubcoi.fos.svc.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -25,11 +29,14 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.metrics.ParsedTopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.pubcoi.cdm.cf.ArrayOfFullNotice;
@@ -44,10 +51,8 @@ import org.pubcoi.fos.svc.models.core.SearchRequestDAO;
 import org.pubcoi.fos.svc.models.dao.AttachmentDAO;
 import org.pubcoi.fos.svc.models.dao.AwardDAO;
 import org.pubcoi.fos.svc.models.dao.TransactionDAO;
-import org.pubcoi.fos.svc.models.dao.es.ESAggregationDTO;
-import org.pubcoi.fos.svc.models.dao.es.ESResponseWrapperDTO;
-import org.pubcoi.fos.svc.models.dao.es.ESResult;
-import org.pubcoi.fos.svc.models.dao.es.ESSingleResponseDTO;
+import org.pubcoi.fos.svc.models.dao.es.*;
+import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
@@ -62,6 +67,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -96,6 +102,7 @@ public class UI {
     final UserObjectFlagRepo userObjectFlagRepo;
     final OCCompaniesRepo ocCompaniesRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
+    final MnisMembersRepo mnisMembersRepo;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -113,7 +120,8 @@ public class UI {
             ApplicationStatusBean applicationStatus,
             UserObjectFlagRepo userObjectFlagRepo,
             OCCompaniesRepo ocCompaniesRepo,
-            OrganisationsGraphRepo organisationsGraphRepo) {
+            OrganisationsGraphRepo organisationsGraphRepo,
+            MnisMembersRepo mnisMembersRepo) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -130,6 +138,15 @@ public class UI {
         this.userObjectFlagRepo = userObjectFlagRepo;
         this.ocCompaniesRepo = ocCompaniesRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
+        this.mnisMembersRepo = mnisMembersRepo;
+    }
+
+    final ObjectMapper esSearchResponseObjectMapper = new ObjectMapper();
+
+    @PostConstruct
+    public void setup() {
+        esSearchResponseObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        esSearchResponseObjectMapper.registerModule(new JavaTimeModule());
     }
 
     @GetMapping("/api/awards")
@@ -203,6 +220,52 @@ public class UI {
     ) {
         Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
         return new AttachmentDAO(attachment);
+    }
+
+    @PostMapping("/api/search/interests")
+    public ESResponseWrapperDTO doSearchInterests(
+            @RequestBody SearchRequestDAO searchRequestDAO
+    ) throws Exception {
+        SearchRequest request = new SearchRequest().indices("members_interests");
+        SearchSourceBuilder sb = new SearchSourceBuilder();
+        sb.query(
+                QueryBuilders.matchQuery("text", null == searchRequestDAO.getQ() ? "" : searchRequestDAO.getQ())
+        );
+        sb.aggregation(AggregationBuilders.terms("personFullName").field("personFullName.keyword")
+                .subAggregation(AggregationBuilders.topHits("top_hits").highlighter(new HighlightBuilder()
+                        .preTags("<mark>")
+                        .postTags("</mark>")
+                        .field("text")
+                ))
+        );
+        request.source(sb);
+        SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
+        ESResponseWrapperDTO wrapper = new ESResponseWrapperDTO(response);
+        ((ParsedStringTerms) response.getAggregations().get("personFullName")).getBuckets().forEach(bucket -> {
+            InterestSearchResponseDAO interestWrapper = new InterestSearchResponseDAO(bucket.getKeyAsString());
+            for (Aggregation aggregation : bucket.getAggregations()) {
+                if (aggregation instanceof ParsedTopHits) {
+                    for (SearchHit hit : ((ParsedTopHits) aggregation).getHits()) {
+                        try {
+                            MemberInterest interest = esSearchResponseObjectMapper.readValue(hit.getSourceAsString(), MemberInterest.class);
+                            InterestSearchResponseHitDAO searchResponseDAO = new InterestSearchResponseHitDAO(interest);
+                            if (null != hit.getHighlightFields().get("text")) {
+                                for (Text fragment : hit.getHighlightFields().get("text").getFragments()) {
+                                    searchResponseDAO.getFragments().add(fragment.string());
+                                }
+                            }
+                            interestWrapper.getTopHits().add(searchResponseDAO);
+                        } catch (JsonProcessingException e) {
+                            throw new FosException(e.getMessage(), e);
+                        }
+                    }
+                }
+            }
+            wrapper.getResults().add(interestWrapper);
+        });
+        wrapper.setCount(wrapper.getResults().size());
+        return wrapper;
+
     }
 
     @PostMapping("/api/search/attachments")

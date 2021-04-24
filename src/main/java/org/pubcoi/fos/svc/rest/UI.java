@@ -39,24 +39,25 @@ import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.metrics.ParsedTopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.pubcoi.cdm.cf.ArrayOfFullNotice;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.pubcoi.cdm.fos.FosESFields;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
+import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDTO;
 import org.pubcoi.fos.svc.models.dto.AttachmentDTO;
-import org.pubcoi.fos.svc.models.dto.AwardDTO;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.models.dto.es.*;
 import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
-import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.models.queries.AwardsListResponseDTO;
+import org.pubcoi.fos.svc.repos.gdb.custom.AwardsListRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.*;
 import org.pubcoi.fos.svc.services.*;
 import org.slf4j.Logger;
@@ -64,22 +65,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.annotation.PostConstruct;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @RestController
@@ -104,6 +95,7 @@ public class UI {
     final OrganisationsGraphRepo organisationsGraphRepo;
     final MnisMembersRepo mnisMembersRepo;
     final MnisSvc mnisSvc;
+    final AwardsListRepo awardsListRepo;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -123,7 +115,8 @@ public class UI {
             OCCompaniesRepo ocCompaniesRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
             MnisMembersRepo mnisMembersRepo,
-            MnisSvc mnisSvc) {
+            MnisSvc mnisSvc,
+            AwardsListRepo awardsListRepo) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -142,6 +135,7 @@ public class UI {
         this.organisationsGraphRepo = organisationsGraphRepo;
         this.mnisMembersRepo = mnisMembersRepo;
         this.mnisSvc = mnisSvc;
+        this.awardsListRepo = awardsListRepo;
     }
 
     final ObjectMapper esSearchResponseObjectMapper = new ObjectMapper();
@@ -153,51 +147,21 @@ public class UI {
     }
 
     @GetMapping("/api/awards")
-    public List<AwardDTO> getContractAwards() {
-        return awardsMDBRepo.findAll().stream().map(AwardDTO::new).collect(Collectors.toList());
+    public List<AwardsListResponseDTO> getContractAwards() {
+        return awardsListRepo.getAwardsWithRels()
+                .stream().map(AwardsListResponseDTO::new)
+                .peek(a -> {
+                    CFAward award = awardsMDBRepo.findById(a.getId()).orElseThrow();
+                    a.setValueMin(award.getValueMin());
+                    a.setValueMax(award.getValueMax());
+                    a.setNoticeId(award.getNoticeId());
+                })
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/api/transactions")
     public List<TransactionDTO> getTransactions() {
         return transactionOrch.getTransactions();
-    }
-
-    @PutMapping("/api/transactions")
-    public String playbackTransactions(@RequestBody List<TransactionDTO> transactions) {
-        AtomicBoolean hasErrors = new AtomicBoolean(false);
-        AtomicInteger numErrors = new AtomicInteger(0);
-        transactions.stream()
-                .sorted(Comparator.comparing(TransactionDTO::getTransactionDT))
-                .forEachOrdered(transaction -> {
-                    boolean success = transactionOrch.exec(transaction);
-                    if (!success) {
-                        hasErrors.set(true);
-                        numErrors.getAndIncrement();
-                    }
-                });
-        return String.format("Transaction playback complete with %d errors", numErrors.get());
-    }
-
-    @PostMapping("/api/contracts")
-    public String uploadContracts(MultipartHttpServletRequest request) {
-        String uid = checkAuth(request.getParameter("authToken")).getUid();
-        MultipartFile file = request.getFile("file");
-        if (null == file) {
-            throw new FosBadRequestException("Empty file");
-        }
-        try {
-            JAXBContext context = JAXBContext.newInstance(ArrayOfFullNotice.class);
-            Unmarshaller u = context.createUnmarshaller();
-            ArrayOfFullNotice array = (ArrayOfFullNotice) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
-            for (FullNotice notice : array.getFullNotice()) {
-                noticesSvc.addNotice(notice, uid);
-            }
-            scheduledSvc.populateFosOrgsMDBFromAwards();
-            graphSvc.populateGraphFromMDB();
-        } catch (IOException | JAXBException e) {
-            throw new FosException("Unable to read file stream");
-        }
-        return "ok";
     }
 
     @GetMapping("/api/attachments/{attachmentId}/view")
@@ -239,7 +203,7 @@ public class UI {
         SearchSourceBuilder sb = new SearchSourceBuilder();
         sb.query(
                 QueryBuilders.matchQuery("text", null == searchRequestDTO.getQ() ? "" : searchRequestDTO.getQ())
-                .fuzziness(Fuzziness.AUTO)
+                // .fuzziness(Fuzziness.AUTO)
         );
         sb.aggregation(AggregationBuilders.terms("personFullName").field("personFullName.keyword")
                 .subAggregation(AggregationBuilders.topHits("top_hits").highlighter(new HighlightBuilder()

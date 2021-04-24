@@ -41,6 +41,9 @@ public class LocalApplicationConfig {
             if (activeProfile.equalsIgnoreCase("batch")) {
                 status.setBatch(true);
             }
+            if (activeProfile.equalsIgnoreCase("standalone")) {
+                status.setStandalone(true);
+            }
         }
         return status;
     }

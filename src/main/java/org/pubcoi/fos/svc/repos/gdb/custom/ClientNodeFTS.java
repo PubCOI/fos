@@ -15,7 +15,7 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.repos.gdb;
+package org.pubcoi.fos.svc.repos.gdb.custom;
 
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;

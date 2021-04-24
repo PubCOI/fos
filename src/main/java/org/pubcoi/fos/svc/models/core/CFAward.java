@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.models.core;
 
-import org.pubcoi.cdm.cf.AwardDetailParentType;
+import org.pubcoi.cdm.cf.AwardDetailType;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.ReferenceTypeE;
 import org.springframework.data.annotation.Id;
@@ -55,7 +55,7 @@ public class CFAward {
 
     public CFAward() {}
 
-    public CFAward(FullNotice notice, AwardDetailParentType.AwardDetail awardDetail) {
+    public CFAward(FullNotice notice, AwardDetailType awardDetail) {
         this.id = awardDetail.getAwardGuid().toLowerCase();
         this.noticeId = awardDetail.getNoticeId();
         this.valueMin = (null != notice.getNotice().getValueLow()) ? notice.getNotice().getValueLow().longValue() : null;
@@ -71,7 +71,7 @@ public class CFAward {
         this.supplierAddress = awardDetail.getSupplierAddress();
         // if it's one of a number of awards on the same notice, the data structure will give the cumulative
         // award total to each AwardDetail node
-        this.group = notice.getAwards().getAwardDetail().size() > 1;
+        this.group = notice.getAwards().getAwardDetails().size() > 1;
     }
 
     public String getId() {

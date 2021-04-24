@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.models.dto.es;
 
-import org.pubcoi.cdm.cf.AwardDetailParentType;
+import org.pubcoi.cdm.cf.AwardDetailType;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.springframework.util.DigestUtils;
@@ -59,7 +59,7 @@ public abstract class ESResult implements ESResultInterface {
                         : notice.getNotice().getDescription())
                 : null);
         this.noticeDT = notice.getCreatedDate();
-        for (AwardDetailParentType.AwardDetail awardDetail : notice.getAwards().getAwardDetail()) {
+        for (AwardDetailType awardDetail : notice.getAwards().getAwardDetails()) {
             if (null == this.firstAwardDT || this.firstAwardDT.isAfter(awardDetail.getAwardedDate())) {
                 this.firstAwardDT = awardDetail.getAwardedDate();
             }

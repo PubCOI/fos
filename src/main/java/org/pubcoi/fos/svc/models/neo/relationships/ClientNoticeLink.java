@@ -30,7 +30,7 @@ import org.springframework.util.DigestUtils;
 import java.time.ZonedDateTime;
 
 @RelationshipProperties
-public class ClientNoticeLink {
+public class ClientNoticeLink implements FosRelationship {
 
     @Id
     String id;

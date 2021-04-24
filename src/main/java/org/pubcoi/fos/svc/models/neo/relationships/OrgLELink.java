@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RelationshipProperties
-public class OrgLELink {
+public class OrgLELink implements FosRelationship {
 
     @Id
     String id;

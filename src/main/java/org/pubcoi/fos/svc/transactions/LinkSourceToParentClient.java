@@ -21,7 +21,7 @@ import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
-import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

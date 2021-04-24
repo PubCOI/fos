@@ -23,7 +23,7 @@ import org.pubcoi.cdm.cf.ReferenceTypeE;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
-import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;

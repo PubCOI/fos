@@ -21,6 +21,7 @@ public class ApplicationStatusBean {
 
     Boolean batch;
     Boolean debug;
+    Boolean standalone;
 
     public Boolean getBatch() {
         return batch;
@@ -37,6 +38,15 @@ public class ApplicationStatusBean {
 
     public ApplicationStatusBean setDebug(Boolean debug) {
         this.debug = debug;
+        return this;
+    }
+
+    public Boolean getStandalone() {
+        return standalone;
+    }
+
+    public ApplicationStatusBean setStandalone(Boolean standalone) {
+        this.standalone = standalone;
         return this;
     }
 }

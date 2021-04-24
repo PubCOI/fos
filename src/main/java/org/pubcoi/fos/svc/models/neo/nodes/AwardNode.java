@@ -39,18 +39,27 @@ public class AwardNode implements FosEntity {
     String id;
     Long value;
     String noticeId;
-
+    Boolean groupAward;
     Boolean hidden = false;
 
-    public AwardNode() {}
+    public AwardNode() {
+    }
 
     public OrganisationNode getOrganisation() {
         return (null != organisation) ? organisation.getOrganisationNode() : null;
     }
 
-    public AwardNode setOrganisation(OrganisationNode organisationNode, ZonedDateTime awardedDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public AwardNode setOrganisation(
+            OrganisationNode organisationNode,
+            ZonedDateTime awardedDate,
+            ZonedDateTime startDate,
+            ZonedDateTime endDate
+    ) {
         if (null == this.organisation) {
-            this.organisation = new AwardOrgLink(organisationNode).setAwardedDate(awardedDate).setStartDate(startDate).setEndDate(endDate);
+            this.organisation = new AwardOrgLink(organisationNode)
+                    .setAwardedDate(awardedDate)
+                    .setStartDate(startDate)
+                    .setEndDate(endDate);
         } else {
             logger.warn("REMOVING relationship between entities {} {}", this, organisationNode);
             this.organisation.setOrganisationNode(organisationNode);
@@ -120,6 +129,15 @@ public class AwardNode implements FosEntity {
 
     public AwardNode setHidden(Boolean hidden) {
         this.hidden = hidden;
+        return this;
+    }
+
+    public Boolean getGroupAward() {
+        return groupAward;
+    }
+
+    public AwardNode setGroupAward(Boolean groupAward) {
+        this.groupAward = groupAward;
         return this;
     }
 }

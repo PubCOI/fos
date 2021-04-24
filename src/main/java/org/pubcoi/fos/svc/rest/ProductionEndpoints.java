@@ -15,17 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.rest;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
+import org.springframework.context.annotation.Profile;
 
-import java.util.List;
-
-public interface NoticesSvc {
-    void addNotice(FullNotice notice);
-
-    NoticeNodeDTO getNoticeDTO(String noticeId);
-
-    List<FullNotice> getNoticesByClientId(String clientId);
+@Profile({"production", "debug"})
+public class ProductionEndpoints {
 }

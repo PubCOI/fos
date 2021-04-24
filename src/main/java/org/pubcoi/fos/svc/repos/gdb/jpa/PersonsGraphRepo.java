@@ -15,17 +15,15 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.repos.gdb.jpa;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
+import org.springframework.data.neo4j.repository.Neo4jRepository;
 
-import java.util.List;
+public interface PersonsGraphRepo extends Neo4jRepository<PersonNode, String> {
 
-public interface NoticesSvc {
-    void addNotice(FullNotice notice);
+    boolean existsByOcId(String ocId);
 
-    NoticeNodeDTO getNoticeDTO(String noticeId);
+    boolean existsByParliamentaryId(Integer parlId);
 
-    List<FullNotice> getNoticesByClientId(String clientId);
 }

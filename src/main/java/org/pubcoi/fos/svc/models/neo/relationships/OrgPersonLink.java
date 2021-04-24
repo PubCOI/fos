@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 @RelationshipProperties
-public class OrgPersonLink {
+public class OrgPersonLink implements FosRelationship {
 
     @Id
     String id;

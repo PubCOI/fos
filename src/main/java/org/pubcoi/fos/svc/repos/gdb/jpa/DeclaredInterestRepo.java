@@ -15,7 +15,7 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.repos.gdb;
+package org.pubcoi.fos.svc.repos.gdb.jpa;
 
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.springframework.data.neo4j.repository.Neo4jRepository;

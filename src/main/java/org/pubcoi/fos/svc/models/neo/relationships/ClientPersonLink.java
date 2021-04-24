@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 @RelationshipProperties
-public class ClientPersonLink {
+public class ClientPersonLink implements FosRelationship {
 
     @Id
     String id;

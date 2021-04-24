@@ -24,7 +24,7 @@ import org.springframework.data.neo4j.core.schema.TargetNode;
 import java.time.ZonedDateTime;
 
 @RelationshipProperties
-public class AwardOrgLink {
+public class AwardOrgLink implements FosRelationship {
 
     @TargetNode
     OrganisationNode organisationNode;

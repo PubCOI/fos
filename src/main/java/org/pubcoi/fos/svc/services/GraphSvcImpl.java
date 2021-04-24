@@ -20,7 +20,7 @@ package org.pubcoi.fos.svc.services;
 import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.cdm.batch.BatchJob;
 import org.pubcoi.cdm.batch.BatchJobTypeEnum;
-import org.pubcoi.cdm.cf.AdditionalDetailsType;
+import org.pubcoi.cdm.cf.AdditionalDetailType;
 import org.pubcoi.cdm.fos.AttachmentFactory;
 import org.pubcoi.cdm.fos.BatchJobFactory;
 import org.pubcoi.fos.svc.exceptions.FosException;
@@ -30,10 +30,10 @@ import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
-import org.pubcoi.fos.svc.repos.gdb.AwardsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.ClientsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.NoticesGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.AwardsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +135,7 @@ public class GraphSvcImpl implements GraphSvc {
                             .setId(award.getId())
                             .setValue(award.getValue())
                             .setNoticeId(award.getNoticeId())
+                            .setGroupAward(award.getGroup())
                             .setOrganisation(
                                     orgGraphRepo.findById(org.getId()).orElseThrow(() -> new FosException()),
                                     award.getAwardedDate().toZonedDateTime(),
@@ -154,13 +155,13 @@ public class GraphSvcImpl implements GraphSvc {
 
         // for every notice in the mongo db, put the attachments onto the attachments DB
         noticesMDBRepo.findAll().forEach(notice -> {
-            for (AdditionalDetailsType additionalDetailsType : notice.getAdditionalDetails().getAdditionalDetail()) {
+            for (AdditionalDetailType additionalDetail : notice.getAdditionalDetails().getDetailsList()) {
                 // note that each notice will have an "additional details" object that is exactly the
                 // same as the description on the notice
                 // helpfully, the ID and notice ID on these objects is the same
-                if (additionalDetailsType.getId().equals(additionalDetailsType.getNoticeId())) continue;
-                if (!attachmentMDBRepo.existsById(additionalDetailsType.getId())) {
-                    attachmentMDBRepo.save(AttachmentFactory.build(additionalDetailsType));
+                if (additionalDetail.getId().equals(additionalDetail.getNoticeId())) continue;
+                if (!attachmentMDBRepo.existsById(additionalDetail.getId())) {
+                    attachmentMDBRepo.save(AttachmentFactory.build(additionalDetail));
                 }
             }
         });

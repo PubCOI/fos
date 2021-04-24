@@ -27,7 +27,7 @@ import org.springframework.util.DigestUtils;
 import java.time.ZonedDateTime;
 
 @RelationshipProperties
-public class ClientParentClientLink {
+public class ClientParentClientLink implements FosRelationship {
 
     @Id
     String id;

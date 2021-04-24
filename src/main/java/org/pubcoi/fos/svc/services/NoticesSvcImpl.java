@@ -17,12 +17,12 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.cdm.cf.AwardDetailParentType;
+import org.pubcoi.cdm.cf.AwardDetailType;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.ItemNotFoundException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
-import org.pubcoi.fos.svc.repos.gdb.NoticesGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
 import org.springframework.stereotype.Service;
 
@@ -48,13 +48,13 @@ public class NoticesSvcImpl implements NoticesSvc {
     }
 
     @Override
-    public void addNotice(FullNotice notice, String currentUser) {
+    public void addNotice(FullNotice notice) {
         // remove data we don't want / need
         notice.getNotice().setContactDetails(null);
 
         noticesMDBRepo.save(notice);
-        for (AwardDetailParentType.AwardDetail awardDetail : notice.getAwards().getAwardDetail()) {
-            awardsSvc.addAward(new CFAward(notice, awardDetail), currentUser);
+        for (AwardDetailType awardDetail : notice.getAwards().getAwardDetails()) {
+            awardsSvc.addAward(new CFAward(notice, awardDetail));
         }
     }
 

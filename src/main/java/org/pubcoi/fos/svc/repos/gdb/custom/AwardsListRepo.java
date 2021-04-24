@@ -15,22 +15,20 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.repos.gdb.custom;
 
-import org.pubcoi.fos.svc.models.core.CFAward;
-import org.pubcoi.fos.svc.models.dto.AwardDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
+import org.pubcoi.fos.svc.models.queries.AwardsGraphResponse;
+import org.springframework.data.neo4j.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
-import java.util.Set;
 
-public interface AwardsSvc {
+public interface AwardsListRepo extends CrudRepository<AwardNode, String> {
 
-    void addAward(CFAward cfAward);
+    @Query("MATCH (c:Client)-[:PUBLISHED]-(:Notice)-[:AWARDS]-(award:Award)-[awardOrgLink:AWARDED_TO]-(awardee:Organisation) " +
+            "OPTIONAL MATCH (awardee)-[orgOrgLink:LEGAL_ENTITY]-(legalEntity:Organisation {verified: true}) " +
+            "RETURN c.name AS clientName, award AS awardNode, awardOrgLink, awardee, orgOrgLink, legalEntity")
+    List<AwardsGraphResponse> getAwardsWithRels();
 
-    Set<AwardDTO> getAwardsForNotice(String noticeID);
-
-    AwardDTO getAwardDetailsDTOWithAttachments(String awardId);
-
-    List<AwardNode> getAwardsForOrg(String orgId);
 }

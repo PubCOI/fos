@@ -34,7 +34,7 @@ import java.util.HashSet;
 import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 
 @RelationshipProperties
-public class PersonConflictLink {
+public class PersonConflictLink implements FosRelationship {
 
     @Id
     String id;

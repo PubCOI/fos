@@ -20,8 +20,8 @@ package org.pubcoi.fos.svc.services;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
-import org.pubcoi.fos.svc.repos.gdb.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.PersonsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.PersonsGraphRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

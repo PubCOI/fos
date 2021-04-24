@@ -22,7 +22,7 @@ import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dto.AttachmentDTO;
 import org.pubcoi.fos.svc.models.dto.AwardDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
-import org.pubcoi.fos.svc.repos.gdb.AwardsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.AwardsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
 import org.springframework.stereotype.Service;
@@ -51,7 +51,7 @@ public class AwardsSvcImpl implements AwardsSvc {
     }
 
     @Override
-    public void addAward(CFAward cfAward, String currentUser) {
+    public void addAward(CFAward cfAward) {
         awardsMDBRepo.save(cfAward);
     }
 

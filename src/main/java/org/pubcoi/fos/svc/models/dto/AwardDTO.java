@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.pubcoi.fos.svc.models.core.CFAward;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,12 @@ public class AwardDTO {
     Long valueMin;
     @JsonView(Views.Details.class)
     Long valueMax;
+    @JsonView(Views.Details.class)
+    LocalDate awardDate;
+    @JsonView(Views.Details.class)
+    LocalDate startDate;
+    @JsonView(Views.Details.class)
+    LocalDate endDate;
     @JsonView(Views.WithChildObjects.class)
     List<AttachmentDTO> attachments = new ArrayList<>();
 
@@ -65,19 +72,22 @@ public class AwardDTO {
         this.valueMin = (null == award.getValueMin() ? 0 : award.getValueMin());
         this.valueMax = (null == award.getValueMax() ? 0 : award.getValueMax());
         this.group = award.getGroup();
+        if (null != award.getAwardedDate()) this.awardDate = award.getAwardedDate().toLocalDate();
+        if (null != award.getStartDate()) this.startDate = award.getStartDate().toLocalDate();
+        if (null != award.getEndDate()) this.endDate = award.getEndDate().toLocalDate();
     }
 
     public String getId() {
         return id;
     }
 
-    public String getOrganisation() {
-        return organisation;
-    }
-
     public AwardDTO setId(String id) {
         this.id = id;
         return this;
+    }
+
+    public String getOrganisation() {
+        return organisation;
     }
 
     public AwardDTO setOrganisation(String organisation) {
@@ -164,5 +174,17 @@ public class AwardDTO {
     public AwardDTO setNoticeTitle(String noticeTitle) {
         this.noticeTitle = noticeTitle;
         return this;
+    }
+
+    public LocalDate getAwardDate() {
+        return awardDate;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
     }
 }

@@ -17,11 +17,9 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
-import org.pubcoi.cdm.pw.PWRootType;
 
-public interface XslSvc {
-    PWRootType cleanPWData(String pwRootType);
-
-    NoticeSearchResponse cleanNoticeSearchResponse(String noticeInput);
+public interface ContractsFinderSvc {
+    NoticeSearchResponse postSearchRequest(SearchCriteriaType searchCriteria);
 }

@@ -20,6 +20,7 @@ package org.pubcoi.fos.svc.models.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.pubcoi.fos.svc.models.core.CFAward;
+import org.pubcoi.fos.views.FosViews;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,31 +31,31 @@ import java.util.List;
  */
 public class AwardDTO {
 
-    @JsonView(Views.Summary.class)
+    @JsonView(FosViews.Summary.class)
     String id;
-    @JsonView(Views.Summary.class)
+    @JsonView(FosViews.Summary.class)
     String noticeId;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     String noticeTitle;
-    @JsonView(Views.Summary.class)
+    @JsonView(FosViews.Summary.class)
     String organisation;
-    @JsonView(Views.Summary.class)
+    @JsonView(FosViews.Summary.class)
     String supplierName;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     Long supplierNumTotalAwards;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     Long value;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     Long valueMin;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     Long valueMax;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     LocalDate awardDate;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     LocalDate startDate;
-    @JsonView(Views.Details.class)
+    @JsonView(FosViews.Details.class)
     LocalDate endDate;
-    @JsonView(Views.WithChildObjects.class)
+    @JsonView(FosViews.WithChildObjects.class)
     List<AttachmentDTO> attachments = new ArrayList<>();
 
     @JsonProperty("group_award")

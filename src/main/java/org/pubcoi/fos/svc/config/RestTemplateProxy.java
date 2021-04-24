@@ -18,6 +18,8 @@
 package org.pubcoi.fos.svc.config;
 
 
+import org.pubcoi.fos.svc.models.dto.search.NoticeSearchResponseMessageConverter;
+import org.pubcoi.fos.svc.services.XslSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -34,15 +36,15 @@ import java.net.Proxy;
 public class RestTemplateProxy {
     private static final Logger logger = LoggerFactory.getLogger(RestTemplateProxy.class);
 
+    final XslSvc xslSvc;
+    final Environment env;
+    RestTemplate restTemplate;
+
     SimpleClientHttpRequestFactory clientHttpReq = new SimpleClientHttpRequestFactory();
     Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 9099));
 
-    RestTemplate restTemplate;
-
-    final
-    Environment env;
-
-    public RestTemplateProxy(Environment env) {
+    public RestTemplateProxy(XslSvc xslSvc, Environment env) {
+        this.xslSvc = xslSvc;
         this.env = env;
     }
 
@@ -55,6 +57,7 @@ public class RestTemplateProxy {
             }
         }
         restTemplate = new RestTemplate(clientHttpReq);
+        restTemplate.getMessageConverters().add(new NoticeSearchResponseMessageConverter(xslSvc));
     }
 
     @Bean

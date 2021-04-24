@@ -15,13 +15,24 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto.search;
 
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
-import org.pubcoi.cdm.pw.PWRootType;
 
-public interface XslSvc {
-    PWRootType cleanPWData(String pwRootType);
+/**
+ * We pass the search response through this wrapper as we're using {@link NoticeSearchResponseMessageConverter} to
+ * clean up the response via an XSLT before writing to the 'proper' {@link NoticeSearchResponse} object
+ */
+public class NoticeSearchResponseWrapper {
 
-    NoticeSearchResponse cleanNoticeSearchResponse(String noticeInput);
+    NoticeSearchResponse noticeSearchResponse;
+
+    public NoticeSearchResponse getNoticeSearchResponse() {
+        return noticeSearchResponse;
+    }
+
+    public NoticeSearchResponseWrapper setNoticeSearchResponse(NoticeSearchResponse noticeSearchResponse) {
+        this.noticeSearchResponse = noticeSearchResponse;
+        return this;
+    }
 }

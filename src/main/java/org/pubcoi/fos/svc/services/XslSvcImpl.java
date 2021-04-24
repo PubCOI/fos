@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.pw.PWRootType;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
@@ -39,42 +40,60 @@ import java.io.InputStream;
 @Service
 public class XslSvcImpl implements XslSvc {
 
-    Transformer regMemStep1Xf;
-    Transformer regMemStep2Xf;
-    Source regMemStep1Src;
-    Source regMemStep2Src;
-    JAXBContext xfOm;
+    private static final String UNABLE_TO_TRANSFORM = "Unable to transform content";
+    Source pwData1XFS;
+    Source pwData2XFS;
+    Source cfsDataXFS;
+    Transformer pwData1XF;
+    Transformer pwData2XF;
+    Transformer cfsDataXF;
+    JAXBContext pwCtx;
+    JAXBContext cfsCtx;
 
     @Value("${fos.xsl.pw.step_1:xsl/CleanROI_step1.xsl}")
-    String step1Xsl;
+    String pwStep1Xsl;
 
     @Value("${fos.xsl.pw.step_2:xsl/CleanROI_step2.xsl}")
-    String step2Xsl;
+    String pwStep2Xsl;
+
+    @Value("${fos.xsl.cfs:xsl/CleanNoticesSearchResponse.xsl}")
+    String cfsXsl;
 
     @PostConstruct
     public void postConstruct() {
         try {
-            this.xfOm = JAXBContext.newInstance(PWRootType.class);
+            this.pwCtx = JAXBContext.newInstance(PWRootType.class);
+            this.cfsCtx = JAXBContext.newInstance(NoticeSearchResponse.class);
         } catch (JAXBException e) {
             throw new FosRuntimeException(String.format(
                     "Unable to instantiate JAXBContext for %s", PWRootType.class.getCanonicalName()
             ));
         }
-        ClassPathResource step1 = new ClassPathResource(step1Xsl);
-        ClassPathResource step2 = new ClassPathResource(step2Xsl);
-        if (!(step1.exists() && step2.exists())) {
-            throw new FosRuntimeException(String.format("Unable to find %s or %s", step1, step2));
-        }
+        ClassPathResource pwStep1 = new ClassPathResource(pwStep1Xsl);
+        ClassPathResource pwStep2 = new ClassPathResource(pwStep2Xsl);
+        ClassPathResource cfsStep = new ClassPathResource(cfsXsl);
+        checkExists(pwStep1);
+        checkExists(pwStep2);
+        checkExists(cfsStep);
         try (
-                InputStream step1is = step1.getInputStream();
-                InputStream step2is = step2.getInputStream()
+                InputStream pwStep1InputStream = pwStep1.getInputStream();
+                InputStream pwStep2InputStream = pwStep2.getInputStream();
+                InputStream cfsStepInputStream = cfsStep.getInputStream()
         ) {
-            this.regMemStep1Src = new StreamSource(step1is);
-            this.regMemStep2Src = new StreamSource(step2is);
-            this.regMemStep1Xf = TransformerFactory.newDefaultInstance().newTransformer(regMemStep1Src);
-            this.regMemStep2Xf = TransformerFactory.newDefaultInstance().newTransformer(regMemStep2Src);
+            this.pwData1XFS = new StreamSource(pwStep1InputStream);
+            this.pwData2XFS = new StreamSource(pwStep2InputStream);
+            this.cfsDataXFS = new StreamSource(cfsStepInputStream);
+            this.pwData1XF = TransformerFactory.newDefaultInstance().newTransformer(pwData1XFS);
+            this.pwData2XF = TransformerFactory.newDefaultInstance().newTransformer(pwData2XFS);
+            this.cfsDataXF = TransformerFactory.newDefaultInstance().newTransformer(cfsDataXFS);
         } catch (IOException | TransformerConfigurationException e) {
             throw new FosRuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private void checkExists(ClassPathResource resource) {
+        if (!resource.exists()) {
+            throw new FosRuntimeException(String.format("Unable to find %s", resource.getFilename()));
         }
     }
 
@@ -87,18 +106,35 @@ public class XslSvcImpl implements XslSvc {
             // throw through converters
             Source inputStep1 = new StreamSource(new ByteArrayInputStream(pwRootType.getBytes()));
             Result step1Output = new StreamResult(step1Baos);
-            regMemStep1Xf.transform(inputStep1, step1Output);
+            pwData1XF.transform(inputStep1, step1Output);
 
             // now run through step 2
             Source inputStep2 = new StreamSource(new ByteArrayInputStream(step1Baos.toByteArray()));
             Result step2Output = new StreamResult(step2Baos);
-            regMemStep2Xf.transform(inputStep2, step2Output);
+            pwData2XF.transform(inputStep2, step2Output);
 
             // now return the object
-            Unmarshaller u = xfOm.createUnmarshaller();
+            Unmarshaller u = pwCtx.createUnmarshaller();
             return (PWRootType) u.unmarshal(new ByteArrayInputStream(step2Baos.toByteArray()));
         } catch (JAXBException | IOException | TransformerException e) {
-            throw new FosException("Unable to transform content");
+            throw new FosException(UNABLE_TO_TRANSFORM);
+        }
+    }
+
+    @Override
+    public NoticeSearchResponse cleanNoticeSearchResponse(String noticeInput) {
+        try (
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        ) {
+            // throw through converters
+            Source inputStep1 = new StreamSource(new ByteArrayInputStream(noticeInput.getBytes()));
+            Result step1Output = new StreamResult(baos);
+            cfsDataXF.transform(inputStep1, step1Output);
+
+            Unmarshaller u = cfsCtx.createUnmarshaller();
+            return (NoticeSearchResponse) u.unmarshal(new ByteArrayInputStream(baos.toByteArray()));
+        } catch (JAXBException | IOException | TransformerException e) {
+            throw new FosException(UNABLE_TO_TRANSFORM);
         }
     }
 

@@ -15,13 +15,29 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto.search;
 
-import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
-import org.pubcoi.cdm.pw.PWRootType;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 
-public interface XslSvc {
-    PWRootType cleanPWData(String pwRootType);
+public enum DateRangeEnum {
+    _3m(3, ChronoUnit.MONTHS),
+    _6m(6, ChronoUnit.MONTHS),
+    _1y(1, ChronoUnit.YEARS),
+    _3y(3, ChronoUnit.YEARS),
+    _5y(5, ChronoUnit.YEARS),
+    _10y(10, ChronoUnit.YEARS);
 
-    NoticeSearchResponse cleanNoticeSearchResponse(String noticeInput);
+    int value;
+    TemporalUnit unit;
+
+    DateRangeEnum(int value, TemporalUnit unit) {
+        this.value = value;
+        this.unit = unit;
+    }
+
+    public LocalDate getDateFrom() {
+        return LocalDate.now().minus(value, unit);
+    }
 }

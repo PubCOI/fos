@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.rest;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +42,9 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.attachments.Attachment;
+import org.pubcoi.cdm.cf.base.NoticeStatusEnum;
+import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
+import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.fos.FosESFields;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
@@ -51,6 +55,8 @@ import org.pubcoi.fos.svc.models.core.SearchRequestDTO;
 import org.pubcoi.fos.svc.models.dto.AttachmentDTO;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.models.dto.es.*;
+import org.pubcoi.fos.svc.models.dto.search.ContractFinderSearchRequestDTO;
+import org.pubcoi.fos.svc.models.dto.search.SearchByDateTypeEnum;
 import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -60,6 +66,7 @@ import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.*;
 import org.pubcoi.fos.svc.services.*;
+import org.pubcoi.fos.views.FosViews;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -68,6 +75,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import java.net.URISyntaxException;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -96,6 +104,7 @@ public class UI {
     final MnisMembersRepo mnisMembersRepo;
     final MnisSvc mnisSvc;
     final AwardsListRepo awardsListRepo;
+    final ContractsFinderSvc contractsFinderSvc;
 
     public UI(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -116,7 +125,8 @@ public class UI {
             OrganisationsGraphRepo organisationsGraphRepo,
             MnisMembersRepo mnisMembersRepo,
             MnisSvc mnisSvc,
-            AwardsListRepo awardsListRepo) {
+            AwardsListRepo awardsListRepo,
+            ContractsFinderSvc contractsFinderSvc) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
@@ -136,6 +146,7 @@ public class UI {
         this.mnisMembersRepo = mnisMembersRepo;
         this.mnisSvc = mnisSvc;
         this.awardsListRepo = awardsListRepo;
+        this.contractsFinderSvc = contractsFinderSvc;
     }
 
     final ObjectMapper esSearchResponseObjectMapper = new ObjectMapper();
@@ -193,6 +204,25 @@ public class UI {
     @GetMapping("/api/interests/{mnisMemberId}")
     public MemberInterestsDTO getInterests(@PathVariable Integer mnisMemberId) {
         return mnisSvc.getInterestsDTOForMember(mnisMemberId);
+    }
+
+    @PostMapping("/api/search/contract-finder")
+    @JsonView(FosViews.Summary.class)
+    public NoticeSearchResponse doContractsFinderSearch(
+            @RequestBody ContractFinderSearchRequestDTO searchRequestDTO
+    ) {
+        SearchCriteriaType searchCriteria = new SearchCriteriaType().withKeyword(searchRequestDTO.getQuery()).withStatuses(
+                new SearchCriteriaType.Statuses().withNoticeStatus(NoticeStatusEnum.AWARDED)
+        );
+        if (searchRequestDTO.getDateType().equals(SearchByDateTypeEnum.awarded)) {
+            searchCriteria.setAwardedFrom(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
+            searchCriteria.setAwardedTo(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
+        }
+        else {
+            searchCriteria.setPublishedFrom(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
+            searchCriteria.setPublishedTo(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
+        }
+        return contractsFinderSvc.postSearchRequest(searchCriteria);
     }
 
     @PostMapping("/api/search/interests")

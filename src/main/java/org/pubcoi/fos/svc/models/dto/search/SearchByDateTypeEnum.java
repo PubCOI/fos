@@ -15,15 +15,8 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.models.dto;
+package org.pubcoi.fos.svc.models.dto.search;
 
-public class Views {
-    public interface Summary {
-    }
-
-    public interface Details extends Summary {
-    }
-
-    public interface WithChildObjects extends Details {
-    }
+public enum  SearchByDateTypeEnum {
+    awarded, published
 }

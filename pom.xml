@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.pubcoi.fos</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>fos-svc</artifactId>
@@ -39,7 +39,6 @@
 
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <version.debatty-str>2.0.0</version.debatty-str>
     </properties>
 
     <dependencies>
@@ -122,7 +121,6 @@
         <dependency>
             <groupId>info.debatty</groupId>
             <artifactId>java-string-similarity</artifactId>
-            <version>${version.debatty-str}</version>
         </dependency>
     </dependencies>
 
@@ -137,7 +135,6 @@
                     <plugin>
                         <groupId>cz.habarta.typescript-generator</groupId>
                         <artifactId>typescript-generator-maven-plugin</artifactId>
-                        <version>2.30.840</version>
                         <executions>
                             <execution>
                                 <id>generate</id>
@@ -181,7 +178,6 @@
                     <plugin>
                         <groupId>com.github.eirslett</groupId>
                         <artifactId>frontend-maven-plugin</artifactId>
-                        <version>1.11.0</version>
                         <configuration>
                             <workingDirectory>${frontend-src-dir}</workingDirectory>
                             <installDirectory>target</installDirectory>
@@ -227,7 +223,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>${maven-enforcer-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>default-cli</id>
@@ -255,7 +250,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.4.2</version>
                 <executions>
                     <execution>
                         <goals>

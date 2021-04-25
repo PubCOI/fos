@@ -17,8 +17,38 @@
 
 package org.pubcoi.fos.svc.rest;
 
+import org.pubcoi.cdm.cf.FullNotice;
+import org.pubcoi.fos.svc.services.ContractsFinderSvc;
+import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 @Profile({"production", "debug"})
+@RestController
 public class ProductionEndpoints {
+
+    final FosAuthProvider authProvider;
+    final ContractsFinderSvc contractsFinderSvc;
+
+    public ProductionEndpoints(FosAuthProvider authProvider, ContractsFinderSvc contractsFinderSvc) {
+        this.authProvider = authProvider;
+        this.contractsFinderSvc = contractsFinderSvc;
+    }
+
+    /**
+     * Grabs a particular notice from the contract finder
+     * @param noticeId the notice to add
+     * @param authToken firebase user token
+     * @return Result of adding notice
+     */
+    @PutMapping("/api/notices/{noticeId}")
+    public String putNotice(@PathVariable String noticeId, @RequestHeader("authToken") String authToken) {
+        authProvider.checkAuth(authToken);
+        FullNotice notice = contractsFinderSvc.addNotice(noticeId);
+        return String.format("%s added", notice.getId());
+    }
+
 }

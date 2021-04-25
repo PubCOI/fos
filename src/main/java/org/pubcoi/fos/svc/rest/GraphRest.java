@@ -38,12 +38,13 @@ import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.repos.gdb.custom.ClientNodeFTS;
 import org.pubcoi.fos.svc.repos.gdb.custom.OrgNodeFTS;
-import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.custom.PersonNodeFTS;
+import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.services.AwardsSvc;
 import org.pubcoi.fos.svc.services.ClientsSvc;
 import org.pubcoi.fos.svc.services.NoticesSvc;
 import org.pubcoi.fos.svc.services.PersonsSvc;
+import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.core.Neo4jClient;
@@ -52,12 +53,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.pubcoi.fos.svc.rest.UI.checkAuth;
-
 @RestController
 public class GraphRest {
     private static final Logger logger = LoggerFactory.getLogger(GraphRest.class);
 
+    final FosAuthProvider authProvider;
     final Neo4jClient neo4jClient;
     final ClientNodeFTS clientNodeFTS;
     final OrgNodeFTS orgNodeFTS;
@@ -80,6 +80,7 @@ public class GraphRest {
     }
 
     public GraphRest(
+            FosAuthProvider authProvider,
             Neo4jClient neo4jClient,
             ClientNodeFTS clientNodeFTS,
             OrgNodeFTS orgNodeFTS,
@@ -90,6 +91,7 @@ public class GraphRest {
             PersonsSvc personsSvc,
             OrganisationsGraphRepo organisationsGraphRepo
     ) {
+        this.authProvider = authProvider;
         this.neo4jClient = neo4jClient;
         this.clientNodeFTS = clientNodeFTS;
         this.orgNodeFTS = orgNodeFTS;
@@ -329,7 +331,7 @@ public class GraphRest {
             @RequestBody AddRelationshipDTO addRelationshipDTO,
             @RequestHeader("authToken") String authToken
     ) {
-        checkAuth(authToken);
+        authProvider.getUid(authToken);
         logger.debug("Adding relationship for client: {}", addRelationshipDTO);
         ClientNode client = clientSvc.getClientNode(clientId);
         client.getPersons().add(new ClientPersonLink(
@@ -348,7 +350,7 @@ public class GraphRest {
             @RequestBody AddRelationshipDTO addRelationshipDTO,
             @RequestHeader("authToken") String authToken
     ) {
-        checkAuth(authToken);
+        authProvider.getUid(authToken);
         logger.debug("Adding relationship for person: {}", addRelationshipDTO);
         OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(addRelationshipDTO.getRelId()).orElseThrow();
         logger.debug("Found {}", org);
@@ -503,7 +505,7 @@ public class GraphRest {
             @PathVariable String personId,
             @RequestHeader("authToken") String authToken
     ) {
-        checkAuth(authToken);
+        authProvider.getUid(authToken);
         return "OK";
     }
 

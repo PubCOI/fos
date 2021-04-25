@@ -17,30 +17,64 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.search.request.NoticeSearchRequest;
 import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
+import org.pubcoi.cdm.cf.search.response.NoticeHitType;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.models.dto.search.NoticeSearchResponseWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class ContractsFinderSvcImpl implements ContractsFinderSvc {
+    private static final Logger logger = LoggerFactory.getLogger(ContractsFinderSvcImpl.class);
 
     final RestTemplate restTemplate;
+    final NoticesSvc noticesSvc;
+    final XslSvc xslSvc;
 
     @Value("${pubcoi.fos.apis.contract-finder.search}")
     String cfSearchEndpoint;
 
-    public ContractsFinderSvcImpl(RestTemplate restTemplate) {
+    @Value("${pubcoi.fos.apis.contract-finder.get-notice}")
+    String cfGetNoticeEndpoint;
+
+    public ContractsFinderSvcImpl(RestTemplate restTemplate, NoticesSvc noticesSvc, XslSvc xslSvc) {
         this.restTemplate = restTemplate;
+        this.noticesSvc = noticesSvc;
+        this.xslSvc = xslSvc;
     }
 
     @Override
     public NoticeSearchResponse postSearchRequest(SearchCriteriaType searchCriteria) {
         NoticeSearchRequest searchRequest = new NoticeSearchRequest().withSearchCriteria(searchCriteria).withSize(10);
         NoticeSearchResponseWrapper searchResponse = restTemplate.postForObject(cfSearchEndpoint, searchRequest, NoticeSearchResponseWrapper.class);
-        return searchResponse != null ? searchResponse.getNoticeSearchResponse() : null;
+        if (searchResponse != null) {
+            for (NoticeHitType hitOfNoticeIndex : searchResponse.getNoticeSearchResponse().getNoticeList().getHitOfNoticeIndex()) {
+                hitOfNoticeIndex.getItem().setAlreadyLoaded(noticesSvc.exists(hitOfNoticeIndex.getItem().getId()));
+            }
+            return searchResponse.getNoticeSearchResponse();
+        }
+        return null;
+    }
+
+    @Override
+    public FullNotice addNotice(String noticeId) {
+        if (noticesSvc.exists(noticeId)) {
+            return noticesSvc.getNotice(noticeId);
+        }
+        else {
+            logger.info("Requesting notice {} from remote endpoint", noticeId);
+            // nb notice has bunch of different namespaces on it ... doing the naughty thing and just nuking them for now
+            String noticeStr = restTemplate.getForObject(String.format(cfGetNoticeEndpoint, noticeId), String.class);
+            FullNotice notice = xslSvc.cleanGetNoticeResponse(noticeStr);
+            if (null == notice || null == noticeId) throw new FosBadRequestException("Unable to get notice");
+            return noticesSvc.addNotice(notice);
+        }
     }
 }

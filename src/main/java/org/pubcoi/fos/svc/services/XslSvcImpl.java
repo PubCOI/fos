@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.pw.PWRootType;
 import org.pubcoi.fos.svc.exceptions.FosException;
@@ -48,7 +49,8 @@ public class XslSvcImpl implements XslSvc {
     Transformer pwData2XF;
     Transformer cfsDataXF;
     JAXBContext pwCtx;
-    JAXBContext cfsCtx;
+    JAXBContext searchNoticeCtx;
+    JAXBContext getNoticeCtx;
 
     @Value("${fos.xsl.pw.step_1:xsl/CleanROI_step1.xsl}")
     String pwStep1Xsl;
@@ -63,7 +65,8 @@ public class XslSvcImpl implements XslSvc {
     public void postConstruct() {
         try {
             this.pwCtx = JAXBContext.newInstance(PWRootType.class);
-            this.cfsCtx = JAXBContext.newInstance(NoticeSearchResponse.class);
+            this.searchNoticeCtx = JAXBContext.newInstance(NoticeSearchResponse.class);
+            this.getNoticeCtx = JAXBContext.newInstance(FullNotice.class);
         } catch (JAXBException e) {
             throw new FosRuntimeException(String.format(
                     "Unable to instantiate JAXBContext for %s", PWRootType.class.getCanonicalName()
@@ -123,16 +126,24 @@ public class XslSvcImpl implements XslSvc {
 
     @Override
     public NoticeSearchResponse cleanNoticeSearchResponse(String noticeInput) {
+        return cleanMessage(noticeInput, NoticeSearchResponse.class, searchNoticeCtx);
+    }
+
+    @Override
+    public FullNotice cleanGetNoticeResponse(String noticeInput) {
+        return cleanMessage(noticeInput, FullNotice.class, getNoticeCtx);
+    }
+
+    private <T> T cleanMessage(String input, Class<T> type, JAXBContext context) {
         try (
                 ByteArrayOutputStream baos = new ByteArrayOutputStream()
         ) {
-            // throw through converters
-            Source inputStep1 = new StreamSource(new ByteArrayInputStream(noticeInput.getBytes()));
+            Source inputStep1 = new StreamSource(new ByteArrayInputStream(input.getBytes()));
             Result step1Output = new StreamResult(baos);
             cfsDataXF.transform(inputStep1, step1Output);
 
-            Unmarshaller u = cfsCtx.createUnmarshaller();
-            return (NoticeSearchResponse) u.unmarshal(new ByteArrayInputStream(baos.toByteArray()));
+            Unmarshaller u = context.createUnmarshaller();
+            return type.cast(u.unmarshal(new ByteArrayInputStream(baos.toByteArray())));
         } catch (JAXBException | IOException | TransformerException e) {
             throw new FosException(UNABLE_TO_TRANSFORM);
         }

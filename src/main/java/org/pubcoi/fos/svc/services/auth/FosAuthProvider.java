@@ -15,14 +15,19 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.services.auth;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
-import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
+import org.pubcoi.fos.svc.models.core.FosUser;
 
-public interface ContractsFinderSvc {
-    NoticeSearchResponse postSearchRequest(SearchCriteriaType searchCriteria);
+public interface FosAuthProvider {
 
-    FullNotice addNotice(String noticeId);
+    void checkAuth(String authToken);
+
+    String getUid(String authToken);
+
+    FosUser getByUid(String uid);
+
+    boolean existsByUid(String uid);
+
+    FosUser save(FosUser setLastLogin);
 }

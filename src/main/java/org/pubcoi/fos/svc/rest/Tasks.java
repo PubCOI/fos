@@ -15,7 +15,7 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.rest.ui;
+package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
@@ -29,15 +29,14 @@ import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
 import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
-import org.pubcoi.fos.svc.rest.UI;
 import org.pubcoi.fos.svc.services.OCRestSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
 import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
 import org.pubcoi.fos.svc.services.Utils;
+import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +52,9 @@ import java.util.stream.Collectors;
 public class Tasks {
     private static final Logger logger = LoggerFactory.getLogger(Tasks.class);
 
+    final FosAuthProvider authProvider;
     final TasksRepo tasksRepo;
     final TransactionOrchestrationSvc transactionOrch;
-    final FosUserRepo userRepo;
     final ClientsGraphRepo clientGRepo;
     final OrganisationsMDBRepo orgMDBRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
@@ -64,16 +63,18 @@ public class Tasks {
     final ScheduledSvc scheduledSvc;
 
     public Tasks(
+            FosAuthProvider authProvider,
             TasksRepo tasksRepo,
             TransactionOrchestrationSvc transactionOrch,
-            FosUserRepo userRepo,
             ClientsGraphRepo clientGRepo,
             OrganisationsMDBRepo orgMDBRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
-            OCRestSvc ocRestSvc, UserObjectFlagRepo objectFlagsRepo, ScheduledSvc scheduledSvc) {
+            OCRestSvc ocRestSvc,
+            UserObjectFlagRepo objectFlagsRepo,
+            ScheduledSvc scheduledSvc) {
+        this.authProvider = authProvider;
         this.tasksRepo = tasksRepo;
         this.transactionOrch = transactionOrch;
-        this.userRepo = userRepo;
         this.clientGRepo = clientGRepo;
         this.orgMDBRepo = orgMDBRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
@@ -94,8 +95,8 @@ public class Tasks {
             @RequestBody VerifyCompanySearchRequestDTO requestDTO,
             @RequestHeader String authToken
     ) {
-        String uid = UI.checkAuth(authToken).getUid();
-        FosUser user = userRepo.getByUid(uid);
+        String uid = authProvider.getUid(authToken);
+        FosUser user = authProvider.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
         OrganisationNode org = organisationsGraphRepo.findOrgNotHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
         OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
@@ -140,7 +141,7 @@ public class Tasks {
             @RequestBody CreateTaskRequestDTO createTask,
             @RequestHeader("authToken") String authToken
     ) {
-        UI.checkAuth(authToken);
+        authProvider.getUid(authToken);
         logger.debug("{}", createTask);
         return new CreateTaskResponseDTO().setTaskId(UUID.randomUUID().toString());
     }
@@ -156,7 +157,7 @@ public class Tasks {
             @RequestHeader String authToken,
             @RequestBody RequestWithAuth req
     ) {
-        FosUser user = userRepo.getByUid(UI.checkAuth(authToken).getUid());
+        FosUser user = authProvider.getByUid(authProvider.getUid(authToken));
 
         /* ******** IMPORTANT ***********
          * This may look a bit convoluted in the fact that we're constructing transactions

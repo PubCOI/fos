@@ -22,9 +22,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
 import com.opencorporates.schemas.OCCompanySchema;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -48,7 +45,6 @@ import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.fos.FosESFields;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
-import org.pubcoi.fos.svc.exceptions.FosUnauthorisedException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDTO;
@@ -66,6 +62,7 @@ import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.*;
 import org.pubcoi.fos.svc.services.*;
+import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.pubcoi.fos.views.FosViews;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,12 +82,12 @@ import java.util.stream.Collectors;
 public class UI {
     private static final Logger logger = LoggerFactory.getLogger(UI.class);
 
+    final FosAuthProvider authProvider;
     final AttachmentMDBRepo attachmentMDBRepo;
     final NoticesMDBRepo noticesMDBRepo;
     final NoticesSvc noticesSvc;
     final AwardsMDBRepo awardsMDBRepo;
     final ClientsGraphRepo clientGRepo;
-    final FosUserRepo userRepo;
     final TransactionOrchestrationSvc transactionOrch;
     final RestHighLevelClient esClient;
     final S3Services s3Services;
@@ -107,12 +104,12 @@ public class UI {
     final ContractsFinderSvc contractsFinderSvc;
 
     public UI(
+            FosAuthProvider authProvider,
             AttachmentMDBRepo attachmentMDBRepo,
             NoticesMDBRepo noticesMDBRepo,
             NoticesSvc noticesSvc,
             AwardsMDBRepo awardsMDBRepo,
             ClientsGraphRepo clientGRepo,
-            FosUserRepo userRepo,
             TransactionOrchestrationSvc transactionOrch,
             RestHighLevelClient esClient,
             S3Services s3Services,
@@ -127,12 +124,12 @@ public class UI {
             MnisSvc mnisSvc,
             AwardsListRepo awardsListRepo,
             ContractsFinderSvc contractsFinderSvc) {
+        this.authProvider = authProvider;
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.noticesSvc = noticesSvc;
         this.awardsMDBRepo = awardsMDBRepo;
         this.clientGRepo = clientGRepo;
-        this.userRepo = userRepo;
         this.transactionOrch = transactionOrch;
         this.esClient = esClient;
         this.s3Services = s3Services;
@@ -363,22 +360,14 @@ public class UI {
         return applicationStatus;
     }
 
-    public static FirebaseToken checkAuth(String authToken) {
-        try {
-            return FirebaseAuth.getInstance().verifyIdToken(authToken);
-        } catch (FirebaseAuthException e) {
-            throw new FosUnauthorisedException();
-        }
-    }
-
     @PutMapping("/api/ui/flags/{type}/{objectId}")
     public String updateFlag(
             @RequestHeader("authToken") String authToken,
             @PathVariable String objectId,
             @PathVariable String type
     ) {
-        String uid = checkAuth(authToken).getUid();
-        FosUser user = userRepo.getByUid(uid);
+        String uid = authProvider.getUid(authToken);
+        FosUser user = authProvider.getByUid(uid);
         userObjectFlagRepo.save(new UserObjectFlag(objectId, user));
         if (type.equals("organisation")) {
             // if item is not already in db, add it
@@ -404,8 +393,8 @@ public class UI {
             @PathVariable String objectId,
             @PathVariable String type
     ) {
-        String uid = checkAuth(authToken).getUid();
-        FosUser user = userRepo.getByUid(uid);
+        String uid = authProvider.getUid(authToken);
+        FosUser user = authProvider.getByUid(uid);
         userObjectFlagRepo.delete(new UserObjectFlag(objectId, user));
         return String.format("Removed flag on item %s", objectId);
     }

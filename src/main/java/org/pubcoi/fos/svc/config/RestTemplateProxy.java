@@ -18,7 +18,8 @@
 package org.pubcoi.fos.svc.config;
 
 
-import org.pubcoi.fos.svc.models.dto.search.NoticeSearchResponseMessageConverter;
+import org.pubcoi.fos.svc.config.converters.FullNoticeResponseMessageConverter;
+import org.pubcoi.fos.svc.config.converters.NoticeSearchResponseMessageConverter;
 import org.pubcoi.fos.svc.services.XslSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,7 @@ public class RestTemplateProxy {
         }
         restTemplate = new RestTemplate(clientHttpReq);
         restTemplate.getMessageConverters().add(new NoticeSearchResponseMessageConverter(xslSvc));
+        restTemplate.getMessageConverters().add(new FullNoticeResponseMessageConverter(xslSvc));
     }
 
     @Bean

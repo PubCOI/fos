@@ -15,10 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.models.dto.search;
+package org.pubcoi.fos.svc.config.converters;
 
-import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.models.dto.search.NoticeSearchResponseWrapper;
 import org.pubcoi.fos.svc.services.XslSvc;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
@@ -30,9 +30,7 @@ import org.springframework.util.StreamUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -75,13 +73,6 @@ public class NoticeSearchResponseMessageConverter extends AbstractHttpMessageCon
 
     @Override
     protected void writeInternal(NoticeSearchResponseWrapper noticeSearchResponse, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-        try {
-            Marshaller m = ctx.createMarshaller();
-            try (OutputStream os = outputMessage.getBody()) {
-                m.marshal(noticeSearchResponse, os);
-            }
-        } catch (JAXBException e) {
-            throw new FosException(e.getMessage(), e);
-        }
+        throw new FosRuntimeException("Should not be using this class to write NoticeSearchResponseWrapper objects");
     }
 }

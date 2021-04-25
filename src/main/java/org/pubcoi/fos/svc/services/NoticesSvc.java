@@ -23,9 +23,13 @@ import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
 import java.util.List;
 
 public interface NoticesSvc {
-    void addNotice(FullNotice notice);
+    FullNotice addNotice(FullNotice notice);
 
     NoticeNodeDTO getNoticeDTO(String noticeId);
 
     List<FullNotice> getNoticesByClientId(String clientId);
+
+    boolean exists(String noticeId);
+
+    FullNotice getNotice(String noticeId);
 }

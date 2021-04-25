@@ -48,14 +48,15 @@ public class NoticesSvcImpl implements NoticesSvc {
     }
 
     @Override
-    public void addNotice(FullNotice notice) {
+    public FullNotice addNotice(FullNotice notice) {
         // remove data we don't want / need
         notice.getNotice().setContactDetails(null);
-
+        notice.setCreatedByUser(null);
         noticesMDBRepo.save(notice);
         for (AwardDetailType awardDetail : notice.getAwards().getAwardDetails()) {
             awardsSvc.addAward(new CFAward(notice, awardDetail));
         }
+        return notice;
     }
 
     @Override
@@ -69,5 +70,15 @@ public class NoticesSvcImpl implements NoticesSvc {
                 .map(n -> noticesMDBRepo.findById(n.getId()).orElseThrow())
                 .sorted(Comparator.comparing(FullNotice::getCreatedDate))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean exists(String noticeId) {
+        return noticesMDBRepo.existsById(noticeId);
+    }
+
+    @Override
+    public FullNotice getNotice(String noticeId) {
+        return noticesMDBRepo.findById(noticeId).orElseThrow();
     }
 }

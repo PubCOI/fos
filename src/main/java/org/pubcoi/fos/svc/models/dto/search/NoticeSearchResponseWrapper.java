@@ -18,6 +18,7 @@
 package org.pubcoi.fos.svc.models.dto.search;
 
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
+import org.pubcoi.fos.svc.config.converters.NoticeSearchResponseMessageConverter;
 
 /**
  * We pass the search response through this wrapper as we're using {@link NoticeSearchResponseMessageConverter} to

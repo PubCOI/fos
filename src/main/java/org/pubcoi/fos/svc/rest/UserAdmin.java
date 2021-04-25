@@ -27,6 +27,7 @@ import org.pubcoi.fos.svc.models.dto.UpdateProfileRequestDTO;
 import org.pubcoi.fos.svc.models.dto.UserLoginDTO;
 import org.pubcoi.fos.svc.models.dto.UserProfileDTO;
 import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
+import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -37,10 +38,10 @@ import java.time.OffsetDateTime;
 public class UserAdmin {
     private static final Logger logger = LoggerFactory.getLogger(UserAdmin.class);
 
-    final FosUserRepo userRepo;
+    final FosAuthProvider authProvider;
 
-    public UserAdmin(FosUserRepo userRepo) {
-        this.userRepo = userRepo;
+    public UserAdmin(FosAuthProvider authProvider, FosUserRepo userRepo) {
+        this.authProvider = authProvider;
     }
 
     @PostMapping("/api/login")
@@ -48,15 +49,15 @@ public class UserAdmin {
         // shortcut .. if we already have the UID, we know we've created the user:
         // if no match, it could be because the UID refers to another provider (eg they initially
         // logged in via GitHub but are now using Google
-        if (userRepo.existsByUid(loginDTO.getUid())) {
-            userRepo.save(userRepo.getByUid(loginDTO.getUid()).setLastLogin(OffsetDateTime.now()));
+        if (authProvider.existsByUid(loginDTO.getUid())) {
+            authProvider.save(authProvider.getByUid(loginDTO.getUid()).setLastLogin(OffsetDateTime.now()));
             return;
         }
 
         // adds user meta if it doesn't exist
         try {
             UserRecord record = FirebaseAuth.getInstance().getUser(loginDTO.getUid());
-            userRepo.save(new FosUser()
+            authProvider.save(new FosUser()
                     .setUid(loginDTO.getUid())
                     .setDisplayName(record.getDisplayName())
                     .setLastLogin(OffsetDateTime.now())
@@ -71,8 +72,8 @@ public class UserAdmin {
     public UserProfileDTO getUserProfile(
             @RequestHeader("authToken") String authToken
     ) {
-        String uid = UI.checkAuth(authToken).getUid();
-        return new UserProfileDTO(userRepo.getByUid(uid));
+        String uid = authProvider.getUid(authToken);
+        return new UserProfileDTO(authProvider.getByUid(uid));
     }
 
     @PutMapping("/api/profile")
@@ -80,9 +81,9 @@ public class UserAdmin {
             @RequestBody UpdateProfileRequestDTO updateProfileRequestDTO,
             @RequestHeader("authToken") String authToken
     ) {
-        String uid = UI.checkAuth(authToken).getUid();
-        FosUser user = userRepo.getByUid(uid);
+        String uid = authProvider.getUid(authToken);
+        FosUser user = authProvider.getByUid(uid);
         if (null == user) throw new FosBadRequestException("Unable to find user");
-        return new UserProfileDTO(userRepo.save(user.setDisplayName(updateProfileRequestDTO.getDisplayName())));
+        return new UserProfileDTO(authProvider.save(user.setDisplayName(updateProfileRequestDTO.getDisplayName())));
     }
 }

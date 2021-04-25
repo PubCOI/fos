@@ -17,9 +17,13 @@
 
 package org.pubcoi.fos.svc.config;
 
+import org.pubcoi.fos.svc.config.converters.mdb.JAXBElementReadConverter;
+import org.pubcoi.fos.svc.config.converters.mdb.JAXBElementWriteConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.mongodb.core.convert.MongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
 import java.time.OffsetDateTime;
@@ -27,17 +31,16 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
 
-// interesting problem! didn't think about this ... changing the package name after objects
-// have been created results in issues in deserialisation ... d'oh. Of course.
-
 @Configuration
 public class FosMongoConfiguration {
 
     @Bean
-    public MongoCustomConversions mongoCustomConversions() {
+    public MongoCustomConversions mongoCustomConversions(@Lazy MongoConverter converter) {
         return new MongoCustomConversions(Arrays.asList(
                 new OffsetDateTimeReadConverter(),
                 new OffsetDateTimeWriteConverter(),
+                new JAXBElementWriteConverter(converter),
+                new JAXBElementReadConverter(converter),
                 new ClassConverter()
         ));
     }

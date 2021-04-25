@@ -48,10 +48,4 @@ public class LocalApplicationConfig {
         return status;
     }
 
-    // stupid me, this is not going to be picked up by resttemplate ..
-//    @Bean
-//    public HttpMessageConverter<NoticeSearchResponseWrapper> createNoticeSearchResponseConverter() {
-//        return new NoticeSearchResponseMessageConverter();
-//    }
-
 }

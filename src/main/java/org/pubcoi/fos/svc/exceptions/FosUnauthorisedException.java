@@ -23,4 +23,8 @@ public class FosUnauthorisedException extends FosException {
     public FosUnauthorisedException() {
         super(HttpStatus.UNAUTHORIZED);
     }
+
+    public FosUnauthorisedException(Throwable e) {
+        super(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
 }

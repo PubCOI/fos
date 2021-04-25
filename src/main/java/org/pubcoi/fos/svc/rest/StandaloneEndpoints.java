@@ -27,10 +27,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Profile({"standalone", "debug"})
+@RestController
 public class StandaloneEndpoints {
 
     final NoticesSvc noticesSvc;
@@ -84,8 +87,8 @@ public class StandaloneEndpoints {
         try {
             JAXBContext context = JAXBContext.newInstance(ArrayOfFullNotice.class);
             Unmarshaller u = context.createUnmarshaller();
-            ArrayOfFullNotice array = (ArrayOfFullNotice) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
-            for (FullNotice notice : array.getFullNotice()) {
+            JAXBElement<ArrayOfFullNotice> array = (JAXBElement<ArrayOfFullNotice>) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
+            for (FullNotice notice : array.getValue().getFullNotice()) {
                 noticesSvc.addNotice(notice);
             }
             scheduledSvc.populateFosOrgsMDBFromAwards();

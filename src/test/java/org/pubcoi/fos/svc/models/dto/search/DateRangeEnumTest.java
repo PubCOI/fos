@@ -15,14 +15,19 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.models.dto.search;
 
-import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
-import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
+import org.junit.Assert;
+import org.junit.Test;
 
-public interface ContractsFinderSvc {
-    NoticeSearchResponse postSearchRequest(SearchCriteriaType searchCriteria);
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
-    FullNotice addNotice(String noticeId);
+public class DateRangeEnumTest {
+
+    @Test
+    public void testReturnsCorrectDate() {
+        Assert.assertEquals(DateRangeEnum._3m.getDateFrom().atStartOfDay(), LocalDate.now().minus(3, ChronoUnit.MONTHS).atStartOfDay());
+    }
+
 }

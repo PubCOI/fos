@@ -22,7 +22,10 @@ import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
-import org.pubcoi.fos.svc.services.*;
+import org.pubcoi.fos.svc.services.GraphSvc;
+import org.pubcoi.fos.svc.services.NoticesSvc;
+import org.pubcoi.fos.svc.services.ScheduledSvc;
+import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
@@ -87,8 +89,8 @@ public class StandaloneEndpoints {
         try {
             JAXBContext context = JAXBContext.newInstance(ArrayOfFullNotice.class);
             Unmarshaller u = context.createUnmarshaller();
-            JAXBElement<ArrayOfFullNotice> array = (JAXBElement<ArrayOfFullNotice>) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
-            for (FullNotice notice : array.getValue().getFullNotice()) {
+            ArrayOfFullNotice array = (ArrayOfFullNotice) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
+            for (FullNotice notice : array.getNotices()) {
                 noticesSvc.addNotice(notice);
             }
             scheduledSvc.populateFosOrgsMDBFromAwards();

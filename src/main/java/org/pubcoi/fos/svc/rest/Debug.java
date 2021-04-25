@@ -176,7 +176,7 @@ public class Debug {
      */
     @PutMapping("/api/debug/populate-office-bearers")
     public void populateOfficeBearers() {
-        organisationsGraphRepo.findAll().forEach(organisationNode -> {
+        organisationsGraphRepo.findAllNotHydrating().forEach(organisationNode -> {
             if (null == organisationNode.getReference() || null == organisationNode.getJurisdiction()) {
                 logger.info("{} not an OC node, skipping", organisationNode);
                 return;

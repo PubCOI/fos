@@ -18,13 +18,17 @@
 package org.pubcoi.fos.svc.repos.gdb.jpa;
 
 
+import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 
 import java.util.List;
 
 public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, String> {
+    Logger logger = LoggerFactory.getLogger(AwardsGraphRepo.class);
 
     @Query("MATCH (a:Award)--(o:Organisation) " +
             "WHERE o.id = $orgId " +
@@ -36,4 +40,12 @@ public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, String> {
             "RETURN a"
     )
     List<AwardNode> getAwardsForSupplier(String orgId);
+
+    @Query("MATCH (a:Award) RETURN a")
+    List<AwardNode> findAllNotHydrating();
+
+    default List<AwardNode> findAll() {
+        logger.error("Don't run this query, will cause runaway transaction");
+        throw new FosRuntimeException("NOOP");
+    }
 }

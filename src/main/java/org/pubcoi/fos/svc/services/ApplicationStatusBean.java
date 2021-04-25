@@ -19,9 +19,9 @@ package org.pubcoi.fos.svc.services;
 
 public class ApplicationStatusBean {
 
-    Boolean batch;
-    Boolean debug;
-    Boolean standalone;
+    Boolean batch = false;
+    Boolean debug = false;
+    Boolean standalone = false;
 
     public Boolean getBatch() {
         return batch;

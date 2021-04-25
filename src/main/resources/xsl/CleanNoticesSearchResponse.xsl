@@ -16,9 +16,13 @@
   ~ along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
     <xsl:output method="xml" encoding="utf-8" indent="yes"/>
+
+    <!-- remove any items with nil -->
+    <xsl:template match="//*[@xsi:nil]"/>
 
     <xsl:template match="*">
         <xsl:element name="{local-name()}">

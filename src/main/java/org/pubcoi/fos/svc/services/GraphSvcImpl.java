@@ -101,7 +101,7 @@ public class GraphSvcImpl implements GraphSvc {
     public void populateGraphFromMDB() {
         // add all clients
         noticesMDBRepo.findAll().forEach(notice -> {
-            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findByIdEquals(ClientNode.resolveId(notice)));
+            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findClientHydratingNotices(ClientNode.resolveId(notice)));
             if (nodeOpt.isPresent()) {
                 logger.debug("Using already instantiated client node {}", ClientNode.resolveId(notice));
             }
@@ -110,12 +110,12 @@ public class GraphSvcImpl implements GraphSvc {
                 tasksSvc.createTask(new DRTask(FosTaskType.resolve_client, clientNode));
                 return clientNode;
             }));
-            node.addNotice(notice);
+            node.addNotice(notice); // FIXME - this doesn't check whether notice exists already
             clientsGraphRepo.save(node);
         });
 
         // add all awards
-        awardsMDBRepo.findAll().forEach(award -> {
+        awardsMDBRepo.findAll().forEach(award -> { // fixme is adding rels
             if (null != award.getFosOrganisation()) {
                 FosOrganisation org = award.getFosOrganisation();
                 try {
@@ -178,13 +178,14 @@ public class GraphSvcImpl implements GraphSvc {
         });
 
         // for every award on the graph, link the associated notice
-        awardsGraphRepo.findAll()
+        awardsGraphRepo.findAllNotHydrating()
                 .forEach(award -> {
                     logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getId());
                     noticesGRepo.findById(award.getNoticeId()).ifPresent(notice -> {
                         logger.debug("Found notice {}", notice);
                         logger.debug("Awards size: {}", notice.getAwards().size());
                         if (!notice.getAwards().contains(award)) {
+                            logger.debug("Adding award {} to notice {}", award.getId(), notice.getId());
                             noticesGRepo.save(notice.addAward(award));
                         } else {
                             logger.debug("Did not add {} to {} (already exists)", award.getId(), notice.getId());

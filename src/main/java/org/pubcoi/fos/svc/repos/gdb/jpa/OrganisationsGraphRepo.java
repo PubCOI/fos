@@ -17,7 +17,10 @@
 
 package org.pubcoi.fos.svc.repos.gdb.jpa;
 
+import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 
@@ -25,8 +28,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode, String> {
+    Logger logger = LoggerFactory.getLogger(OrganisationsGraphRepo.class);
 
-    @Query("MATCH paths = (o:Organisation)-[rel]->(p:Person) " +
+    @Query("MATCH paths = (o:Organisation)-[rel:ORG_PERSON]->(p:Person) " +
             "WHERE o.id = $orgId " +
             "RETURN o, collect(rel) AS ORG_PERSON, collect(p) AS orgPersons")
     Optional<OrganisationNode> findOrgHydratingPersons(String orgId);
@@ -39,5 +43,13 @@ public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode
     List<OrganisationNode> findAllByPerson(String personId);
 
     boolean existsByJurisdictionAndReference(String jurisdiction, String reference);
+
+    @Query("MATCH (o:Organisation) return o")
+    List<OrganisationNode> findAllNotHydrating();
+
+    default List<OrganisationNode> findAll() {
+        logger.error("Don't run this query, will cause runaway transaction");
+        throw new FosRuntimeException("NOOP");
+    }
 
 }

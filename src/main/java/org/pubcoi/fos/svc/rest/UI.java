@@ -209,7 +209,7 @@ public class UI {
             @RequestBody ContractFinderSearchRequestDTO searchRequestDTO
     ) {
         SearchCriteriaType searchCriteria = new SearchCriteriaType().withKeyword(searchRequestDTO.getQuery()).withStatuses(
-                new SearchCriteriaType.Statuses().withNoticeStatus(NoticeStatusEnum.AWARDED)
+                new SearchCriteriaType.Statuses().withNoticeStatuses(NoticeStatusEnum.AWARDED)
         );
         if (searchRequestDTO.getDateType().equals(SearchByDateTypeEnum.awarded)) {
             searchCriteria.setAwardedFrom(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));

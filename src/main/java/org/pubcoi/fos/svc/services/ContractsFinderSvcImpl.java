@@ -55,7 +55,7 @@ public class ContractsFinderSvcImpl implements ContractsFinderSvc {
         NoticeSearchRequest searchRequest = new NoticeSearchRequest().withSearchCriteria(searchCriteria).withSize(10);
         NoticeSearchResponseWrapper searchResponse = restTemplate.postForObject(cfSearchEndpoint, searchRequest, NoticeSearchResponseWrapper.class);
         if (searchResponse != null) {
-            for (NoticeHitType hitOfNoticeIndex : searchResponse.getNoticeSearchResponse().getNoticeList().getHitOfNoticeIndex()) {
+            for (NoticeHitType hitOfNoticeIndex : searchResponse.getNoticeSearchResponse().getNoticeList().getHitOfNoticeIndices()) {
                 hitOfNoticeIndex.getItem().setAlreadyLoaded(noticesSvc.exists(hitOfNoticeIndex.getItem().getId()));
             }
             return searchResponse.getNoticeSearchResponse();

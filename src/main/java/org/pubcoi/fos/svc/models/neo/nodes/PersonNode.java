@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.models.neo.nodes;
 
+import com.opencorporates.schemas.OCOfficer__1;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -52,13 +53,13 @@ public class PersonNode implements FosEntity {
 
     PersonNode() {}
 
-    public PersonNode(PersonNodeType personNodeType, String openCorporatesId, String name, String occupation, String nationality, String transactionId) {
-        this.ocId = openCorporatesId;
-        this.fosId = DigestUtils.sha1Hex(String.format("oc:%s", openCorporatesId));
+    public PersonNode(PersonNodeType personNodeType, OCOfficer__1 officer, String transactionId) {
+        this.ocId = convertPersonOCIdToString(officer.getId());
+        this.fosId = generatePersonId(officer);
         this.labels.add(personNodeType.name());
-        this.commonName = name;
-        this.occupation = occupation;
-        this.nationality = nationality;
+        this.commonName = officer.getName();
+        this.occupation = officer.getOccupation();
+        this.nationality = officer.getNationality();
         this.transactions.add(transactionId);
     }
 
@@ -70,9 +71,12 @@ public class PersonNode implements FosEntity {
         this.commonName = memberType.getFullTitle();
     }
 
-    public PersonNode(String name) {
-        this.fosId = UUID.randomUUID().toString();
-        this.commonName = name;
+    public static String generatePersonId(OCOfficer__1 officer) {
+        return DigestUtils.sha1Hex(String.format("oc:%s", convertPersonOCIdToString(officer.getId())));
+    }
+
+    public static String convertPersonOCIdToString(Double openCorporatesId) {
+        return String.format("%.0f", openCorporatesId);
     }
 
     public Integer getParliamentaryId() {

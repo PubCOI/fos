@@ -47,8 +47,8 @@ public class OrgPersonLink implements FosRelationship {
 
     OrgPersonLink() {}
 
-    public OrgPersonLink(PersonNode person, String companyId, String position, ZonedDateTime startDT, ZonedDateTime endDT, String transactionId) {
-        this.fosId = DigestUtils.sha1Hex(String.format("%s_%s_%s", companyId, person.getFosId(), position));
+    public OrgPersonLink(PersonNode person, String organisationId, String position, ZonedDateTime startDT, ZonedDateTime endDT, String transactionId) {
+        this.fosId = DigestUtils.sha1Hex(String.format("%s_%s_%s", organisationId, person.getFosId(), position));
         this.person = person;
         this.position = position;
         this.startDT = startDT;

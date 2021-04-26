@@ -28,7 +28,6 @@ import org.pubcoi.cdm.mnis.MnisMembersType;
 import org.pubcoi.cdm.pw.RegisterCategoryType;
 import org.pubcoi.cdm.pw.RegisterEntryType;
 import org.pubcoi.cdm.pw.RegisterRecordType;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.core.MnisInterestsCache;
 import org.pubcoi.fos.svc.models.dto.es.MemberInterestDTO;
@@ -153,7 +152,7 @@ public class MnisSvcImpl implements MnisSvc {
     }
 
     @Override
-    public void addInterestsToMDB(RegisterEntryType entryType, String datasetName) throws FosCoreException {
+    public void addInterestsToMDB(RegisterEntryType entryType, String datasetName) {
         Integer memberId = pwToMemberLookup.get(entryType.getPersonId());
         MnisMemberType member;
         Set<String> flags = new HashSet<>();
@@ -190,7 +189,6 @@ public class MnisSvcImpl implements MnisSvc {
                         declaredInterest.getFlags().addAll(flags);
                         declaredInterest.setParentRecordId(parentRecordId);
                         upsertInterestIntoMDB(declaredInterest);
-//                        addToES(member, category, item, datasetName, flags);
                     }
                 }
             }

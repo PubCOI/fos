@@ -31,10 +31,8 @@ import org.pubcoi.fos.svc.models.dto.fts.GenericIDNameFTSResponse;
 import org.pubcoi.fos.svc.models.dto.neo.InternalNodeSerializer;
 import org.pubcoi.fos.svc.models.dto.neo.InternalRelationshipSerializer;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
-import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
-import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.repos.gdb.custom.ClientNodeFTS;
 import org.pubcoi.fos.svc.repos.gdb.custom.OrgNodeFTS;
@@ -325,24 +323,25 @@ public class GraphRest {
         }
     }
 
-    @PutMapping("/api/graphs/clients/{clientId}/relationships")
-    public ClientNodeDTO addRelationship(
-            @PathVariable String clientId,
-            @RequestBody AddRelationshipDTO addRelationshipDTO,
-            @RequestHeader("authToken") String authToken
-    ) {
-        authProvider.getUid(authToken);
-        logger.debug("Adding relationship for client: {}", addRelationshipDTO);
-        ClientNode client = clientSvc.getClientNode(clientId);
-        client.getPersons().add(new ClientPersonLink(
-                new PersonNode(addRelationshipDTO.getRelName()),
-                addRelationshipDTO.getCoiType().toString(),
-                addRelationshipDTO.getCoiSubtype().toString(),
-                clientId, UUID.randomUUID().toString()
-        ));
-        clientSvc.save(client);
-        return new ClientNodeDTO(client);
-    }
+    // disabled for now as we need a way of safely generating the IDs
+//    @PutMapping("/api/graphs/clients/{clientId}/relationships")
+//    public ClientNodeDTO addRelationship(
+//            @PathVariable String clientId,
+//            @RequestBody AddRelationshipDTO addRelationshipDTO,
+//            @RequestHeader("authToken") String authToken
+//    ) {
+//        authProvider.getUid(authToken);
+//        logger.debug("Adding relationship for client: {}", addRelationshipDTO);
+//        ClientNode client = clientSvc.getClientNode(clientId);
+//        client.getPersons().add(new ClientPersonLink(
+//                new PersonNode(addRelationshipDTO.getRelName()),
+//                addRelationshipDTO.getCoiType().toString(),
+//                addRelationshipDTO.getCoiSubtype().toString(),
+//                clientId, UUID.randomUUID().toString()
+//        ));
+//        clientSvc.save(client);
+//        return new ClientNodeDTO(client);
+//    }
 
     @PutMapping("/api/graphs/persons/{personId}/relationships")
     public PersonNodeDTO addRelationshipForPerson(

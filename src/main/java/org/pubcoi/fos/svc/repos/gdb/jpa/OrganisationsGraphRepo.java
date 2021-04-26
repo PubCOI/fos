@@ -47,10 +47,13 @@ public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode
     @Query("MATCH (o:Organisation) return o")
     List<OrganisationNode> findAllNotHydrating();
 
+    Optional<OrganisationNode> findByFosId(String fosId);
+
+    @Query("RETURN exists((:Organisation {fosId: $orgId})-[:ORG_PERSON]-(:Person {fosId: $personId}))")
+    boolean relationshipExists(String orgId, String personId);
+
     default List<OrganisationNode> findAll() {
         logger.error("Don't run this query, will cause runaway transaction");
         throw new FosRuntimeException("NOOP");
     }
-
-    Optional<OrganisationNode> findByFosId(String fosId);
 }

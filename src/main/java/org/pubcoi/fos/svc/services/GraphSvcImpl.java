@@ -115,7 +115,7 @@ public class GraphSvcImpl implements GraphSvc {
         addAllClientsAndNoticesToGraph();
 
         // add all awards
-        awardsMDBRepo.findAll().forEach(award -> { // fixme is adding rels
+        awardsMDBRepo.findAll().forEach(award -> {
             if (null != award.getFosOrganisation()) {
                 FosOrganisation org = award.getFosOrganisation();
                 try {
@@ -184,6 +184,8 @@ public class GraphSvcImpl implements GraphSvc {
                     noticesGRepo.findByFosId(award.getNoticeId()).ifPresent(notice -> {
                         logger.debug("Found notice {}", notice);
                         logger.debug("Awards size: {}", notice.getAwards().size());
+
+                        // fixme
                         if (!notice.getAwards().contains(award)) {
                             logger.debug("Adding award {} to notice {}", award.getFosId(), notice.getFosId());
                             noticesGRepo.save(notice.addAward(award));

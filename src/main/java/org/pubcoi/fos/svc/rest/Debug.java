@@ -172,7 +172,10 @@ public class Debug {
             }
             OCCompanySchema companySchema = ocCompanies.findByCompanyNumberAndJurisdictionCode(organisationNode.getReference(), organisationNode.getJurisdiction());
             companySchema.getOfficers().forEach(officer -> {
-                logger.debug("Looking up details for officer {}", getUID(officer.getOfficer().getId()));
+                logger.debug("Looking up details for officer {} (fosId:{})",
+                        PersonNode.convertPersonOCIdToString(officer.getOfficer().getId()),
+                        PersonNode.generatePersonId(officer.getOfficer())
+                );
                 // warning don't use in production - won't add people to two different companies
                 // if (!personsGraphRepo.existsByOcId(getUID(officer.getOfficer().getId()))) { // todo add getid to aspects
                 final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
@@ -182,34 +185,34 @@ public class Debug {
                 Optional<OrganisationNode> orgOpt = organisationsGraphRepo
                         // first look for a version WITH persons
                         .findOrgHydratingPersons(orgId);
-
+                // if that search didn't work, search again but without hydrating ...
+                // todo: check whether we might be able to get away with not doing this given we're now searching
+                // orgPersonLink explicitly via separate exists() query
                 if (orgOpt.isEmpty()) {
                     orgOpt = organisationsGraphRepo.findOrgNotHydratingPersons(orgId);
                 }
-
-                // null
+                if (orgOpt.isEmpty()) {
+                    throw new FosBadRequestException(String.format("Unable to find organisation %s", orgId));
+                }
                 OrganisationNode org = orgOpt.get();
 
-                OrgPersonLink orgPersonLink = new OrgPersonLink(
-                        new PersonNode(
-                                PersonNodeType.OfficeBearer,
-                                getUID(officer.getOfficer().getId()),
-                                officer.getOfficer().getName(),
-                                officer.getOfficer().getOccupation(),
-                                officer.getOfficer().getNationality(),
-                                UUID.randomUUID().toString()
-                        ),
-                        org.getFosId(),
-                        officer.getOfficer().getPosition(),
-                        getZDT(officer.getOfficer().getStartDate()),
-                        getZDT(officer.getOfficer().getEndDate()),
-                        UUID.randomUUID().toString()
-                );
-                if (!org.getOrgPersons().contains(orgPersonLink)) {
-                    logger.debug("org {} does not contain person {}: adding with link ID {}", org.getFosId(), orgPersonLink.getPerson().getFosId(), orgPersonLink.getFosId());
+                final String transactionId = UUID.randomUUID().toString();
+
+                PersonNode personNode = personsGraphRepo
+                        .findByFosId(PersonNode.generatePersonId(officer.getOfficer()))
+                        .orElse(new PersonNode(PersonNodeType.OfficeBearer, officer.getOfficer(), transactionId));
+
+                if (!organisationsGraphRepo.relationshipExists(org.getFosId(), personNode.getFosId())) {
+                    logger.debug("Instantiating new relationship between {} and {}", org, personNode);
+                    OrgPersonLink orgPersonLink = new OrgPersonLink(personNode,
+                            org.getFosId(),
+                            officer.getOfficer().getPosition(),
+                            getZDT(officer.getOfficer().getStartDate()),
+                            getZDT(officer.getOfficer().getEndDate()), transactionId);
                     org.getOrgPersons().add(orgPersonLink);
-                    organisationsGraphRepo.save(org);
+                    logger.trace("Completed adding person {} to organisation {}", personNode.getFosId(), org.getFosId());
                 }
+                organisationsGraphRepo.save(org);
             });
         });
     }
@@ -349,10 +352,6 @@ public class Debug {
             return null;
         }
         return localDate.atStartOfDay(ZoneOffset.UTC);
-    }
-
-    private String getUID(Double id) {
-        return String.format("%.0f", id);
     }
 }
 

@@ -27,18 +27,18 @@ import org.springframework.data.neo4j.repository.query.Query;
 import java.util.List;
 import java.util.Optional;
 
-public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode, String> {
+public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode, Long> {
     Logger logger = LoggerFactory.getLogger(OrganisationsGraphRepo.class);
 
     @Query("MATCH paths = (o:Organisation)-[rel:ORG_PERSON]->(p:Person) " +
-            "WHERE o.id = $orgId " +
+            "WHERE o.fosId = $orgId " +
             "RETURN o, collect(rel) AS ORG_PERSON, collect(p) AS orgPersons")
     Optional<OrganisationNode> findOrgHydratingPersons(String orgId);
 
-    @Query("MATCH (o:Organisation {id: $orgId}) return o")
+    @Query("MATCH (o:Organisation {fosId: $orgId}) return o")
     Optional<OrganisationNode> findOrgNotHydratingPersons(String orgId);
 
-    @Query("MATCH (p:Person {id: $personId})-[rel:ORG_PERSON]-(o:Organisation) " +
+    @Query("MATCH (p:Person {fosId: $personId})-[rel:ORG_PERSON]-(o:Organisation) " +
             "RETURN p, rel AS ORG_PERSON, o AS ORGANISATION")
     List<OrganisationNode> findAllByPerson(String personId);
 
@@ -52,4 +52,5 @@ public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode
         throw new FosRuntimeException("NOOP");
     }
 
+    Optional<OrganisationNode> findByFosId(String fosId);
 }

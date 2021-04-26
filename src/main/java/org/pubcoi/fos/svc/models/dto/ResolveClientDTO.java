@@ -34,11 +34,11 @@ public class ResolveClientDTO {
     }
 
     public ResolveClientDTO(ClientNode clientNode) {
-        this.id = clientNode.getId();
+        this.id = clientNode.getFosId();
         this.name = clientNode.getName();
         this.isCanonical = clientNode.getCanonical();
         this.postCode = clientNode.getPostCode();
-        this.canonicalId = (null != clientNode.getParent() ? clientNode.getParent().getClient().getId() : null);
+        this.canonicalId = (null != clientNode.getParent() ? clientNode.getParent().getClient().getFosId() : null);
         if (this.isCanonical && null != clientNode.getParent()) {
             logger.error("ClientNode {} is marked as canonical but has a parent node", this.id);
         }

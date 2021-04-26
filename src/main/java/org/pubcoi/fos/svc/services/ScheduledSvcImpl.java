@@ -82,7 +82,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
                             new FosCanonicalOrg(ocCompany);
 
                     // save new org if it doesn't exist
-                    if (!orgMDBRepo.existsById(org.getId())) {
+                    if (!orgMDBRepo.existsById(org.getFosId())) {
                         if (org instanceof FosCanonicalOrg) {
                             // of course, companySchema is implicitly not null
                             if (isSimilar(award.getSupplierName(), ocCompany.getName())) {

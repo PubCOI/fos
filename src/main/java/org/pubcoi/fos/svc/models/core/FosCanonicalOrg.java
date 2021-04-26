@@ -32,7 +32,7 @@ public class FosCanonicalOrg extends FosOrganisation {
 
     public FosCanonicalOrg(OCCompanySchema ocCompany) {
         super();
-        this.id = String.format("%s:%s", ocCompany.getJurisdictionCode(), ocCompany.getCompanyNumber());
+        this.fosId = String.format("%s:%s", ocCompany.getJurisdictionCode(), ocCompany.getCompanyNumber());
         this.companyName = ocCompany.getName();
         this.companyAddress = ocCompany.getRegisteredAddressInFull();
         this.jurisdiction = ocCompany.getJurisdictionCode();

@@ -24,16 +24,16 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface ClientNodeFTS extends CrudRepository<ClientNode, String> {
+public interface ClientNodeFTS extends CrudRepository<ClientNode, Long> {
     @Query("CALL db.index.fulltext.queryNodes(\"clients-fts\", $query) " +
             "YIELD node, score " +
             "WHERE node.canonical=true " +
-            "RETURN node, node.id, node.name, score")
+            "RETURN node, node.fosId, node.name, score")
     List<GraphFTSResponse> findAllCanonicalClientNodesMatching(String query);
 
     @Query("CALL db.index.fulltext.queryNodes(\"clients-fts\", $query) " +
             "YIELD node, score " +
-            "RETURN node, node.id, node.name, score " +
+            "RETURN node, node.fosId, node.name, score " +
             "LIMIT $limit")
     List<GraphFTSResponse> findAnyClientsMatching(String query, Integer limit);
 }

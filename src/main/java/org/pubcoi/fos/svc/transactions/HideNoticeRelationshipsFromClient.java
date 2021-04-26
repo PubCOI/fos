@@ -37,13 +37,13 @@ public class HideNoticeRelationshipsFromClient implements IFosTransaction {
             FosEntity target
     ) {
         this.clientsGraphRepo = clientsGraphRepo;
-        this.targetClient = clientsGraphRepo.findClientHydratingNotices(target.getId()).orElseThrow();
+        this.targetClient = clientsGraphRepo.findClientHydratingNotices(target.getFosId()).orElseThrow();
     }
 
 
     @Override
     public FosTransaction exec() {
-        logger.debug("Hiding ClientNode->Notice relationships from client {}", targetClient.getId());
+        logger.debug("Hiding ClientNode->Notice relationships from client {}", targetClient.getFosId());
 
         targetClient.setNotices(
                 targetClient.getNoticeRelationships().stream()

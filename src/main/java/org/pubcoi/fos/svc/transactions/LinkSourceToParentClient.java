@@ -40,8 +40,8 @@ public class LinkSourceToParentClient implements IFosTransaction {
             FosTransaction transaction
     ) {
         this.clientsGraphRepo = clientsGraphRepo;
-        this.source = clientsGraphRepo.findClientHydratingNotices(source.getId()).orElseThrow();
-        this.target = clientsGraphRepo.findClientHydratingNotices(target.getId()).orElseThrow();
+        this.source = clientsGraphRepo.findClientHydratingNotices(source.getFosId()).orElseThrow();
+        this.target = clientsGraphRepo.findClientHydratingNotices(target.getFosId()).orElseThrow();
         this.transaction = transaction;
     }
 
@@ -63,7 +63,7 @@ public class LinkSourceToParentClient implements IFosTransaction {
 
     @Override
     public FosTransaction exec() {
-        logger.debug("Linking {} to parent {}", source.getId(), target.getId());
+        logger.debug("Linking {} to parent {}", source.getFosId(), target.getFosId());
         source.setParent(new ClientParentClientLink(target, transaction));
         clientsGraphRepo.save(source);
         return getTransaction();

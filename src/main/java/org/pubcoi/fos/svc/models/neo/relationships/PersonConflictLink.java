@@ -23,6 +23,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -36,8 +37,10 @@ import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 @RelationshipProperties
 public class PersonConflictLink implements FosRelationship {
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+
+    String fosId;
 
     @TargetNode
     FosEntity target;
@@ -56,7 +59,7 @@ public class PersonConflictLink implements FosRelationship {
             FosEntity target, String relationshipType, String relationshipSubtype,
             String transactionId
     ) {
-        this.id = DigestUtils.sha1Hex(String.format("%s_%s", personId, target.getId()));
+        this.fosId = DigestUtils.sha1Hex(String.format("%s_%s", personId, target.getFosId()));
         this.target = target;
         this.relationshipType = relationshipType;
         this.relationshipSubtype = relationshipSubtype;
@@ -64,16 +67,16 @@ public class PersonConflictLink implements FosRelationship {
     }
 
     public PersonConflictLink(MnisMemberType memberType, DeclaredInterest interest) {
-        this.id = DigestUtils.sha1Hex(String.format("%s_%s", mnisIdHash(memberType.getMemberId()), interest.getId()));
+        this.fosId = DigestUtils.sha1Hex(String.format("%s_%s", mnisIdHash(memberType.getMemberId()), interest.getFosId()));
         this.target = interest;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public PersonConflictLink setId(String id) {
-        this.id = id;
+    public PersonConflictLink setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -132,6 +135,11 @@ public class PersonConflictLink implements FosRelationship {
     }
 
     @Override
+    public Long getGraphId() {
+        return graphId;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
 
@@ -140,24 +148,24 @@ public class PersonConflictLink implements FosRelationship {
         PersonConflictLink that = (PersonConflictLink) o;
 
         return new EqualsBuilder()
-                .append(id, that.id)
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(id)
+                .append(graphId)
+                .append(fosId)
                 .toHashCode();
     }
 
     @Override
     public String toString() {
         return "PersonConflictLink{" +
-                "id='" + id + '\'' +
-                ", target=" + target +
-                ", relationshipType='" + relationshipType + '\'' +
-                ", relationshipSubtype='" + relationshipSubtype + '\'' +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
                 '}';
     }
 }

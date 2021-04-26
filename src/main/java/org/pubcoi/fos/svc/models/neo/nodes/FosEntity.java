@@ -18,7 +18,8 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 public interface FosEntity {
-    String getId();
+
+    String getFosId();
 
     Boolean getHidden();
 

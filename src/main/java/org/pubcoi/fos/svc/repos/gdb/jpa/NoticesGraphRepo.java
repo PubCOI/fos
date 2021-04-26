@@ -22,11 +22,14 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface NoticesGraphRepo extends Neo4jRepository<NoticeNode, String> {
+public interface NoticesGraphRepo extends Neo4jRepository<NoticeNode, Long> {
 
     @Query("MATCH (n:Notice)-[rel:PUBLISHED]-(c:Client) " +
-            "WHERE c.id = $clientId " +
+            "WHERE c.fosId = $clientId " +
             "RETURN n")
     List<NoticeNode> findAllNoticesByClientNode(String clientId);
+
+    Optional<NoticeNode> findByFosId(String noticeId);
 }

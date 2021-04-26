@@ -41,7 +41,7 @@ public class PersonNodeDTO {
     }
 
     public PersonNodeDTO(PersonNode person) {
-        this.id = person.getId();
+        this.id = person.getFosId();
         this.ocId = person.getOcId();
         this.commonName = person.getCommonName();
         this.occupation = person.getOccupation();

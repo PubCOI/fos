@@ -27,7 +27,7 @@ public class PositionDTO {
     PositionDTO() {}
 
     public PositionDTO(OrganisationNode link) {
-        this.companyId = link.getId();
+        this.companyId = link.getFosId();
         this.companyName = link.getName();
         this.position = "undefined";
     }

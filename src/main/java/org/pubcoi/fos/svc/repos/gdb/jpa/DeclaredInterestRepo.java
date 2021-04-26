@@ -20,5 +20,6 @@ package org.pubcoi.fos.svc.repos.gdb.jpa;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
-public interface DeclaredInterestRepo extends Neo4jRepository<DeclaredInterest, String> {
+public interface DeclaredInterestRepo extends Neo4jRepository<DeclaredInterest, Long> {
+    boolean existsByFosId(String mnisIdHash);
 }

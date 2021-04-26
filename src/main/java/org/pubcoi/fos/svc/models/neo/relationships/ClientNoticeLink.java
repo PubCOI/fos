@@ -19,10 +19,10 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
-import org.springframework.data.annotation.Id;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 import org.springframework.util.DigestUtils;
@@ -32,8 +32,10 @@ import java.time.ZonedDateTime;
 @RelationshipProperties
 public class ClientNoticeLink implements FosRelationship {
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+
+    String fosId;
 
     @TargetNode
     NoticeNode notice;
@@ -46,38 +48,18 @@ public class ClientNoticeLink implements FosRelationship {
 
     public ClientNoticeLink() {}
 
-    public ClientNoticeLink(ClientNode clientNode, FullNotice notice) {
-        this.id = DigestUtils.md5DigestAsHex(String.format("%s:%s", clientNode.getId(), notice.getId()).getBytes());
-        this.published = notice.getCreatedDate().toZonedDateTime();
-        this.notice = new NoticeNode(notice);
+    public ClientNoticeLink(ClientNode clientNode, NoticeNode notice, String noticeId, ZonedDateTime publishedZDT) {
+        this.fosId = DigestUtils.md5DigestAsHex(String.format("%s:%s", clientNode.getFosId(), noticeId).getBytes());
+        this.published = publishedZDT;
+        this.notice = notice;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ClientNoticeLink that = (ClientNoticeLink) o;
-
-        return new EqualsBuilder()
-                .append(id, that.id)
-                .isEquals();
+    public String getFosId() {
+        return fosId;
     }
 
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .toHashCode();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public ClientNoticeLink setId(String id) {
-        this.id = id;
+    public ClientNoticeLink setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -115,5 +97,41 @@ public class ClientNoticeLink implements FosRelationship {
     public ClientNoticeLink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
+    }
+
+    @Override
+    public Long getGraphId() {
+        return graphId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ClientNoticeLink that = (ClientNoticeLink) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ClientNoticeLink{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                ", published=" + published +
+                '}';
     }
 }

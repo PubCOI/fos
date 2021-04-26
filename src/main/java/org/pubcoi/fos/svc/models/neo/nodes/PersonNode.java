@@ -18,13 +18,12 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
-import org.springframework.data.neo4j.core.schema.DynamicLabels;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
+import org.springframework.data.neo4j.core.schema.*;
 
 import java.util.*;
 
@@ -36,8 +35,9 @@ public class PersonNode implements FosEntity {
     // a user CANNOT be assigned as an office bearer unless they have an OCID
     // todo: allow records to be merged
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+    String fosId;
     Boolean hidden = false;
     String ocId;
     Integer parliamentaryId;
@@ -54,7 +54,7 @@ public class PersonNode implements FosEntity {
 
     public PersonNode(PersonNodeType personNodeType, String openCorporatesId, String name, String occupation, String nationality, String transactionId) {
         this.ocId = openCorporatesId;
-        this.id = DigestUtils.sha1Hex(String.format("oc:%s", openCorporatesId));
+        this.fosId = DigestUtils.sha1Hex(String.format("oc:%s", openCorporatesId));
         this.labels.add(personNodeType.name());
         this.commonName = name;
         this.occupation = occupation;
@@ -64,14 +64,14 @@ public class PersonNode implements FosEntity {
 
     public PersonNode(MnisMemberType memberType) {
         this.parliamentaryId = memberType.getMemberId();
-        this.id = Utils.mnisIdHash(memberType.getMemberId());
+        this.fosId = Utils.mnisIdHash(memberType.getMemberId());
         this.occupation = String.format("politician: Member_Id %d", memberType.getMemberId());
         this.labels.add(PersonNodeType.Politician.name());
         this.commonName = memberType.getFullTitle();
     }
 
     public PersonNode(String name) {
-        this.id = UUID.randomUUID().toString();
+        this.fosId = UUID.randomUUID().toString();
         this.commonName = name;
     }
 
@@ -84,12 +84,12 @@ public class PersonNode implements FosEntity {
         return this;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public PersonNode setId(String id) {
-        this.id = id;
+    public PersonNode setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -159,14 +159,33 @@ public class PersonNode implements FosEntity {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PersonNode that = (PersonNode) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
     public String toString() {
         return "PersonNode{" +
-                "id='" + id + '\'' +
-                ", hidden=" + hidden +
-                ", ocId='" + ocId + '\'' +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
                 ", commonName='" + commonName + '\'' +
-                ", occupation='" + occupation + '\'' +
-                ", nationality='" + nationality + '\'' +
                 '}';
     }
 }

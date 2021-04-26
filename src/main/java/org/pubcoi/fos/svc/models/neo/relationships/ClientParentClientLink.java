@@ -17,8 +17,11 @@
 
 package org.pubcoi.fos.svc.models.neo.relationships;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.transactions.FosTransaction;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -29,8 +32,10 @@ import java.time.ZonedDateTime;
 @RelationshipProperties
 public class ClientParentClientLink implements FosRelationship {
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+
+    String fosId;
 
     @TargetNode
     ClientNode client;
@@ -44,14 +49,14 @@ public class ClientParentClientLink implements FosRelationship {
     ClientParentClientLink() {}
 
     public ClientParentClientLink(ClientNode target, FosTransaction transaction) {
-        this.id = DigestUtils.md5DigestAsHex(String.format("%s:%s", transaction.getId(), target.getId()).getBytes());
+        this.fosId = DigestUtils.md5DigestAsHex(String.format("%s:%s", transaction.getId(), target.getFosId()).getBytes());
         this.transactionID = transaction.getId();
         this.transactionDT = transaction.getTransactionDT().toZonedDateTime();
         this.client = target;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
     public ClientNode getClient() {
@@ -73,5 +78,40 @@ public class ClientParentClientLink implements FosRelationship {
     public ClientParentClientLink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
+    }
+
+    @Override
+    public Long getGraphId() {
+        return graphId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ClientParentClientLink that = (ClientParentClientLink) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ClientParentClientLink{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                '}';
     }
 }

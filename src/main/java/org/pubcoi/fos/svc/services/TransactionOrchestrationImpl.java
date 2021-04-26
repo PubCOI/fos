@@ -65,9 +65,9 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
         switch (metaTransaction.getTransactionType()) {
             case link_source_to_parent_clientNode:
                 ClientNode s2p_fromNode = clientsGraphRepo.findClientHydratingNotices(
-                        metaTransaction.getSource().getId()).orElseThrow();
+                        metaTransaction.getSource().getFosId()).orElseThrow();
                 ClientNode s2p_toNode = clientsGraphRepo.findClientHydratingNotices(
-                        metaTransaction.getTarget().getId()).orElseThrow();
+                        metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!s2p_toNode.getCanonical()) {
                     throw new FosBadRequestException("Parent ClientNode is not canonical");
@@ -87,18 +87,18 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
 
             case mark_canonical_clientNode:
                 clientsGraphRepo.findClientHydratingNotices(
-                        metaTransaction.getTarget().getId()).ifPresent(client -> clientsGraphRepo.save(client.setCanonical(true))
+                        metaTransaction.getTarget().getFosId()).ifPresent(client -> clientsGraphRepo.save(client.setCanonical(true))
                 );
                 transactionRepo.save(metaTransaction);
                 return true;
 
             case link_org_to_canonical:
                 OrganisationNode o2c_fromNode = orgGraphRepo
-                        .findOrgHydratingPersons(metaTransaction.getSource().getId())
-                        .orElse(orgGraphRepo.findOrgNotHydratingPersons(metaTransaction.getSource().getId()).orElseThrow());
+                        .findOrgHydratingPersons(metaTransaction.getSource().getFosId())
+                        .orElse(orgGraphRepo.findOrgNotHydratingPersons(metaTransaction.getSource().getFosId()).orElseThrow());
                 OrganisationNode o2c_toNode = orgGraphRepo
-                        .findOrgHydratingPersons(metaTransaction.getTarget().getId())
-                        .orElse(orgGraphRepo.findOrgNotHydratingPersons(metaTransaction.getTarget().getId()).orElseThrow());
+                        .findOrgHydratingPersons(metaTransaction.getTarget().getFosId())
+                        .orElse(orgGraphRepo.findOrgNotHydratingPersons(metaTransaction.getTarget().getFosId()).orElseThrow());
 
                 if (!o2c_toNode.isVerified()) {
                     throw new FosBadRequestException("Target node must be verified");

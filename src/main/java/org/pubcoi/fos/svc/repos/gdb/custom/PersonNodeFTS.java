@@ -25,20 +25,20 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface PersonNodeFTS extends CrudRepository<PersonNode, String> {
+public interface PersonNodeFTS extends CrudRepository<PersonNode, Long> {
 
     @Query("CALL db.index.fulltext.queryNodes(\"persons-fts\", $query) " +
             "YIELD node, score " +
-            "RETURN node, node.id, node.commonName AS name, score"
+            "RETURN node, node.fosId, node.commonName AS name, score"
     )
     List<GraphFTSResponse> findAnyPersonsMatching(String query);
 
     // returns persons including the company/companies they're associated with
     @Query("CALL db.index.fulltext.queryNodes(\"persons-fts\", $query) " +
             "YIELD node, score " +
-            "MATCH(p:Person {id: node.id})-[rel:ORG_PERSON]-(o:Organisation) " +
+            "MATCH(p:Person {fosId: node.fosId})-[rel:ORG_PERSON]-(o:Organisation) " +
             "WITH {neo4j_id: id(node), labels: labels(node), properties: node{.*, details: [o.name], score: score}} as populated " +
-            "RETURN populated, populated.properties.id AS id, populated.properties.details AS details, populated.properties.commonName AS name, populated.properties.score AS score")
+            "RETURN populated, populated.properties.fosId AS fosId, populated.properties.details AS details, populated.properties.commonName AS name, populated.properties.score AS score")
     List<GraphFTSDetailedResponse> findAnyPersonsMatchingWithDetails(String query);
 
 }

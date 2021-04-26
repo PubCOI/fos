@@ -32,7 +32,7 @@ public class TaskDTO {
     public TaskDTO(DRTask task) {
         this.taskId = task.getId();
         this.taskType = task.getTaskType();
-        this.entity = task.getEntity().getId();
+        this.entity = task.getEntity().getFosId();
     }
 
     public FosTaskType getTaskType() {

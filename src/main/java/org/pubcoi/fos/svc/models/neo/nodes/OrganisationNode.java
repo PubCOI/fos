@@ -18,14 +18,13 @@
 package org.pubcoi.fos.svc.models.neo.nodes;
 
 import com.opencorporates.schemas.OCCompanySchema;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
-import org.springframework.data.neo4j.core.schema.DynamicLabels;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
+import org.springframework.data.neo4j.core.schema.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,8 +34,9 @@ import java.util.Set;
 @Node(primaryLabel = "Organisation")
 public class OrganisationNode implements FosEntity {
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+    String fosId;
     String jurisdiction;
     String reference;
     String name;
@@ -55,7 +55,7 @@ public class OrganisationNode implements FosEntity {
     public OrganisationNode() {}
 
     public OrganisationNode(FosOrganisation org) {
-        this.id = org.getId();
+        this.fosId = org.getFosId();
         this.jurisdiction = org.getJurisdiction();
         this.reference = org.getReference();
         this.name = org.getCompanyName();
@@ -63,7 +63,7 @@ public class OrganisationNode implements FosEntity {
     }
 
     public OrganisationNode(OCCompanySchema ocCompany) {
-        this.id = String.format("%s:%s", ocCompany.getJurisdictionCode(), ocCompany.getCompanyNumber());
+        this.fosId = String.format("%s:%s", ocCompany.getJurisdictionCode(), ocCompany.getCompanyNumber());
         this.jurisdiction = ocCompany.getJurisdictionCode();
         this.reference = ocCompany.getCompanyNumber();
         this.name = ocCompany.getName();
@@ -71,7 +71,7 @@ public class OrganisationNode implements FosEntity {
     }
 
     public OrganisationNode(NodeReference target) {
-        this.id = target.getId();
+        this.fosId = target.getFosId();
     }
 
     public String getName() {
@@ -83,20 +83,13 @@ public class OrganisationNode implements FosEntity {
         return this;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public OrganisationNode setId(String id) {
-        this.id = id;
+    public OrganisationNode setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "OrganisationNode{" +
-                "id='" + id + '\'' +
-                '}';
     }
 
     public OrgLELink getLegalEntity() {
@@ -171,5 +164,37 @@ public class OrganisationNode implements FosEntity {
     public OrganisationNode setReference(String reference) {
         this.reference = reference;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OrganisationNode that = (OrganisationNode) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "OrganisationNode{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                ", name='" + name + '\'' +
+                ", verified=" + verified +
+                '}';
     }
 }

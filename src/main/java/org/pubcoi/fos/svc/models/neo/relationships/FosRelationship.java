@@ -18,4 +18,7 @@
 package org.pubcoi.fos.svc.models.neo.relationships;
 
 public interface FosRelationship {
+
+    Long getGraphId();
+
 }

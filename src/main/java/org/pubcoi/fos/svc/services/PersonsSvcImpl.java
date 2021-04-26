@@ -39,7 +39,7 @@ public class PersonsSvcImpl implements PersonsSvc {
 
     @Override
     public PersonNode getPersonGraphObject(String personId) {
-        return personsGraphRepo.findById(personId).orElseThrow(() -> new FosRuntimeException(
+        return personsGraphRepo.findByFosId(personId).orElseThrow(() -> new FosRuntimeException(
                 String.format("Unable to find person ID %s in graph", personId)
         ));
     }
@@ -47,7 +47,7 @@ public class PersonsSvcImpl implements PersonsSvc {
     @Override
     public List<OrganisationNode> getOrgPersonLinks(String personId) {
         PersonNode personNode = getPersonGraphObject(personId);
-        return orgGraphRepo.findAllByPerson(personNode.getId());
+        return orgGraphRepo.findAllByPerson(personNode.getFosId());
     }
 
     @Override

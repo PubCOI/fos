@@ -23,8 +23,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "fos_organisations")
 public abstract class FosOrganisation implements FosEntity {
+
     @Id
-    String id;
+    String fosId;
     String jurisdiction;
     String companyName;
     String companyAddress;
@@ -33,8 +34,8 @@ public abstract class FosOrganisation implements FosEntity {
     Boolean hidden = false;
     Boolean verified = false;
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
     FosOrganisation() {
@@ -51,8 +52,8 @@ public abstract class FosOrganisation implements FosEntity {
         return this;
     }
 
-    public FosOrganisation setId(String id) {
-        this.id = id;
+    public FosOrganisation setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 

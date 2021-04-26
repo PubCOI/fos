@@ -18,6 +18,8 @@
 package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
@@ -25,6 +27,9 @@ import java.time.ZonedDateTime;
 
 @RelationshipProperties
 public class AwardOrgLink implements FosRelationship {
+
+    @Id @GeneratedValue
+    Long graphId;
 
     @TargetNode
     OrganisationNode organisationNode;
@@ -35,10 +40,13 @@ public class AwardOrgLink implements FosRelationship {
 
     Boolean hidden = false;
 
-    public AwardOrgLink(){}
+    AwardOrgLink() {}
 
-    public AwardOrgLink(OrganisationNode organisationNode) {
-        this.setOrganisationNode(organisationNode);
+    public AwardOrgLink(OrganisationNode organisationNode, ZonedDateTime awardedDate, ZonedDateTime startDate, ZonedDateTime endDate){
+        this.organisationNode = organisationNode;
+        this.awardedDate = awardedDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     public OrganisationNode getOrganisationNode() {
@@ -84,5 +92,18 @@ public class AwardOrgLink implements FosRelationship {
     public AwardOrgLink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
+    }
+
+    @Override
+    public Long getGraphId() {
+        return graphId;
+    }
+
+    @Override
+    public String toString() {
+        return "AwardOrgLink{" +
+                "graphId=" + graphId +
+                ", organisationNode=" + organisationNode +
+                '}';
     }
 }

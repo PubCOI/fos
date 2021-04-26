@@ -17,8 +17,11 @@
 
 package org.pubcoi.fos.svc.models.neo.nodes;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.springframework.data.neo4j.core.schema.DynamicLabels;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 
@@ -34,8 +37,9 @@ public class DeclaredInterest implements FosEntity {
     // but in future we might also hold other declared interests here
     // and then link to the entities mentioned within blurb of declaration
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+    String fosId;
     String text;
     String comments;
     @DynamicLabels
@@ -45,17 +49,17 @@ public class DeclaredInterest implements FosEntity {
     DeclaredInterest() {}
 
     public DeclaredInterest(MnisInterestType interestType) {
-        this.id = mnisIdHash(interestType.getId());
+        this.fosId = mnisIdHash(interestType.getId());
         this.text = interestType.getRegisteredInterest();
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public DeclaredInterest setId(String id) {
-        this.id = id;
+    public DeclaredInterest setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -95,5 +99,35 @@ public class DeclaredInterest implements FosEntity {
     public DeclaredInterest setLabels(Set<String> labels) {
         this.labels = labels;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DeclaredInterest that = (DeclaredInterest) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "DeclaredInterest{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                '}';
     }
 }

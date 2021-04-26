@@ -22,6 +22,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
@@ -35,8 +36,9 @@ public class AwardNode implements FosEntity {
     @Relationship("AWARDED_TO")
     AwardOrgLink organisation;
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+    String fosId;
     Long value;
     String noticeId;
     Boolean groupAward;
@@ -56,10 +58,7 @@ public class AwardNode implements FosEntity {
             ZonedDateTime endDate
     ) {
         if (null == this.organisation) {
-            this.organisation = new AwardOrgLink(organisationNode)
-                    .setAwardedDate(awardedDate)
-                    .setStartDate(startDate)
-                    .setEndDate(endDate);
+            this.organisation = new AwardOrgLink(organisationNode, awardedDate, startDate, endDate);
         } else {
             logger.warn("REMOVING relationship between entities {} {}", this, organisationNode);
             this.organisation.setOrganisationNode(organisationNode);
@@ -67,12 +66,12 @@ public class AwardNode implements FosEntity {
         return this;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public AwardNode setId(String id) {
-        this.id = id;
+    public AwardNode setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -94,35 +93,6 @@ public class AwardNode implements FosEntity {
         return this;
     }
 
-    @Override
-    public String toString() {
-        return "AwardNode{" +
-                "id='" + id + '\'' +
-                ", value=" + value +
-                ", noticeId='" + noticeId + '\'' +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AwardNode awardNode = (AwardNode) o;
-
-        return new EqualsBuilder()
-                .append(id, awardNode.id)
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .toHashCode();
-    }
-
     public Boolean getHidden() {
         return hidden;
     }
@@ -139,5 +109,36 @@ public class AwardNode implements FosEntity {
     public AwardNode setGroupAward(Boolean groupAward) {
         this.groupAward = groupAward;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AwardNode awardNode = (AwardNode) o;
+
+        return new EqualsBuilder()
+                .append(graphId, awardNode.graphId)
+                .append(fosId, awardNode.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "AwardNode{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                ", noticeId='" + noticeId + '\'' +
+                '}';
     }
 }

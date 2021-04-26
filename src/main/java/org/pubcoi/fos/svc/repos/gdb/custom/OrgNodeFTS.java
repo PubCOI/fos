@@ -24,11 +24,11 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface OrgNodeFTS extends CrudRepository<OrganisationNode, String> {
+public interface OrgNodeFTS extends CrudRepository<OrganisationNode, Long> {
 
     @Query("CALL db.index.fulltext.queryNodes(\"orgs-fts\", $query) " +
             "YIELD node, score " +
-            "RETURN node, node.id, node.name, score " +
+            "RETURN node, node.fosId, node.name, score " +
             "LIMIT $limit"
     )
     List<GraphFTSResponse> findAnyOrgsMatching(String query, Integer limit);

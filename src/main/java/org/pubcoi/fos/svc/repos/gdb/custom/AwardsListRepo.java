@@ -24,7 +24,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface AwardsListRepo extends CrudRepository<AwardNode, String> {
+public interface AwardsListRepo extends CrudRepository<AwardNode, Long> {
 
     @Query("MATCH (c:Client)-[:PUBLISHED]-(:Notice)-[:AWARDS]-(award:Award)-[awardOrgLink:AWARDED_TO]-(awardee:Organisation) " +
             "OPTIONAL MATCH (awardee)-[orgOrgLink:LEGAL_ENTITY]-(legalEntity:Organisation {verified: true}) " +

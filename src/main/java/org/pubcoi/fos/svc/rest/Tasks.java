@@ -210,14 +210,14 @@ public class Tasks {
             // looking up target ensures we have it in db
             OCCompanySchema companySchema = scheduledSvc.getCompany(req.getTarget());
 
-            OrganisationNode source = organisationsGraphRepo.findById(req.getSource()).orElseThrow();
+            OrganisationNode source = organisationsGraphRepo.findByFosId(req.getSource()).orElseThrow();
             OrganisationNode target = organisationsGraphRepo
-                    .findById(Utils.convertOCCompanyToGraphID(req.getTarget()))
+                    .findByFosId(Utils.convertOCCompanyToGraphID(req.getTarget()))
                     .orElse(organisationsGraphRepo.save(new OrganisationNode(companySchema)));
 
             transactionOrch.exec(FosTransactionBuilder.resolveCompany(source, target, user, null));
             markTaskCompleted(task.getId(), user);
-            return new UpdateNodeDTO().setResponse(String.format("Linked %s to %s", source.getId(), target.getId()));
+            return new UpdateNodeDTO().setResponse(String.format("Linked %s to %s", source.getFosId(), target.getFosId()));
         }
 
         throw new FosBadRequestException("Unable to find request type");

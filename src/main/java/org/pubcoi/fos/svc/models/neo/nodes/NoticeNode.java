@@ -20,6 +20,7 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.cdm.cf.FullNotice;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 
@@ -29,25 +30,27 @@ import java.util.Set;
 @Node(primaryLabel = "Notice")
 public class NoticeNode implements FosEntity {
 
-    @Id // notice ID
-            String id;
+    @Id @GeneratedValue
+    Long graphId;
+    String fosId;
 
     Set<AwardNode> awards = new HashSet<>();
 
     Boolean hidden = false;
 
-    public NoticeNode() {}
+    public NoticeNode() {
+    }
 
     public NoticeNode(FullNotice notice) {
-        this.id = notice.getId();
+        this.fosId = notice.getId();
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public NoticeNode setId(String id) {
-        this.id = id;
+    public NoticeNode setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -66,33 +69,6 @@ public class NoticeNode implements FosEntity {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-
-        if (o == null || getClass() != o.getClass()) return false;
-
-        NoticeNode that = (NoticeNode) o;
-
-        return new EqualsBuilder()
-                .append(id, that.id)
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "NoticeNode{" +
-                "id='" + id + '\'' +
-                '}';
-    }
-
-    @Override
     public Boolean getHidden() {
         return hidden;
     }
@@ -101,5 +77,35 @@ public class NoticeNode implements FosEntity {
     public NoticeNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NoticeNode that = (NoticeNode) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "NoticeNode{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                '}';
     }
 }

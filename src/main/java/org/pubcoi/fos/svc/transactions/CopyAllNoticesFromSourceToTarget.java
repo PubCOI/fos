@@ -37,23 +37,23 @@ public class CopyAllNoticesFromSourceToTarget implements IFosTransaction {
             ClientNode toNode
     ) {
         this.clientsGraphRepo = clientsGraphRepo;
-        this.fromClient = clientsGraphRepo.findClientHydratingNotices(fromNode.getId()).orElseThrow();
-        this.toClient = clientsGraphRepo.findClientHydratingNotices(toNode.getId()).orElseThrow();
+        this.fromClient = clientsGraphRepo.findClientHydratingNotices(fromNode.getFosId()).orElseThrow();
+        this.toClient = clientsGraphRepo.findClientHydratingNotices(toNode.getFosId()).orElseThrow();
     }
 
     @Override
     public FosTransaction exec() {
         logger.debug("{} currently has {} notices; {} has {}",
-                fromClient.getId(), fromClient.getNoticeRelationships().size(),
-                toClient.getId(), toClient.getNoticeRelationships().size()
+                fromClient.getFosId(), fromClient.getNoticeRelationships().size(),
+                toClient.getFosId(), toClient.getNoticeRelationships().size()
         );
 
         for (ClientNoticeLink notice : fromClient.getNoticeRelationships()) {
             if (toClient.getNoticeRelationships().contains(notice)) {
-                logger.warn("Notice {} already exists on ClientNode {}", notice.getId(), toClient.getId());
+                logger.warn("Notice {} already exists on ClientNode {}", notice.getFosId(), toClient.getFosId());
             } else {
                 toClient.getNoticeRelationships().add(notice);
-                logger.debug("Added notice {} to ClientNode {}", notice.getId(), toClient.getId());
+                logger.debug("Added notice {} to ClientNode {}", notice.getFosId(), toClient.getFosId());
             }
         }
 

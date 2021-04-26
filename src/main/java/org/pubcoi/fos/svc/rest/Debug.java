@@ -138,21 +138,10 @@ public class Debug {
         scheduledSvc.populateFosOrgsMDBFromAwards();
     }
 
-    @DeleteMapping("/api/debug/clear-graphs")
-    public void clearGraphs() {
-        graphSvc.clearGraphs();
-    }
-
     @DeleteMapping("/api/debug/clear-mdb")
     public void clearMDB() {
         transactionOrchestrationSvc.clearTransactions();
         tasksRepo.deleteAll();
-    }
-
-    @DeleteMapping("/api/debug/clear-all")
-    public void clearAll() {
-        clearGraphs();
-        clearMDB();
     }
 
     @PutMapping("/api/debug/populate-all")
@@ -210,14 +199,14 @@ public class Debug {
                                 officer.getOfficer().getNationality(),
                                 UUID.randomUUID().toString()
                         ),
-                        org.getId(),
+                        org.getFosId(),
                         officer.getOfficer().getPosition(),
                         getZDT(officer.getOfficer().getStartDate()),
                         getZDT(officer.getOfficer().getEndDate()),
                         UUID.randomUUID().toString()
                 );
                 if (!org.getOrgPersons().contains(orgPersonLink)) {
-                    logger.debug("org {} does not contain person {}: adding with link ID {}", org.getId(), orgPersonLink.getPerson().getId(), orgPersonLink.getId());
+                    logger.debug("org {} does not contain person {}: adding with link ID {}", org.getFosId(), orgPersonLink.getPerson().getFosId(), orgPersonLink.getFosId());
                     org.getOrgPersons().add(orgPersonLink);
                     organisationsGraphRepo.save(org);
                 }
@@ -323,8 +312,8 @@ public class Debug {
                     boolean changed = false;
                     for (MnisInterestCategoryType mnisInterestCategoryType : m.getInterests().getCategories()) {
                         for (MnisInterestType mnisInterestType : mnisInterestCategoryType.getInterests()) {
-                            if (!declaredInterestRepo.existsById(mnisIdHash(mnisInterestType.getId()))) {
-                                logger.debug("Adding conflict {} to person {}", mnisInterestType.getId(), p.getId());
+                            if (!declaredInterestRepo.existsByFosId(mnisIdHash(mnisInterestType.getId()))) {
+                                logger.debug("Adding conflict {} to person {}", mnisInterestType.getId(), p.getFosId());
                                 PersonConflictLink conflictLink = new PersonConflictLink(m, new DeclaredInterest(mnisInterestType));
                                 if (null != mnisInterestType.getCreatedDT()) {
                                     conflictLink.setStartDT(mnisInterestType.getCreatedDT().toZonedDateTime());
@@ -338,7 +327,7 @@ public class Debug {
                         }
                     }
                     if (changed) {
-                        logger.debug("Saving changes to {}", p.getId());
+                        logger.debug("Saving changes to {}", p.getFosId());
                         personsGraphRepo.save(p);
                     }
                 });

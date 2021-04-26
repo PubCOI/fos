@@ -21,6 +21,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -32,8 +33,10 @@ import java.util.HashSet;
 @RelationshipProperties
 public class OrgPersonLink implements FosRelationship {
 
-    @Id
-    String id;
+    @Id @GeneratedValue
+    Long graphId;
+
+    String fosId;
 
     @TargetNode
     PersonNode person;
@@ -45,7 +48,7 @@ public class OrgPersonLink implements FosRelationship {
     OrgPersonLink() {}
 
     public OrgPersonLink(PersonNode person, String companyId, String position, ZonedDateTime startDT, ZonedDateTime endDT, String transactionId) {
-        this.id = DigestUtils.sha1Hex(String.format("%s_%s_%s", companyId, person.getId(), position));
+        this.fosId = DigestUtils.sha1Hex(String.format("%s_%s_%s", companyId, person.getFosId(), position));
         this.person = person;
         this.position = position;
         this.startDT = startDT;
@@ -89,13 +92,18 @@ public class OrgPersonLink implements FosRelationship {
         return this;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public OrgPersonLink setId(String id) {
-        this.id = id;
+    public OrgPersonLink setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
+    }
+
+    @Override
+    public Long getGraphId() {
+        return graphId;
     }
 
     @Override
@@ -107,14 +115,24 @@ public class OrgPersonLink implements FosRelationship {
         OrgPersonLink that = (OrgPersonLink) o;
 
         return new EqualsBuilder()
-                .append(id, that.id)
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(id)
+                .append(graphId)
+                .append(fosId)
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "OrgPersonLink{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                '}';
     }
 }

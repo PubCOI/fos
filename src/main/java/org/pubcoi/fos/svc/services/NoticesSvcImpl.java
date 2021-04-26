@@ -67,7 +67,7 @@ public class NoticesSvcImpl implements NoticesSvc {
     @Override
     public List<FullNotice> getNoticesByClientId(String clientId) {
         return noticesGRepo.findAllNoticesByClientNode(clientId).stream()
-                .map(n -> noticesMDBRepo.findById(n.getId()).orElseThrow())
+                .map(n -> noticesMDBRepo.findById(n.getFosId()).orElseThrow())
                 .sorted(Comparator.comparing(FullNotice::getCreatedDate))
                 .collect(Collectors.toList());
     }

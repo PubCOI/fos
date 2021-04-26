@@ -26,16 +26,19 @@ import org.springframework.data.neo4j.repository.query.Query;
 
 import java.util.Optional;
 
-public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, String> {
+public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
     Logger logger = LoggerFactory.getLogger(ClientsGraphRepo.class);
 
-    @Query("MATCH(c:Client) WHERE c.id = $clientId RETURN c")
+    @Query("MATCH(c:Client) WHERE c.fosId = $clientId RETURN c")
     Optional<ClientNode> findByIdEquals(String clientId);
 
     @Query("MATCH paths = (c:Client)-[rel]->(n:Notice) " +
-            "WHERE c.id = $clientId " +
+            "WHERE c.fosId = $clientId " +
             "RETURN c, collect(rel) AS AWARDED, collect(n) AS NOTICES")
     Optional<ClientNode> findClientHydratingNotices(String clientId);
+
+    @Query("RETURN exists((:Client {fosId: $clientId})-[:PUBLISHED]-(:Notice {fosId: $noticeId}))")
+    boolean relationshipExists(String clientId, String noticeId);
 
     default Optional<ClientNode> findById(String id) {
         logger.error("Don't run this query, it goes and executes a [:*] and merrily blows itself up");

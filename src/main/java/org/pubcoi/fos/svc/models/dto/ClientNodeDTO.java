@@ -33,7 +33,7 @@ public class ClientNodeDTO {
     public ClientNodeDTO() {}
 
     public ClientNodeDTO(ClientNode client) {
-        this.id = client.getId();
+        this.id = client.getFosId();
         this.name = client.getName();
         this.postCode = client.getPostCode();
         this.noticeCount = client.getNoticeRelationships().size();

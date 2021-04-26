@@ -17,6 +17,8 @@
 
 package org.pubcoi.fos.svc.models.neo.nodes;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
@@ -24,11 +26,13 @@ import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.util.DigestUtils;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,13 +42,11 @@ import static org.pubcoi.fos.svc.services.Utils.normalise;
 public class ClientNode implements FosEntity {
     private static final Logger logger = LoggerFactory.getLogger(ClientNode.class);
 
-    @Id
-    String id;
-
+    @Id @GeneratedValue
+    Long graphId;
+    String fosId;
     String postCode;
-
     String name;
-
     Boolean hidden = false;
 
     @Relationship("AKA")
@@ -63,7 +65,7 @@ public class ClientNode implements FosEntity {
     }
 
     public ClientNode(NodeReference node) {
-        this.id = node.getId();
+        this.fosId = node.getFosId();
     }
 
     static String resolveIdStr(FullNotice notice) {
@@ -80,10 +82,10 @@ public class ClientNode implements FosEntity {
     }
 
     public ClientNode(FullNotice notice) {
-        this.id = resolveId(notice);
+        this.fosId = resolveId(notice);
         this.name = notice.getNotice().getOrganisationName();
         this.postCode = getNormalisedPostCode(notice);
-        logger.debug("Adding client {} -> (id:{})", resolveIdStr(notice), this.id);
+        logger.debug("Adding client {} -> (id:{})", resolveIdStr(notice), this.fosId);
     }
 
     private static String getNormalisedPostCode(FullNotice notice) {
@@ -100,12 +102,12 @@ public class ClientNode implements FosEntity {
         return postcode.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public ClientNode setId(String id) {
-        this.id = id;
+    public ClientNode setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 
@@ -136,8 +138,8 @@ public class ClientNode implements FosEntity {
         return this;
     }
 
-    public void addNotice(FullNotice notice) {
-        notices.add(new ClientNoticeLink(this, notice));
+    public void addNotice(NoticeNode noticeNode, String noticeId, ZonedDateTime publishedZDT) {
+        notices.add(new ClientNoticeLink(this, noticeNode, noticeId, publishedZDT));
     }
 
     public Boolean getHidden() {
@@ -168,20 +170,43 @@ public class ClientNode implements FosEntity {
         return this;
     }
 
-    @Override
-    public String toString() {
-        return "ClientNode{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", canonical=" + canonical +
-                '}';
-    }
-
     public List<ClientNoticeLink> getNotices() {
         return notices;
     }
 
     public List<ClientPersonLink> getPersons() {
         return persons;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ClientNode that = (ClientNode) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .append(fosId)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ClientNode{" +
+                "graphId=" + graphId +
+                ", fosId='" + fosId + '\'' +
+                ", name='" + name + '\'' +
+                ", canonical=" + canonical +
+                '}';
     }
 }

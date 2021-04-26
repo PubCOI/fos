@@ -41,7 +41,7 @@ public class FosNonCanonicalOrg extends FosOrganisation {
     }
 
     public FosNonCanonicalOrg(CFAward award) {
-        this.id = resolveId(award);
+        this.fosId = resolveId(award);
         this.reference = award.getOrgReference();
         this.referenceType = (null != award.getOrgReferenceType()) ? award.getOrgReferenceType().toString() : null;
         this.companyName = award.getSupplierName();
@@ -51,7 +51,7 @@ public class FosNonCanonicalOrg extends FosOrganisation {
     @Override
     public String toString() {
         return "FosNonCanonicalOrg{" +
-                "id='" + id + '\'' +
+                "id='" + fosId + '\'' +
                 '}';
     }
 }

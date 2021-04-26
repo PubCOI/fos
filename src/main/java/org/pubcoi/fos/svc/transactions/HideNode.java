@@ -35,15 +35,15 @@ public class HideNode implements IFosTransaction {
             FosEntity target
     ) {
         this.clientsGraphRepo = clientsGraphRepo;
-        this.clientNode = clientsGraphRepo.findClientHydratingNotices(target.getId()).orElseThrow();
+        this.clientNode = clientsGraphRepo.findClientHydratingNotices(target.getFosId()).orElseThrow();
     }
 
     @Override
     public FosTransaction exec() {
         if (null != clientNode.getParent() && null != clientNode.getParent().getClient()) {
-            logger.debug("Hiding ClientNode {} (child of {})", clientNode.getId(), clientNode.getParent().getClient().getId());
+            logger.debug("Hiding ClientNode {} (child of {})", clientNode.getFosId(), clientNode.getParent().getClient().getFosId());
         } else {
-            logger.debug("Hiding ClientNode {}", clientNode.getId());
+            logger.debug("Hiding ClientNode {}", clientNode.getFosId());
         }
         clientsGraphRepo.save(clientNode.setHidden(true));
         return getTransaction();

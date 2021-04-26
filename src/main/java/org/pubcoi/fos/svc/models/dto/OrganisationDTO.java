@@ -30,7 +30,7 @@ public class OrganisationDTO {
     }
 
     public OrganisationDTO(OrganisationNode organisationNode) {
-        this.id = organisationNode.getId();
+        this.id = organisationNode.getFosId();
         this.name = organisationNode.getName();
         this.verified = organisationNode.getVerified();
     }

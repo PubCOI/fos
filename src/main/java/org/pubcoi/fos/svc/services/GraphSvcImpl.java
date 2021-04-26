@@ -29,6 +29,7 @@ import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
+import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.repos.gdb.jpa.AwardsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
@@ -86,12 +87,23 @@ public class GraphSvcImpl implements GraphSvc {
         this.batchJobMDBRepo = batchJobMDBRepo;
     }
 
-    @Override
-    public void clearGraphs() {
-        clientsGraphRepo.deleteAll();
-        awardsGraphRepo.deleteAll();
-        noticesGRepo.deleteAll();
-        orgGraphRepo.deleteAll();
+    private void addAllClientsAndNoticesToGraph() {
+        noticesMDBRepo.findAll().forEach(notice -> {
+            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findClientHydratingNotices(ClientNode.resolveId(notice)));
+            if (nodeOpt.isPresent()) {
+                logger.debug("Using already instantiated client node {}", ClientNode.resolveId(notice));
+            }
+            ClientNode client = (nodeOpt.orElseGet(() -> {
+                ClientNode clientNode = new ClientNode(notice);
+                tasksSvc.createTask(new DRTask(FosTaskType.resolve_client, clientNode));
+                return clientNode;
+            }));
+            NoticeNode noticeNode = (noticesGRepo.findByFosId(notice.getId()).orElse(new NoticeNode(notice)));
+            if (!clientsGraphRepo.relationshipExists(client.getFosId(), noticeNode.getFosId())) {
+                client.addNotice(noticeNode, notice.getId(), notice.getNotice().getPublishedDate().toZonedDateTime());
+            }
+            clientsGraphRepo.save(client);
+        });
     }
 
     /**
@@ -99,20 +111,8 @@ public class GraphSvcImpl implements GraphSvc {
      */
     @Override
     public void populateGraphFromMDB() {
-        // add all clients
-        noticesMDBRepo.findAll().forEach(notice -> {
-            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findClientHydratingNotices(ClientNode.resolveId(notice)));
-            if (nodeOpt.isPresent()) {
-                logger.debug("Using already instantiated client node {}", ClientNode.resolveId(notice));
-            }
-            ClientNode node = (nodeOpt.orElseGet(() -> {
-                ClientNode clientNode = new ClientNode(notice);
-                tasksSvc.createTask(new DRTask(FosTaskType.resolve_client, clientNode));
-                return clientNode;
-            }));
-            node.addNotice(notice); // FIXME - this doesn't check whether notice exists already
-            clientsGraphRepo.save(node);
-        });
+
+        addAllClientsAndNoticesToGraph();
 
         // add all awards
         awardsMDBRepo.findAll().forEach(award -> { // fixme is adding rels
@@ -120,24 +120,24 @@ public class GraphSvcImpl implements GraphSvc {
                 FosOrganisation org = award.getFosOrganisation();
                 try {
                     // if the organisation is "verified", it'll already have an entry on the OCCompanyRepo
-                    Optional<OCCompanySchema> ocCompany = ocCompaniesRepo.findById(org.getId());
+                    Optional<OCCompanySchema> ocCompany = ocCompaniesRepo.findById(org.getFosId());
                     boolean verified = ocCompany.isPresent();
                     // if it's verified, use the OFFICIAL name for the company (not whatever is in Contracts Finder)
                     String companyName = (verified) ? ocCompany.orElseThrow().getName() : award.getSupplierName();
 
-                    OrganisationNode orgNode = orgGraphRepo.findById(org.getId()).orElse(
+                    OrganisationNode orgNode = orgGraphRepo.findByFosId(org.getFosId()).orElse(
                             new OrganisationNode(org)
                     );
                     logger.debug("Saving org node: {}", orgNode);
                     orgGraphRepo.save(orgNode);
 
-                    AwardNode awardNode = awardsGraphRepo.findById(award.getId()).orElse(new AwardNode()
-                            .setId(award.getId())
+                    AwardNode awardNode = awardsGraphRepo.findByFosId(award.getId()).orElse(new AwardNode()
+                            .setFosId(award.getId())
                             .setValue(award.getValue())
                             .setNoticeId(award.getNoticeId())
                             .setGroupAward(award.getGroup())
                             .setOrganisation(
-                                    orgGraphRepo.findById(org.getId()).orElseThrow(() -> new FosException()),
+                                    orgGraphRepo.findByFosId(org.getFosId()).orElseThrow(() -> new FosException()),
                                     award.getAwardedDate().toZonedDateTime(),
                                     award.getStartDate().toZonedDateTime(),
                                     award.getEndDate().toZonedDateTime()
@@ -180,15 +180,15 @@ public class GraphSvcImpl implements GraphSvc {
         // for every award on the graph, link the associated notice
         awardsGraphRepo.findAllNotHydrating()
                 .forEach(award -> {
-                    logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getId());
-                    noticesGRepo.findById(award.getNoticeId()).ifPresent(notice -> {
+                    logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getFosId());
+                    noticesGRepo.findByFosId(award.getNoticeId()).ifPresent(notice -> {
                         logger.debug("Found notice {}", notice);
                         logger.debug("Awards size: {}", notice.getAwards().size());
                         if (!notice.getAwards().contains(award)) {
-                            logger.debug("Adding award {} to notice {}", award.getId(), notice.getId());
+                            logger.debug("Adding award {} to notice {}", award.getFosId(), notice.getFosId());
                             noticesGRepo.save(notice.addAward(award));
                         } else {
-                            logger.debug("Did not add {} to {} (already exists)", award.getId(), notice.getId());
+                            logger.debug("Did not add {} to {} (already exists)", award.getFosId(), notice.getFosId());
                         }
                     });
                 });

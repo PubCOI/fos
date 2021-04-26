@@ -65,9 +65,9 @@ public class AwardsSvcImpl implements AwardsSvc {
         final CFAward award = awardsMDBRepo.findById(awardId).orElseThrow();
         AwardDTO awardDTO = new AwardDTO(award);
         List<AttachmentDTO> attachments = attachmentSvc.findAttachmentsByNoticeId(award.getNoticeId());
-        if (null != award.getFosOrganisation() && null != award.getFosOrganisation().getId()) {
+        if (null != award.getFosOrganisation() && null != award.getFosOrganisation().getFosId()) {
             awardDTO.setSupplierNumTotalAwards(awardsGraphRepo.countAwardsToSupplier(
-                    award.getFosOrganisation().getId()
+                    award.getFosOrganisation().getFosId()
             ));
         }
         FullNotice notice = noticesMDBRepo.findById(award.getNoticeId()).orElseThrow();

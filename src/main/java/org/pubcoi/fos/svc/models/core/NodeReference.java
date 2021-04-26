@@ -21,14 +21,14 @@ import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 
 public class NodeReference {
     String nodeType;
-    String id;
+    String fosId;
 
     public NodeReference() {
     }
 
     public NodeReference(FosEntity node) {
         this.nodeType = node.getClass().getTypeName();
-        this.id = node.getId();
+        this.fosId = node.getFosId();
     }
 
     public String getNodeType() {
@@ -40,12 +40,12 @@ public class NodeReference {
         return this;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public NodeReference setId(String id) {
-        this.id = id;
+    public NodeReference setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 }

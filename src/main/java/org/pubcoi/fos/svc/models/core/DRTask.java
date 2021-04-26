@@ -40,7 +40,7 @@ public class DRTask {
     DRTask() {}
 
     public DRTask(FosTaskType type, FosEntity entity) {
-        this.id = String.format("%s_%s", type.toString(), entity.getId());
+        this.id = String.format("%s_%s", type.toString(), entity.getFosId());
         this.taskType = type;
         this.entity = entity;
     }

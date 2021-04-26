@@ -20,14 +20,14 @@ package org.pubcoi.fos.svc.models.dto;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.pubcoi.fos.svc.models.core.FosUser;
 
-public class UserProfileDTO {
+public class UpdateProfileResponseDTO {
 
     String displayName;
     String uid;
 
-    public UserProfileDTO() {}
+    public UpdateProfileResponseDTO() {}
 
-    public UserProfileDTO(FosUser user) {
+    public UpdateProfileResponseDTO(FosUser user) {
         this.displayName = user.getDisplayName();
         this.uid = DigestUtils.sha1Hex(user.getUid());
     }
@@ -36,7 +36,7 @@ public class UserProfileDTO {
         return displayName;
     }
 
-    public UserProfileDTO setDisplayName(String displayName) {
+    public UpdateProfileResponseDTO setDisplayName(String displayName) {
         this.displayName = displayName;
         return this;
     }
@@ -45,7 +45,7 @@ public class UserProfileDTO {
         return uid;
     }
 
-    public UserProfileDTO setUid(String uid) {
+    public UpdateProfileResponseDTO setUid(String uid) {
         this.uid = uid;
         return this;
     }

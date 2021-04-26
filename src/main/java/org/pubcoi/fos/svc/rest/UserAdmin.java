@@ -25,7 +25,7 @@ import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.dto.UpdateProfileRequestDTO;
 import org.pubcoi.fos.svc.models.dto.UserLoginDTO;
-import org.pubcoi.fos.svc.models.dto.UserProfileDTO;
+import org.pubcoi.fos.svc.models.dto.UpdateProfileResponseDTO;
 import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
 import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.slf4j.Logger;
@@ -69,21 +69,21 @@ public class UserAdmin {
     }
 
     @PostMapping("/api/profile")
-    public UserProfileDTO getUserProfile(
+    public UpdateProfileResponseDTO getUserProfile(
             @RequestHeader("authToken") String authToken
     ) {
         String uid = authProvider.getUid(authToken);
-        return new UserProfileDTO(authProvider.getByUid(uid));
+        return new UpdateProfileResponseDTO(authProvider.getByUid(uid));
     }
 
     @PutMapping("/api/profile")
-    public UserProfileDTO updateUserProfile(
+    public UpdateProfileResponseDTO updateUserProfile(
             @RequestBody UpdateProfileRequestDTO updateProfileRequestDTO,
             @RequestHeader("authToken") String authToken
     ) {
         String uid = authProvider.getUid(authToken);
         FosUser user = authProvider.getByUid(uid);
         if (null == user) throw new FosBadRequestException("Unable to find user");
-        return new UserProfileDTO(authProvider.save(user.setDisplayName(updateProfileRequestDTO.getDisplayName())));
+        return new UpdateProfileResponseDTO(authProvider.save(user.setDisplayName(updateProfileRequestDTO.getDisplayName())));
     }
 }

@@ -75,6 +75,28 @@ public class Neo4JConfig {
         } catch (InvalidDataAccessResourceUsageException e) {
             logger.info("Persons index appears to already exist");
         }
+
+        client.query(
+                "CREATE CONSTRAINT orgNodesFosId IF NOT EXISTS \n" +
+                        "ON (o:Organisation) " +
+                        "ASSERT o.fosId IS UNIQUE"
+        ).run();
+        logger.info("Ran create/update unique constraint for OrgNodes");
+
+        client.query(
+                "CREATE CONSTRAINT personFosId IF NOT EXISTS \n" +
+                        "ON (o:Person) " +
+                        "ASSERT o.fosId IS UNIQUE"
+        ).run();
+        logger.info("Ran create/update unique constraint for PersonNodes");
+
+        client.query(
+                "CREATE CONSTRAINT awardFosId IF NOT EXISTS \n" +
+                        "ON (o:Award) " +
+                        "ASSERT o.fosId IS UNIQUE"
+        ).run();
+        logger.info("Ran create/update unique constraint for AwardNodes");
+
     }
 
 }

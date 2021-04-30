@@ -30,23 +30,22 @@ import java.util.Optional;
 public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode, Long> {
     Logger logger = LoggerFactory.getLogger(OrganisationsGraphRepo.class);
 
-    @Query("MATCH paths = (o:Organisation)-[rel:ORG_PERSON]->(p:Person) " +
-            "WHERE o.fosId = $orgId " +
+    @Query("MATCH (o:Organisation {fosId: $orgId}) " +
+            "OPTIONAL MATCH (o:Organisation)-[rel:ORG_PERSON]->(p:Person) " +
             "RETURN o, collect(rel) AS ORG_PERSON, collect(p) AS orgPersons")
     Optional<OrganisationNode> findOrgHydratingPersons(String orgId);
-
-    @Query("MATCH (o:Organisation {fosId: $orgId}) return o")
-    Optional<OrganisationNode> findOrgNotHydratingPersons(String orgId);
 
     @Query("MATCH (p:Person {fosId: $personId})-[rel:ORG_PERSON]-(o:Organisation) " +
             "RETURN p, rel AS ORG_PERSON, o AS ORGANISATION")
     List<OrganisationNode> findAllByPerson(String personId);
 
+    @Query("RETURN exists((:Organisation {jurisdiction: $jurisdiction, reference: $reference}))")
     boolean existsByJurisdictionAndReference(String jurisdiction, String reference);
 
     @Query("MATCH (o:Organisation) return o")
     List<OrganisationNode> findAllNotHydrating();
 
+    @Query("MATCH (o:Organisation {fosId: $fosId}) RETURN o")
     Optional<OrganisationNode> findByFosId(String fosId);
 
     @Query("RETURN exists((:Organisation {fosId: $orgId})-[:ORG_PERSON]-(:Person {fosId: $personId}))")

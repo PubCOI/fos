@@ -181,7 +181,7 @@ public class GraphSvcImpl implements GraphSvc {
         });
 
         // for every award on the graph, link the associated notice
-        awardsGraphRepo.findAllNotHydrating()
+        awardsGraphRepo.findAllHydratingAwardees()
                 .forEach(award -> {
                     logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getFosId());
                     noticesGRepo.findByFosId(award.getNoticeId()).ifPresent(notice -> {

@@ -32,10 +32,7 @@ import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.TasksMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
-import org.pubcoi.fos.svc.services.OCRestSvc;
-import org.pubcoi.fos.svc.services.ScheduledSvc;
-import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
-import org.pubcoi.fos.svc.services.Utils;
+import org.pubcoi.fos.svc.services.*;
 import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
@@ -85,10 +82,10 @@ public class Tasks {
 
     /**
      * Searches OpenCorporates for companies matching a particular set of terms
-     * @param requestDTO the request object
-     * @param authToken the user auth token
-     * @return a set of matching results
      *
+     * @param requestDTO the request object
+     * @param authToken  the user auth token
+     * @return a set of matching results
      */
     @PostMapping("/api/ui/tasks/verify_company/_search")
     public List<VerifyCompanySearchResponse> doCompanyVerifySearch(
@@ -98,7 +95,7 @@ public class Tasks {
         String uid = authProvider.getUid(authToken);
         FosUser user = authProvider.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
-        OrganisationNode org = organisationsGraphRepo.findOrgNotHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
+        OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
         OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
         return wrapper.getResults().getCompanies().stream()
                 .map(company -> new VerifyCompanySearchResponse(company))
@@ -113,7 +110,7 @@ public class Tasks {
                 .map(TaskDTO::new)
                 .peek(task -> {
                     if (task.getTaskType().equals(FosTaskType.resolve_client)) {
-                        Optional<ClientNode> clientNode = clientGRepo.findByIdEquals(task.getEntity());
+                        Optional<ClientNode> clientNode = clientGRepo.findByFosIdEquals(task.getEntity());
                         if (!clientNode.isPresent()) {
                             logger.error("Unable to find ClientNode {}", task.getEntity());
                             task = null;
@@ -148,7 +145,7 @@ public class Tasks {
 
     @GetMapping("/api/ui/tasks/{taskType}/{refId}")
     public ResolveClientDTO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
-        return new ResolveClientDTO(clientGRepo.findByIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
+        return new ResolveClientDTO(clientGRepo.findByFosIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
     }
 
     @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
@@ -172,7 +169,7 @@ public class Tasks {
                 throw new FosBadRequestException("Task ID and target must not be null");
             }
 
-            clientGRepo.findByIdEquals(req.getTarget()).ifPresent(clientNode -> {
+            clientGRepo.findByFosIdEquals(req.getTarget()).ifPresent(clientNode -> {
                 transactionOrch.exec(FosTransactionBuilder.markCanonicalNode(clientNode, user, null));
             });
 
@@ -210,10 +207,13 @@ public class Tasks {
             // looking up target ensures we have it in db
             OCCompanySchema companySchema = scheduledSvc.getCompany(req.getTarget());
 
-            OrganisationNode source = organisationsGraphRepo.findByFosId(req.getSource()).orElseThrow();
+            OrganisationNode source = organisationsGraphRepo
+                    .findByFosId(req.getSource()).orElseThrow();
             OrganisationNode target = organisationsGraphRepo
-                    .findByFosId(Utils.convertOCCompanyToGraphID(req.getTarget()))
-                    .orElse(organisationsGraphRepo.save(new OrganisationNode(companySchema)));
+                    .findByFosId(Utils.convertOCCompanyToGraphID(req.getTarget())).orElseGet(() -> {
+                        logger.info(Ansi.Yellow.format("Unable to find OrgNode %s, instantiating new instance"));
+                        return organisationsGraphRepo.save(new OrganisationNode(companySchema));
+                    });
 
             transactionOrch.exec(FosTransactionBuilder.resolveCompany(source, target, user, null));
             markTaskCompleted(task.getId(), user);

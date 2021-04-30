@@ -22,6 +22,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
+import org.pubcoi.fos.svc.services.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,7 @@ public class LinkSourceToParentClient implements IFosTransaction {
 
     @Override
     public FosTransaction exec() {
-        logger.debug("Linking {} to parent {}", source.getFosId(), target.getFosId());
+        logger.debug(Ansi.Blue.format("Linking %s to parent %s", source.getFosId(), target.getFosId()));
         source.setParent(new ClientParentClientLink(target, transaction));
         clientsGraphRepo.save(source);
         return getTransaction();

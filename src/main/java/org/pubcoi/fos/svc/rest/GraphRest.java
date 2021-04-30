@@ -432,7 +432,7 @@ public class GraphRest {
 
     @GetMapping("/api/graphs/organisations/{orgId}/metadata")
     public OrganisationDTO getOrgMetadata(@PathVariable String orgId) {
-        OrganisationNode organisationNode = organisationsGraphRepo.findOrgNotHydratingPersons(orgId).orElseThrow();
+        OrganisationNode organisationNode = organisationsGraphRepo.findOrgHydratingPersons(orgId).orElseThrow();
         return new OrganisationDTO(organisationNode);
     }
 

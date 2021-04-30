@@ -189,9 +189,6 @@ public class Debug {
                 // todo: check whether we might be able to get away with not doing this given we're now searching
                 // orgPersonLink explicitly via separate exists() query
                 if (orgOpt.isEmpty()) {
-                    orgOpt = organisationsGraphRepo.findOrgNotHydratingPersons(orgId);
-                }
-                if (orgOpt.isEmpty()) {
                     throw new FosBadRequestException(String.format("Unable to find organisation %s", orgId));
                 }
                 OrganisationNode org = orgOpt.get();

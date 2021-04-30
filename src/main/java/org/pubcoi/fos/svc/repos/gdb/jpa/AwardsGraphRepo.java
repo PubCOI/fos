@@ -38,8 +38,9 @@ public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, Long> {
     @Query("MATCH (a:Award)-[rel:AWARDED_TO]-(o:Organisation {fosId: $orgId}) RETURN a")
     List<AwardNode> getAwardsForSupplier(String orgId);
 
-    @Query("MATCH (a:Award) RETURN a")
-    List<AwardNode> findAllNotHydrating();
+    @Query("MATCH (a:Award) OPTIONAL MATCH (a:Award)-[rel]->(o:Organisation) " +
+            "RETURN a, collect(rel) AS AWARDED_TO, collect(o) AS AWARDEES")
+    List<AwardNode> findAllHydratingAwardees();
 
     @Query("RETURN exists((:Award {fosId: $awardId})-[:AWARDED_TO]-(:Organisation {fosId: $orgId}))")
     boolean relationshipExists(String awardId, String orgId);
@@ -52,7 +53,7 @@ public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, Long> {
     @Query("MATCH(a:Award {fosId: $awardId}) RETURN a")
     Optional<AwardNode> findByFosIdNotHydratingAwardees(String awardId);
 
-    @Query("MATCH paths = (a:Award {fosId: $awardId})-[rel]->(o:Organisation) " +
+    @Query("MATCH (a:Award {fosId: $awardId}) OPTIONAL MATCH (a:Award)-[rel]->(o:Organisation) " +
             "RETURN a, collect(rel) AS AWARDED_TO, collect(o) AS AWARDEES")
     Optional<AwardNode> findByFosIdHydratingAwardees(String awardId);
 }

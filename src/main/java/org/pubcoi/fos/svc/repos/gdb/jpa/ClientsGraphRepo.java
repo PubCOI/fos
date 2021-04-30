@@ -29,11 +29,10 @@ import java.util.Optional;
 public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
     Logger logger = LoggerFactory.getLogger(ClientsGraphRepo.class);
 
-    @Query("MATCH(c:Client) WHERE c.fosId = $clientId RETURN c")
-    Optional<ClientNode> findByIdEquals(String clientId);
+    @Query("MATCH(c:Client {fosId: $clientId}) RETURN c")
+    Optional<ClientNode> findByFosIdEquals(String clientId);
 
-    @Query("MATCH paths = (c:Client)-[rel]->(n:Notice) " +
-            "WHERE c.fosId = $clientId " +
+    @Query("MATCH paths = (c:Client {fosId: $clientId})-[rel]->(n:Notice) " +
             "RETURN c, collect(rel) AS PUBLISHED, collect(n) AS NOTICES")
     Optional<ClientNode> findClientHydratingNotices(String clientId);
 

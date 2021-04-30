@@ -21,6 +21,7 @@ import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.services.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,14 +40,14 @@ public class LinkOrganisationToParent implements IFosTransaction {
             FosTransaction transaction
     ) {
         this.orgGraphRepo = orgGraphRepo;
-        this.source = orgGraphRepo.findOrgHydratingPersons(source.getFosId()).orElse(orgGraphRepo.findOrgNotHydratingPersons(source.getFosId()).orElseThrow());
-        this.target = orgGraphRepo.findOrgHydratingPersons(target.getFosId()).orElse(orgGraphRepo.findOrgNotHydratingPersons(target.getFosId()).orElseThrow());
+        this.source = orgGraphRepo.findOrgHydratingPersons(source.getFosId()).orElseThrow();
+        this.target = orgGraphRepo.findOrgHydratingPersons(target.getFosId()).orElseThrow();
         this.transaction = transaction;
     }
 
     @Override
     public FosTransaction exec() {
-        logger.debug("Linking {} to parent {}", source.getFosId(), target.getFosId());
+        logger.debug(Ansi.Blue.format("Linking %s to parent %s", source.getFosId(), target.getFosId()));
         source.setLegalEntity(new OrgLELink(
                 source, target, transaction.id
         ));

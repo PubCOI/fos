@@ -17,47 +17,50 @@
 
 package org.pubcoi.fos.svc.services;
 
+import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.cdm.batch.BatchJob;
 import org.pubcoi.cdm.batch.BatchJobTypeEnum;
 import org.pubcoi.cdm.cf.AdditionalDetailType;
+import org.pubcoi.cdm.cf.FullNotice;
+import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.pubcoi.cdm.fos.AttachmentFactory;
 import org.pubcoi.cdm.fos.BatchJobFactory;
 import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.FosTaskType;
-import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
-import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
-import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
-import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.*;
 import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
-import org.pubcoi.fos.svc.repos.gdb.jpa.AwardsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
-import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
+import org.pubcoi.fos.svc.repos.gdb.jpa.*;
 import org.pubcoi.fos.svc.repos.mdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
+
+import static org.pubcoi.fos.svc.services.Utils.getZDT;
 
 @Service
 public class GraphSvcImpl implements GraphSvc {
     private static final Logger logger = LoggerFactory.getLogger(GraphSvcImpl.class);
 
-    AwardsMDBRepo awardsMDBRepo;
-    OrganisationsMDBRepo organisationsMDBRepo;
-    OCCompaniesRepo ocCompaniesRepo;
-    AwardsGraphRepo awardsGraphRepo;
-    NoticesMDBRepo noticesMDBRepo;
-    OrganisationsGraphRepo orgGraphRepo;
-    ClientsGraphRepo clientsGraphRepo;
-    NoticesGraphRepo noticesGRepo;
-    ScheduledSvc scheduledSvc;
-    TasksSvc tasksSvc;
-    AttachmentMDBRepo attachmentMDBRepo;
-    BatchJobMDBRepo batchJobMDBRepo;
+    final AwardsMDBRepo awardsMDBRepo;
+    final OrganisationsMDBRepo organisationsMDBRepo;
+    final OCCompaniesRepo ocCompaniesRepo;
+    final AwardsGraphRepo awardsGraphRepo;
+    final NoticesMDBRepo noticesMDBRepo;
+    final OrganisationsGraphRepo orgGraphRepo;
+    final ClientsGraphRepo clientsGraphRepo;
+    final NoticesGraphRepo noticesGraphRepo;
+    final PersonsGraphRepo personsGraphRepo;
+    final ScheduledSvc scheduledSvc;
+    final TasksSvc tasksSvc;
+    final AttachmentMDBRepo attachmentMDBRepo;
+    final BatchJobMDBRepo batchJobMDBRepo;
 
     public GraphSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
@@ -67,7 +70,8 @@ public class GraphSvcImpl implements GraphSvc {
             OCCompaniesRepo ocCompaniesRepo,
             NoticesMDBRepo noticesMDBRepo,
             ClientsGraphRepo clientsGraphRepo,
-            NoticesGraphRepo noticesGRepo,
+            NoticesGraphRepo noticesGraphRepo,
+            PersonsGraphRepo personsGraphRepo,
             ScheduledSvc scheduledSvc,
             TasksSvc tasksSvc,
             AttachmentMDBRepo attachmentMDBRepo,
@@ -80,30 +84,82 @@ public class GraphSvcImpl implements GraphSvc {
         this.ocCompaniesRepo = ocCompaniesRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.clientsGraphRepo = clientsGraphRepo;
-        this.noticesGRepo = noticesGRepo;
+        this.noticesGraphRepo = noticesGraphRepo;
+        this.personsGraphRepo = personsGraphRepo;
         this.scheduledSvc = scheduledSvc;
         this.tasksSvc = tasksSvc;
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.batchJobMDBRepo = batchJobMDBRepo;
     }
 
-    private void addAllClientsAndNoticesToGraph() {
-        noticesMDBRepo.findAll().forEach(notice -> {
-            Optional<ClientNode> nodeOpt = (clientsGraphRepo.findClientHydratingNotices(ClientNode.resolveId(notice)));
-            if (nodeOpt.isPresent()) {
-                logger.debug("Using already instantiated client node {}", ClientNode.resolveId(notice));
+    private void addNoticeToGraph(FullNotice notice) {
+        Optional<ClientNode> nodeOpt = (clientsGraphRepo.findClientHydratingNotices(ClientNode.resolveId(notice)));
+        if (nodeOpt.isPresent()) {
+            logger.debug("Using already instantiated client node {}", ClientNode.resolveId(notice));
+        }
+        ClientNode client = (nodeOpt.orElseGet(() -> {
+            ClientNode clientNode = new ClientNode(notice);
+            tasksSvc.createTask(new DRTask(FosTaskType.resolve_client, clientNode));
+            return clientNode;
+        }));
+        NoticeNode noticeNode = (noticesGraphRepo.findByFosId(notice.getId()).orElse(new NoticeNode(notice)));
+        if (!clientsGraphRepo.relationshipExists(client.getFosId(), noticeNode.getFosId())) {
+            client.addNotice(noticeNode, notice.getId(), notice.getNotice().getPublishedDate().toZonedDateTime());
+        }
+        clientsGraphRepo.save(client);
+    }
+
+    private void addAwardToGraph(CFAward award) {
+        if (null != award.getFosOrganisation()) {
+            FosOrganisation org = award.getFosOrganisation();
+            try {
+                logger.trace("Looking up OrganisationNode {}", org.getFosId());
+                final OrganisationNode orgNode = orgGraphRepo.findByFosIdHydratingPersons(org.getFosId()).orElseGet(() -> {
+                            logger.trace(Ansi.Yellow.format("Did not find OrganisationNode %s: instantiating new instance", org.getFosId()));
+                            return new OrganisationNode(org);
+                        }
+                );
+
+                logger.trace("Looking up AwardNode {}", award.getId());
+                AwardNode awardNode = awardsGraphRepo.findByFosIdHydratingAwardees(award.getId()).orElseGet(() -> {
+                            logger.trace(Ansi.Yellow.format("Did not find AwardNode %s: instantiating new instance", award.getId()));
+                            return new AwardNode()
+                                    .setFosId(award.getId())
+                                    .setValue(award.getValue())
+                                    .setNoticeId(award.getNoticeId())
+                                    .setGroupAward(award.getGroup());
+                        }
+                );
+
+                // check if award<->org exists ... if not create it
+                if (!awardsGraphRepo.relationshipExists(awardNode.getFosId(), orgNode.getFosId())) {
+                    logger.trace(Ansi.Yellow.format("Relationship between AwardNode %s and OrganisationNode %s does not exist: linking nodes", awardNode.getFosId(), orgNode.getFosId()));
+                    AwardOrgLink awLink = new AwardOrgLink(orgNode, award.getAwardedDate().toLocalDate(), award.getStartDate().toLocalDate(), award.getEndDate().toLocalDate());
+                    awardNode.getAwardees().add(awLink);
+                    logger.debug("Saved {}", awLink);
+                }
+
+                orgGraphRepo.save(orgNode);
+                awardsGraphRepo.save(awardNode);
+
+                logger.trace("Attempting to add backwards ref for notice {} to AwardNode {}", awardNode.getNoticeId(), awardNode.getFosId());
+                noticesGraphRepo.findByFosId(awardNode.getNoticeId()).ifPresent(notice -> {
+                    logger.trace("Found notice {}", notice);
+                    if (!noticesGraphRepo.isLinkedToAward(notice.getFosId(), awardNode.getFosId())) {
+                        logger.debug(Ansi.Yellow.format("Relationship between NoticeNode %s and AwardNode %s does not exist: linking nodes", notice.getFosId(), awardNode.getFosId()));
+                        noticesGraphRepo.save(notice.addAward(awardNode));
+                    } else {
+                        logger.debug("Did not add {} to {} (already exists)", awardNode.getFosId(), notice.getFosId());
+                    }
+                });
+
+                logger.debug("Saved {}", awardNode);
+            } catch (FosException e) {
+                logger.error(Ansi.Red.colorize("Unable to insert entry into graph: is source MDB fully populated?"), e);
             }
-            ClientNode client = (nodeOpt.orElseGet(() -> {
-                ClientNode clientNode = new ClientNode(notice);
-                tasksSvc.createTask(new DRTask(FosTaskType.resolve_client, clientNode));
-                return clientNode;
-            }));
-            NoticeNode noticeNode = (noticesGRepo.findByFosId(notice.getId()).orElse(new NoticeNode(notice)));
-            if (!clientsGraphRepo.relationshipExists(client.getFosId(), noticeNode.getFosId())) {
-                client.addNotice(noticeNode, notice.getId(), notice.getNotice().getPublishedDate().toZonedDateTime());
-            }
-            clientsGraphRepo.save(client);
-        });
+        } else {
+            logger.debug("Unable to find OC entry for {}", award.getSupplierName());
+        }
     }
 
     /**
@@ -111,91 +167,81 @@ public class GraphSvcImpl implements GraphSvc {
      */
     @Override
     public void populateGraphFromMDB() {
+        logger.info("Populating organisations cache");
+        scheduledSvc.populateFosOrgsMDBFromAwards();
+        logger.info("Adding all notices to graph");
+        noticesMDBRepo.findAll().forEach(this::addNoticeToGraph);
+        logger.info("Adding all awards to graph");
+        awardsMDBRepo.findAll().forEach(this::addAwardToGraph);
+        logger.info("Adding all office bearers");
+        orgGraphRepo.findAllNotHydrating().forEach(this::populateOfficeBearers);
+    }
 
-        addAllClientsAndNoticesToGraph();
+    private void populateOfficeBearers(OrganisationNode orgNode) {
+        if (null == orgNode.getReference() || null == orgNode.getJurisdiction()) {
+            logger.info("{} not an OC node, skipping", orgNode);
+            return;
+        }
+        OCCompanySchema companySchema = ocCompaniesRepo.findByCompanyNumberAndJurisdictionCode(orgNode.getReference(), orgNode.getJurisdiction());
+        companySchema.getOfficers().forEach(officer -> {
+            logger.debug("Looking up details for officer {} (fosId:{})",
+                    PersonNode.convertPersonOCIdToString(officer.getOfficer().getId()),
+                    PersonNode.generatePersonId(officer.getOfficer())
+            );
+            // warning don't use in production - won't add people to two different companies
+            // if (!personsGraphRepo.existsByOcId(getUID(officer.getOfficer().getId()))) { // todo add getid to aspects
 
-        // add all awards
-        awardsMDBRepo.findAll().forEach(award -> {
-            if (null != award.getFosOrganisation()) {
-                FosOrganisation org = award.getFosOrganisation();
-                try {
-                    logger.trace("Looking up OrganisationNode {}", org.getFosId());
-                    final OrganisationNode orgNode = orgGraphRepo.findByFosId(org.getFosId()).orElseGet(() -> {
-                                logger.trace(Ansi.Yellow.format("Did not find OrganisationNode %s in graph, instantiating new instance", org.getFosId()));
-                                return new OrganisationNode(org);
-                            }
-                    );
-
-                    logger.trace("Looking up AwardNode {}", award.getId());
-                    AwardNode awardNode = awardsGraphRepo.findByFosIdHydratingAwardees(award.getId()).orElseGet(() -> {
-                                logger.trace(Ansi.Yellow.format("Did not find AwardNode %s in graph, instantiating new instance", award.getId()));
-                                return new AwardNode()
-                                        .setFosId(award.getId())
-                                        .setValue(award.getValue())
-                                        .setNoticeId(award.getNoticeId())
-                                        .setGroupAward(award.getGroup());
-                            }
-                    );
-
-                    // check if award<->org exists ... if not create it
-                    if (!awardsGraphRepo.relationshipExists(awardNode.getFosId(), orgNode.getFosId())) {
-                        logger.trace(Ansi.Yellow.format("Relationship between award %s and org %s does not exist: linking nodes", awardNode.getFosId(), orgNode.getFosId()));
-                        AwardOrgLink awLink = new AwardOrgLink(orgNode, award.getAwardedDate().toLocalDate(), award.getStartDate().toLocalDate(), award.getEndDate().toLocalDate());
-                        awardNode.getAwardees().add(awLink);
-                        logger.debug("Saved {}", awLink);
-                    }
-
-                    orgGraphRepo.save(orgNode);
-                    awardsGraphRepo.save(awardNode);
-                    logger.debug("Saved {}", awardNode);
-                } catch (FosException e) {
-                    logger.error(Ansi.Red.colorize("Unable to insert entry into graph: is source MDB fully populated?"), e);
-                }
-            } else {
-                logger.debug("Unable to find OC entry for {}", award.getSupplierName());
-            }
-        });
-
-        // for every notice in the mongo db, put the attachments onto the attachments DB
-        noticesMDBRepo.findAll().forEach(notice -> {
-            for (AdditionalDetailType additionalDetail : notice.getAdditionalDetails().getDetailsList()) {
-                // note that each notice will have an "additional details" object that is exactly the
-                // same as the description on the notice
-                // helpfully, the ID and notice ID on these objects is the same
-                if (additionalDetail.getId().equals(additionalDetail.getNoticeId())) continue;
-                if (!attachmentMDBRepo.existsById(additionalDetail.getId())) {
-                    attachmentMDBRepo.save(AttachmentFactory.build(additionalDetail));
-                }
-            }
-        });
-
-        // for every attachment, create a job
-        attachmentMDBRepo.findAll().forEach(attachment -> {
-            BatchJob dl = null;
-            if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.DOWNLOAD)) {
-                dl = batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.DOWNLOAD));
-            }
-            if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.PROCESS_OCR)) {
-                batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.PROCESS_OCR).withDepends((null != dl ? dl.getId() : null)));
-            }
-        });
-
-        // for every award on the graph, link the associated notice
-        awardsGraphRepo.findAllHydratingAwardees()
-                .forEach(award -> {
-                    logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getFosId());
-                    noticesGRepo.findByFosId(award.getNoticeId()).ifPresent(notice -> {
-                        logger.debug("Found notice {}", notice);
-
-                        // fixme
-                        if (!notice.getAwards().contains(award)) {
-                            logger.debug("Adding award {} to notice {}", award.getFosId(), notice.getFosId());
-                            noticesGRepo.save(notice.addAward(award));
-                        } else {
-                            logger.debug("Did not add {} to {} (already exists)", award.getFosId(), notice.getFosId());
-                        }
+            final String transactionId = UUID.randomUUID().toString();
+            final String personNodeId = PersonNode.generatePersonId(officer.getOfficer());
+            PersonNode personNode = personsGraphRepo
+                    .findByFosId(personNodeId)
+                    .orElseGet(() -> {
+                        logger.debug(Ansi.Yellow.format("Did not find PersonNode %s: instantiating new instance", personNodeId));
+                        return new PersonNode(PersonNodeType.OfficeBearer, officer.getOfficer(), transactionId);
                     });
-                });
+
+            if (!orgGraphRepo.relationshipExists(orgNode.getFosId(), personNode.getFosId())) {
+                logger.debug(Ansi.Yellow.format("Relationship between OrganisationNode %s and PersonNode %s does not exist: linking nodes", orgNode.getFosId(), personNode.getFosId()));
+                OrgPersonLink orgPersonLink = new OrgPersonLink(personNode,
+                        orgNode.getFosId(),
+                        officer.getOfficer().getPosition(),
+                        getZDT(officer.getOfficer().getStartDate()),
+                        getZDT(officer.getOfficer().getEndDate()), transactionId);
+                orgNode.getOrgPersons().add(orgPersonLink);
+                logger.trace("Completed adding person {} to organisation {}", personNode.getFosId(), orgNode.getFosId());
+            }
+            orgGraphRepo.save(orgNode);
+        });
+    }
+
+    @Override
+    public void createAndUpdateAttachmentObjects() {
+        logger.info("Extracting all attachment metadata from notices");
+        noticesMDBRepo.findAll().forEach(this::addAttachmentsToMDB);
+        logger.info("Creating default batch jobs for attachment processing");
+        attachmentMDBRepo.findAll().forEach(this::createDefaultBatchJobs);
+    }
+
+    private void createDefaultBatchJobs(Attachment attachment) {
+        BatchJob dl = null;
+        if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.DOWNLOAD)) {
+            dl = batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.DOWNLOAD));
+        }
+        if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.PROCESS_OCR)) {
+            batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.PROCESS_OCR).withDepends((null != dl ? dl.getId() : null)));
+        }
+    }
+
+    private void addAttachmentsToMDB(FullNotice notice) {
+        for (AdditionalDetailType additionalDetail : notice.getAdditionalDetails().getDetailsList()) {
+            // note that each notice will have an "additional details" object that is exactly the
+            // same as the description on the notice
+            // helpfully, the ID and notice ID on these objects is the same
+            if (additionalDetail.getId().equals(additionalDetail.getNoticeId())) continue;
+            if (!attachmentMDBRepo.existsById(additionalDetail.getId())) {
+                attachmentMDBRepo.save(AttachmentFactory.build(additionalDetail));
+            }
+        }
     }
 
 }

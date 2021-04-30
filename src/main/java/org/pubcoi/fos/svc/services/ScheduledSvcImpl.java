@@ -23,7 +23,6 @@ import org.pubcoi.cdm.cf.ReferenceTypeE;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
-import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
@@ -55,7 +54,6 @@ public class ScheduledSvcImpl implements ScheduledSvc {
             OCCompaniesRepo ocCompanies,
             OCRestSvc ocRestSvc, RestTemplate restTemplate,
             OrganisationsMDBRepo orgMDBRepo,
-            OrganisationsGraphRepo orgGraphRepo,
             TasksMDBRepo tasksMDBRepo
     ) {
         this.awardsMDBRepo = awardsMDBRepo;
@@ -86,6 +84,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
                         if (org instanceof FosCanonicalOrg) {
                             // of course, companySchema is implicitly not null
                             if (isSimilar(award.getSupplierName(), ocCompany.getName())) {
+                                logger.debug(Ansi.Green.format("Marking organisation %s as verified", org.getFosId()));
                                 org.setVerified(true);
                             } else {
                                 logger.warn(

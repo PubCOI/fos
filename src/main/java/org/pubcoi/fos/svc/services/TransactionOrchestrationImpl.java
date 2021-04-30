@@ -94,9 +94,9 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
 
             case link_org_to_canonical:
                 OrganisationNode o2c_fromNode = orgGraphRepo
-                        .findOrgHydratingPersons(metaTransaction.getSource().getFosId()).orElseThrow();
+                        .findByFosIdHydratingPersons(metaTransaction.getSource().getFosId()).orElseThrow();
                 OrganisationNode o2c_toNode = orgGraphRepo
-                        .findOrgHydratingPersons(metaTransaction.getTarget().getFosId()).orElseThrow();
+                        .findByFosIdHydratingPersons(metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!o2c_toNode.isVerified()) {
                     throw new FosBadRequestException("Target node must be verified");

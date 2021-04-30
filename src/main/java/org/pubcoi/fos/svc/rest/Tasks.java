@@ -95,7 +95,7 @@ public class Tasks {
         String uid = authProvider.getUid(authToken);
         FosUser user = authProvider.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
-        OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
+        OrganisationNode org = organisationsGraphRepo.findByFosIdHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
         OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
         return wrapper.getResults().getCompanies().stream()
                 .map(company -> new VerifyCompanySearchResponse(company))
@@ -211,7 +211,7 @@ public class Tasks {
                     .findByFosId(req.getSource()).orElseThrow();
             OrganisationNode target = organisationsGraphRepo
                     .findByFosId(Utils.convertOCCompanyToGraphID(req.getTarget())).orElseGet(() -> {
-                        logger.info(Ansi.Yellow.format("Unable to find OrgNode %s, instantiating new instance"));
+                        logger.info(Ansi.Yellow.format("Did not find OrganisationNode %s: instantiating new instance"));
                         return organisationsGraphRepo.save(new OrganisationNode(companySchema));
                     });
 

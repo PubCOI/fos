@@ -26,7 +26,7 @@ import java.util.List;
 
 public interface AwardsListRepo extends CrudRepository<AwardNode, Long> {
 
-    @Query("MATCH (c:Client)-[:PUBLISHED]-(:Notice)-[:AWARDS]-(award:Award)-[awardOrgLink:AWARDED_TO]-(awardee:Organisation) " +
+    @Query("MATCH (c:Client)-[:PUBLISHED]-(:Notice)-[:HAS_AWARD]-(award:Award)-[awardOrgLink:AWARDED_TO]-(awardee:Organisation) " +
             "OPTIONAL MATCH (awardee)-[orgOrgLink:LEGAL_ENTITY]-(legalEntity:Organisation {verified: true}) " +
             "RETURN c.name AS clientName, award AS awardNode, awardOrgLink, awardee, orgOrgLink, legalEntity")
     List<AwardsGraphResponse> getAwardsWithRels();

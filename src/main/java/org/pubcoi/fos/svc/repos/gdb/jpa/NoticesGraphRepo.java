@@ -26,10 +26,12 @@ import java.util.Optional;
 
 public interface NoticesGraphRepo extends Neo4jRepository<NoticeNode, Long> {
 
-    @Query("MATCH (n:Notice)-[rel:PUBLISHED]-(c:Client) " +
-            "WHERE c.fosId = $clientId " +
+    @Query("MATCH (n:Notice)-[rel:PUBLISHED]-(c:Client {fosId: $clientId}) " +
             "RETURN n")
     List<NoticeNode> findAllNoticesByClientNode(String clientId);
 
     Optional<NoticeNode> findByFosId(String noticeId);
+
+    @Query("RETURN exists((:Notice {fosId: $noticeId})-[:HAS_AWARD]-(:Award {fosId: $awardId}))")
+    boolean isLinkedToAward(String noticeId, String awardId);
 }

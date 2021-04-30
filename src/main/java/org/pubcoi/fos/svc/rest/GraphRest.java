@@ -214,10 +214,10 @@ public class GraphRest {
     ) {
         Map<String, Object> bindParams = new HashMap<>();
         bindParams.put("limit", getLimit(max, 250));
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
-                "WHERE c.hidden=false AND ref.hidden=false AND n.hidden=false " +
-                "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:AWARDS]-())}} as n" +
-                " LIMIT $limit").bindAll(bindParams);
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH(c:Client {hidden: false})-[ref:PUBLISHED {hidden: false}]-(n:Notice {hidden: false}) " +
+                        "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:HAS_AWARD]-())}} AS n " +
+                        "LIMIT $limit").bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
@@ -246,7 +246,8 @@ public class GraphRest {
         bindParams.put("awardId", awardId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (:Award {fosId: $awardId})-[:AWARDED_TO]-(o:Organisation) " +
-                        "MATCH (o)-[ref:AWARDED_TO]-(a:Award) return o, ref, a LIMIT $limit")
+                        "MATCH (o)-[ref:AWARDED_TO]-(a:Award) " +
+                        "RETURN o, ref, a LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -264,8 +265,8 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 50));
         bindParams.put("awardId", awardId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
-                "MATCH (:Award {fosId: $awardId})-[:AWARDS]-(n:Notice) " +
-                        "MATCH (n)-[ref:AWARDS]-(a:Award) return n, ref, a LIMIT $limit")
+                "MATCH (:Award {fosId: $awardId})-[:HAS_AWARD]-(n:Notice) " +
+                        "MATCH (n)-[ref:HAS_AWARD]-(a:Award) return n, ref, a LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -284,9 +285,9 @@ public class GraphRest {
     public String getSpecificClientForSearchResult(@PathVariable String clientId) {
         Map<String, Object> bindParams = new HashMap<>();
         bindParams.put("clientId", clientId);
-        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query("MATCH(c:Client)-[ref:PUBLISHED]-(n:Notice) " +
-                "WHERE c.fosId = $clientId " +
-                "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:AWARDS]-())}} as n"
+        Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
+                "MATCH(c:Client {fosId: $clientId})-[ref:PUBLISHED]-(n:Notice) " +
+                        "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:HAS_AWARD]-(:Award))}} AS n"
         ).bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -314,7 +315,8 @@ public class GraphRest {
         bindParams.put("clientId", clientId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (:Client {fosId: $clientId})-[:REL_PERSON]-(p:Person) " +
-                        "MATCH (p)-[ref:REL_PERSON]-(c:Client) return c, ref, p LIMIT $limit")
+                        "MATCH (p)-[ref:REL_PERSON]-(c:Client) " +
+                        "RETURN c, ref, p LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -351,7 +353,7 @@ public class GraphRest {
     ) {
         authProvider.getUid(authToken);
         logger.debug("Adding relationship for person: {}", addRelationshipDTO);
-        OrganisationNode org = organisationsGraphRepo.findOrgHydratingPersons(addRelationshipDTO.getRelId()).orElseThrow();
+        OrganisationNode org = organisationsGraphRepo.findByFosIdHydratingPersons(addRelationshipDTO.getRelId()).orElseThrow();
         logger.debug("Found {}", org);
 
         PersonNode personNode = personsSvc.getPersonGraphObject(personId);
@@ -406,7 +408,7 @@ public class GraphRest {
         bindParams.put("noticeId", noticeId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (:Notice {fosId: $noticeId})-[:PUBLISHED]-(c:Client) " +
-                        "MATCH (c)-[ref:PUBLISHED]-(n:Notice) return c, ref, n LIMIT $limit")
+                        "MATCH (c)-[ref:PUBLISHED]-(n:Notice) RETURN c, ref, n LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -432,7 +434,7 @@ public class GraphRest {
 
     @GetMapping("/api/graphs/organisations/{orgId}/metadata")
     public OrganisationDTO getOrgMetadata(@PathVariable String orgId) {
-        OrganisationNode organisationNode = organisationsGraphRepo.findOrgHydratingPersons(orgId).orElseThrow();
+        OrganisationNode organisationNode = organisationsGraphRepo.findByFosIdHydratingPersons(orgId).orElseThrow();
         return new OrganisationDTO(organisationNode);
     }
 
@@ -448,9 +450,9 @@ public class GraphRest {
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH (:Organisation {fosId: $orgId})-[:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(p) " +
                         "MATCH (p)-[ref:ORG_PERSON|CONFLICT|LEGAL_ENTITY]-(o:Organisation) " +
-                        "WITH o, exists((o)-[:LEGAL_ENTITY]-()) as o_resolved, ref, p, exists((p)-[:LEGAL_ENTITY]-()) as p_resolved " +
-                        "RETURN {neo4j_id: id(o), labels: labels(o), properties: o{.*, resolved: o_resolved}} as o, " +
-                        "ref, {neo4j_id: id(p), labels: labels(p), properties: p{.*, resolved: p_resolved}} as p LIMIT $limit")
+                        "WITH o, exists((o)-[:LEGAL_ENTITY]-()) as o_resolved, ref, p, exists((p)-[:LEGAL_ENTITY]-()) AS p_resolved " +
+                        "RETURN {neo4j_id: id(o), labels: labels(o), properties: o{.*, resolved: o_resolved}} AS o, " +
+                        "ref, {neo4j_id: id(p), labels: labels(p), properties: p{.*, resolved: p_resolved}} AS p LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());

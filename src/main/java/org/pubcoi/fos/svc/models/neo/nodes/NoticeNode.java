@@ -23,6 +23,7 @@ import org.pubcoi.cdm.cf.FullNotice;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -34,6 +35,7 @@ public class NoticeNode implements FosEntity {
     Long graphId;
     String fosId;
 
+    @Relationship("HAS_AWARD")
     Set<AwardNode> awards = new HashSet<>();
 
     Boolean hidden = false;

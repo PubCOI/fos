@@ -33,7 +33,7 @@ public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode
     @Query("MATCH (o:Organisation {fosId: $orgId}) " +
             "OPTIONAL MATCH (o:Organisation)-[rel:ORG_PERSON]->(p:Person) " +
             "RETURN o, collect(rel) AS ORG_PERSON, collect(p) AS orgPersons")
-    Optional<OrganisationNode> findOrgHydratingPersons(String orgId);
+    Optional<OrganisationNode> findByFosIdHydratingPersons(String orgId);
 
     @Query("MATCH (p:Person {fosId: $personId})-[rel:ORG_PERSON]-(o:Organisation) " +
             "RETURN p, rel AS ORG_PERSON, o AS ORGANISATION")

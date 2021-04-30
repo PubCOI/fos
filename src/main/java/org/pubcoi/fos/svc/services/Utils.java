@@ -20,6 +20,9 @@ package org.pubcoi.fos.svc.services;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,11 +46,30 @@ public class Utils {
 
     /**
      * Note the MNIS ID is considered the 'canonical' id for any politicians on this system
+     *
      * @param id the Member Naming Information Service (MNIS) ID
      * @return a hash of the MNIS ID
      */
     public static String mnisIdHash(Integer id) {
         return DigestUtils.sha1Hex(String.format("parliament:%d", id));
+    }
+
+    public static LocalDate getDate(Object date) {
+        if (null == date) {
+            return null;
+        }
+        if (date instanceof String) {
+            return LocalDate.parse((CharSequence) date);
+        }
+        throw new IllegalArgumentException("Must provide valid date string");
+    }
+
+    public static ZonedDateTime getZDT(Object date) {
+        LocalDate localDate = getDate(date);
+        if (null == localDate) {
+            return null;
+        }
+        return localDate.atStartOfDay(ZoneOffset.UTC);
     }
 }
 

@@ -28,10 +28,7 @@ import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
 import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.FosException;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
-import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
-import org.pubcoi.fos.svc.models.neo.nodes.PersonNodeType;
-import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.repos.gdb.custom.ClientNodeFTS;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
@@ -55,13 +52,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 
@@ -138,12 +130,6 @@ public class Debug {
         scheduledSvc.populateFosOrgsMDBFromAwards();
     }
 
-    @DeleteMapping("/api/debug/clear-mdb")
-    public void clearMDB() {
-        transactionOrchestrationSvc.clearTransactions();
-        tasksMDBRepo.deleteAll();
-    }
-
     @PutMapping("/api/debug/populate-all")
     public void populateAll() {
         populateCompanies();
@@ -154,64 +140,6 @@ public class Debug {
     @GetMapping("/api/debug/populate-graph")
     public void populateGraph() {
         graphSvc.populateGraphFromMDB();
-    }
-
-    /**
-     * DEBUG CLASS
-     * <p>
-     * calls list of companies
-     * pulls back an officer
-     * inserts officer and links to company
-     */
-    @PutMapping("/api/debug/populate-office-bearers")
-    public void populateOfficeBearers() {
-        organisationsGraphRepo.findAllNotHydrating().forEach(organisationNode -> {
-            if (null == organisationNode.getReference() || null == organisationNode.getJurisdiction()) {
-                logger.info("{} not an OC node, skipping", organisationNode);
-                return;
-            }
-            OCCompanySchema companySchema = ocCompanies.findByCompanyNumberAndJurisdictionCode(organisationNode.getReference(), organisationNode.getJurisdiction());
-            companySchema.getOfficers().forEach(officer -> {
-                logger.debug("Looking up details for officer {} (fosId:{})",
-                        PersonNode.convertPersonOCIdToString(officer.getOfficer().getId()),
-                        PersonNode.generatePersonId(officer.getOfficer())
-                );
-                // warning don't use in production - won't add people to two different companies
-                // if (!personsGraphRepo.existsByOcId(getUID(officer.getOfficer().getId()))) { // todo add getid to aspects
-                final String orgId = String.format("%s:%s", companySchema.getJurisdictionCode(), companySchema.getCompanyNumber());
-                logger.debug("Looking up org details for {}", orgId);
-
-                // first try find org using stated ID
-                Optional<OrganisationNode> orgOpt = organisationsGraphRepo
-                        // first look for a version WITH persons
-                        .findOrgHydratingPersons(orgId);
-                // if that search didn't work, search again but without hydrating ...
-                // todo: check whether we might be able to get away with not doing this given we're now searching
-                // orgPersonLink explicitly via separate exists() query
-                if (orgOpt.isEmpty()) {
-                    throw new FosBadRequestException(String.format("Unable to find organisation %s", orgId));
-                }
-                OrganisationNode org = orgOpt.get();
-
-                final String transactionId = UUID.randomUUID().toString();
-
-                PersonNode personNode = personsGraphRepo
-                        .findByFosId(PersonNode.generatePersonId(officer.getOfficer()))
-                        .orElse(new PersonNode(PersonNodeType.OfficeBearer, officer.getOfficer(), transactionId));
-
-                if (!organisationsGraphRepo.relationshipExists(org.getFosId(), personNode.getFosId())) {
-                    logger.debug("Instantiating new relationship between {} and {}", org, personNode);
-                    OrgPersonLink orgPersonLink = new OrgPersonLink(personNode,
-                            org.getFosId(),
-                            officer.getOfficer().getPosition(),
-                            getZDT(officer.getOfficer().getStartDate()),
-                            getZDT(officer.getOfficer().getEndDate()), transactionId);
-                    org.getOrgPersons().add(orgPersonLink);
-                    logger.trace("Completed adding person {} to organisation {}", personNode.getFosId(), org.getFosId());
-                }
-                organisationsGraphRepo.save(org);
-            });
-        });
     }
 
     /**
@@ -331,24 +259,6 @@ public class Debug {
                         personsGraphRepo.save(p);
                     }
                 });
-    }
-
-    private LocalDate getDate(Object date) {
-        if (null == date) {
-            return null;
-        }
-        if (date instanceof String) {
-            return LocalDate.parse((CharSequence) date);
-        }
-        throw new IllegalArgumentException("Must provide valid date string");
-    }
-
-    private ZonedDateTime getZDT(Object date) {
-        LocalDate localDate = getDate(date);
-        if (null == localDate) {
-            return null;
-        }
-        return localDate.atStartOfDay(ZoneOffset.UTC);
     }
 }
 

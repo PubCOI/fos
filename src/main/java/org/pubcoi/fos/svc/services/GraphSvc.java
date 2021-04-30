@@ -19,4 +19,6 @@ package org.pubcoi.fos.svc.services;
 
 public interface GraphSvc {
     void populateGraphFromMDB();
+
+    void createAndUpdateAttachmentObjects();
 }

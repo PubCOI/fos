@@ -27,7 +27,7 @@ import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
-import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
+import org.pubcoi.fos.svc.repos.mdb.TasksMDBRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +45,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     final OCRestSvc ocRestSvc;
     final RestTemplate restTemplate;
     final OrganisationsMDBRepo orgMDBRepo;
-    final TasksRepo tasksRepo;
+    final TasksMDBRepo tasksMDBRepo;
 
     @Value("${pubcoi.fos.opencorporates.api-key}")
     String apiToken;
@@ -56,14 +56,14 @@ public class ScheduledSvcImpl implements ScheduledSvc {
             OCRestSvc ocRestSvc, RestTemplate restTemplate,
             OrganisationsMDBRepo orgMDBRepo,
             OrganisationsGraphRepo orgGraphRepo,
-            TasksRepo tasksRepo
+            TasksMDBRepo tasksMDBRepo
     ) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.ocCompanies = ocCompanies;
         this.ocRestSvc = ocRestSvc;
         this.restTemplate = restTemplate;
         this.orgMDBRepo = orgMDBRepo;
-        this.tasksRepo = tasksRepo;
+        this.tasksMDBRepo = tasksMDBRepo;
     }
 
     /**
@@ -82,7 +82,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
                             new FosCanonicalOrg(ocCompany);
 
                     // save new org if it doesn't exist
-                    if (!orgMDBRepo.existsById(org.getFosId())) {
+                    if (!orgMDBRepo.existsByFosId(org.getFosId())) {
                         if (org instanceof FosCanonicalOrg) {
                             // of course, companySchema is implicitly not null
                             if (isSimilar(award.getSupplierName(), ocCompany.getName())) {
@@ -98,7 +98,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
                             logger.debug(
                                     "Generating {} task for {}", FosTaskType.resolve_company, org
                             );
-                            tasksRepo.save(new DRTask(FosTaskType.resolve_company, org));
+                            tasksMDBRepo.save(new DRTask(FosTaskType.resolve_company, org));
                         }
                         orgMDBRepo.save(org);
                     }

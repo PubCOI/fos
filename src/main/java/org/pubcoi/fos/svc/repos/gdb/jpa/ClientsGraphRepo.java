@@ -34,7 +34,7 @@ public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
 
     @Query("MATCH paths = (c:Client)-[rel]->(n:Notice) " +
             "WHERE c.fosId = $clientId " +
-            "RETURN c, collect(rel) AS AWARDED, collect(n) AS NOTICES")
+            "RETURN c, collect(rel) AS PUBLISHED, collect(n) AS NOTICES")
     Optional<ClientNode> findClientHydratingNotices(String clientId);
 
     @Query("RETURN exists((:Client {fosId: $clientId})-[:PUBLISHED]-(:Notice {fosId: $noticeId}))")

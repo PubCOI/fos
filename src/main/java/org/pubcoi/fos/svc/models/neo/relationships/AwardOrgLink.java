@@ -17,13 +17,15 @@
 
 package org.pubcoi.fos.svc.models.neo.relationships;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
 
 @RelationshipProperties
 public class AwardOrgLink implements FosRelationship {
@@ -34,15 +36,15 @@ public class AwardOrgLink implements FosRelationship {
     @TargetNode
     OrganisationNode organisationNode;
 
-    ZonedDateTime awardedDate;
-    ZonedDateTime startDate;
-    ZonedDateTime endDate;
+    LocalDate awardedDate;
+    LocalDate startDate;
+    LocalDate endDate;
 
     Boolean hidden = false;
 
     AwardOrgLink() {}
 
-    public AwardOrgLink(OrganisationNode organisationNode, ZonedDateTime awardedDate, ZonedDateTime startDate, ZonedDateTime endDate){
+    public AwardOrgLink(OrganisationNode organisationNode, LocalDate awardedDate, LocalDate startDate, LocalDate endDate){
         this.organisationNode = organisationNode;
         this.awardedDate = awardedDate;
         this.startDate = startDate;
@@ -58,29 +60,29 @@ public class AwardOrgLink implements FosRelationship {
         return this;
     }
 
-    public ZonedDateTime getAwardedDate() {
+    public LocalDate getAwardedDate() {
         return awardedDate;
     }
 
-    public AwardOrgLink setAwardedDate(ZonedDateTime awardedDate) {
+    public AwardOrgLink setAwardedDate(LocalDate awardedDate) {
         this.awardedDate = awardedDate;
         return this;
     }
 
-    public ZonedDateTime getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public AwardOrgLink setStartDate(ZonedDateTime startDate) {
+    public AwardOrgLink setStartDate(LocalDate startDate) {
         this.startDate = startDate;
         return this;
     }
 
-    public ZonedDateTime getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public AwardOrgLink setEndDate(ZonedDateTime endDate) {
+    public AwardOrgLink setEndDate(LocalDate endDate) {
         this.endDate = endDate;
         return this;
     }
@@ -105,5 +107,25 @@ public class AwardOrgLink implements FosRelationship {
                 "graphId=" + graphId +
                 ", organisationNode=" + organisationNode +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AwardOrgLink that = (AwardOrgLink) o;
+
+        return new EqualsBuilder()
+                .append(graphId, that.graphId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(graphId)
+                .toHashCode();
     }
 }

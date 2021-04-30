@@ -18,5 +18,5 @@
 package org.pubcoi.fos.svc.models.dto;
 
 public enum NodeTypeEnum {
-    client, organisation, person
+    client, organisation, person, notice, award
 }

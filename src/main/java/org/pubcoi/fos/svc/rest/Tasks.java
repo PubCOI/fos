@@ -30,7 +30,7 @@ import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
-import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
+import org.pubcoi.fos.svc.repos.mdb.TasksMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
 import org.pubcoi.fos.svc.services.OCRestSvc;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
@@ -53,7 +53,7 @@ public class Tasks {
     private static final Logger logger = LoggerFactory.getLogger(Tasks.class);
 
     final FosAuthProvider authProvider;
-    final TasksRepo tasksRepo;
+    final TasksMDBRepo tasksMDBRepo;
     final TransactionOrchestrationSvc transactionOrch;
     final ClientsGraphRepo clientGRepo;
     final OrganisationsMDBRepo orgMDBRepo;
@@ -64,7 +64,7 @@ public class Tasks {
 
     public Tasks(
             FosAuthProvider authProvider,
-            TasksRepo tasksRepo,
+            TasksMDBRepo tasksMDBRepo,
             TransactionOrchestrationSvc transactionOrch,
             ClientsGraphRepo clientGRepo,
             OrganisationsMDBRepo orgMDBRepo,
@@ -73,7 +73,7 @@ public class Tasks {
             UserObjectFlagRepo objectFlagsRepo,
             ScheduledSvc scheduledSvc) {
         this.authProvider = authProvider;
-        this.tasksRepo = tasksRepo;
+        this.tasksMDBRepo = tasksMDBRepo;
         this.transactionOrch = transactionOrch;
         this.clientGRepo = clientGRepo;
         this.orgMDBRepo = orgMDBRepo;
@@ -108,7 +108,7 @@ public class Tasks {
 
     @GetMapping("/api/ui/tasks")
     public List<TaskDTO> getTasks(@RequestParam(value = "completed", defaultValue = "false") Boolean completed) {
-        return tasksRepo.findAll().stream()
+        return tasksMDBRepo.findAll().stream()
                 .filter(t -> t.getCompleted().equals(completed))
                 .map(TaskDTO::new)
                 .peek(task -> {
@@ -202,7 +202,7 @@ public class Tasks {
                 throw new FosBadRequestException("Source and target must be populated");
             }
 
-            DRTask task = tasksRepo.getByTaskTypeAndEntity(FosTaskType.resolve_company, orgMDBRepo.findById(req.getSource()).orElseThrow());
+            DRTask task = tasksMDBRepo.getByTaskTypeAndEntity(FosTaskType.resolve_company, orgMDBRepo.findById(req.getSource()).orElseThrow());
             if (null == task) {
                 throw new FosBadRequestException("Unable to find relevant task");
             }
@@ -224,7 +224,7 @@ public class Tasks {
     }
 
     private void markTaskCompleted(String taskId, FosUser user) {
-        tasksRepo.save(tasksRepo.getById(taskId).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
+        tasksMDBRepo.save(tasksMDBRepo.getById(taskId).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
     }
 
 }

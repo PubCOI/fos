@@ -21,7 +21,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 
 public class OrganisationDTO {
 
-    String id;
+    String fosId;
     String name;
     Boolean verified;
 
@@ -30,17 +30,17 @@ public class OrganisationDTO {
     }
 
     public OrganisationDTO(OrganisationNode organisationNode) {
-        this.id = organisationNode.getFosId();
+        this.fosId = organisationNode.getFosId();
         this.name = organisationNode.getName();
         this.verified = organisationNode.getVerified();
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public OrganisationDTO setId(String id) {
-        this.id = id;
+    public OrganisationDTO setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 

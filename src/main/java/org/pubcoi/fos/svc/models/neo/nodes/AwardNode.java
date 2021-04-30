@@ -27,14 +27,15 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Node(primaryLabel = "Award")
 public class AwardNode implements FosEntity {
     private static final Logger logger = LoggerFactory.getLogger(AwardNode.class);
 
     @Relationship("AWARDED_TO")
-    AwardOrgLink organisation;
+    Set<AwardOrgLink> awardees = new HashSet<>();
 
     @Id @GeneratedValue
     Long graphId;
@@ -45,25 +46,6 @@ public class AwardNode implements FosEntity {
     Boolean hidden = false;
 
     public AwardNode() {
-    }
-
-    public OrganisationNode getOrganisation() {
-        return (null != organisation) ? organisation.getOrganisationNode() : null;
-    }
-
-    public AwardNode setOrganisation(
-            OrganisationNode organisationNode,
-            ZonedDateTime awardedDate,
-            ZonedDateTime startDate,
-            ZonedDateTime endDate
-    ) {
-        if (null == this.organisation) {
-            this.organisation = new AwardOrgLink(organisationNode, awardedDate, startDate, endDate);
-        } else {
-            logger.warn("REMOVING relationship between entities {} {}", this, organisationNode);
-            this.organisation.setOrganisationNode(organisationNode);
-        }
-        return this;
     }
 
     public String getFosId() {
@@ -140,5 +122,14 @@ public class AwardNode implements FosEntity {
                 ", fosId='" + fosId + '\'' +
                 ", noticeId='" + noticeId + '\'' +
                 '}';
+    }
+
+    public Set<AwardOrgLink> getAwardees() {
+        return awardees;
+    }
+
+    public AwardNode setAwardees(Set<AwardOrgLink> awardees) {
+        this.awardees = awardees;
+        return this;
     }
 }

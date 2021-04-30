@@ -30,7 +30,7 @@ public class GenericIDNameFTSResponse {
     public GenericIDNameFTSResponse() {}
 
     public GenericIDNameFTSResponse(GraphFTSResponse r) {
-        this.id = r.getId();
+        this.id = r.getFosId();
         this.name = r.getName();
         this.score = (null != r.getScore()) ? r.getScore().asFloat() : null;
     }

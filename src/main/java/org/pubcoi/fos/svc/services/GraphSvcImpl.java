@@ -17,7 +17,6 @@
 
 package org.pubcoi.fos.svc.services;
 
-import com.opencorporates.schemas.OCCompanySchema;
 import org.pubcoi.cdm.batch.BatchJob;
 import org.pubcoi.cdm.batch.BatchJobTypeEnum;
 import org.pubcoi.cdm.cf.AdditionalDetailType;
@@ -31,6 +30,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
 import org.pubcoi.fos.svc.repos.gdb.jpa.AwardsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
@@ -119,34 +119,37 @@ public class GraphSvcImpl implements GraphSvc {
             if (null != award.getFosOrganisation()) {
                 FosOrganisation org = award.getFosOrganisation();
                 try {
-                    // if the organisation is "verified", it'll already have an entry on the OCCompanyRepo
-                    Optional<OCCompanySchema> ocCompany = ocCompaniesRepo.findById(org.getFosId());
-                    boolean verified = ocCompany.isPresent();
-                    // if it's verified, use the OFFICIAL name for the company (not whatever is in Contracts Finder)
-                    String companyName = (verified) ? ocCompany.orElseThrow().getName() : award.getSupplierName();
-
-                    OrganisationNode orgNode = orgGraphRepo.findByFosId(org.getFosId()).orElse(
-                            new OrganisationNode(org)
+                    logger.trace("Looking up OrganisationNode {}", org.getFosId());
+                    final OrganisationNode orgNode = orgGraphRepo.findByFosId(org.getFosId()).orElseGet(() -> {
+                                logger.trace(Ansi.Yellow.format("Did not find OrganisationNode %s in graph, instantiating new instance", org.getFosId()));
+                                return new OrganisationNode(org);
+                            }
                     );
-                    logger.debug("Saving org node: {}", orgNode);
+
+                    logger.trace("Looking up AwardNode {}", award.getId());
+                    AwardNode awardNode = awardsGraphRepo.findByFosIdHydratingAwardees(award.getId()).orElseGet(() -> {
+                                logger.trace(Ansi.Yellow.format("Did not find AwardNode %s in graph, instantiating new instance", award.getId()));
+                                return new AwardNode()
+                                        .setFosId(award.getId())
+                                        .setValue(award.getValue())
+                                        .setNoticeId(award.getNoticeId())
+                                        .setGroupAward(award.getGroup());
+                            }
+                    );
+
+                    // check if award<->org exists ... if not create it
+                    if (!awardsGraphRepo.relationshipExists(awardNode.getFosId(), orgNode.getFosId())) {
+                        logger.trace(Ansi.Yellow.format("Relationship between award %s and org %s does not exist: linking nodes", awardNode.getFosId(), orgNode.getFosId()));
+                        AwardOrgLink awLink = new AwardOrgLink(orgNode, award.getAwardedDate().toLocalDate(), award.getStartDate().toLocalDate(), award.getEndDate().toLocalDate());
+                        awardNode.getAwardees().add(awLink);
+                        logger.debug("Saved {}", awLink);
+                    }
+
                     orgGraphRepo.save(orgNode);
-
-                    AwardNode awardNode = awardsGraphRepo.findByFosId(award.getId()).orElse(new AwardNode()
-                            .setFosId(award.getId())
-                            .setValue(award.getValue())
-                            .setNoticeId(award.getNoticeId())
-                            .setGroupAward(award.getGroup())
-                            .setOrganisation(
-                                    orgGraphRepo.findByFosId(org.getFosId()).orElseThrow(() -> new FosException()),
-                                    award.getAwardedDate().toZonedDateTime(),
-                                    award.getStartDate().toZonedDateTime(),
-                                    award.getEndDate().toZonedDateTime()
-                            )
-                    );
-                    logger.debug("Saving node: {}", awardNode);
                     awardsGraphRepo.save(awardNode);
+                    logger.debug("Saved {}", awardNode);
                 } catch (FosException e) {
-                    logger.error("Unable to insert entry into graph: is source MDB fully populated?");
+                    logger.error(Ansi.Red.colorize("Unable to insert entry into graph: is source MDB fully populated?"), e);
                 }
             } else {
                 logger.debug("Unable to find OC entry for {}", award.getSupplierName());
@@ -183,7 +186,6 @@ public class GraphSvcImpl implements GraphSvc {
                     logger.debug("Attempting to add backwards ref for notice {} to AwardNode {}", award.getNoticeId(), award.getFosId());
                     noticesGRepo.findByFosId(award.getNoticeId()).ifPresent(notice -> {
                         logger.debug("Found notice {}", notice);
-                        logger.debug("Awards size: {}", notice.getAwards().size());
 
                         // fixme
                         if (!notice.getAwards().contains(award)) {

@@ -22,7 +22,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 
 public class GraphFTSResponse {
     FosEntity entity;
-    String id;
+    String fosId;
     String name;
     FloatValue score;
 
@@ -35,12 +35,12 @@ public class GraphFTSResponse {
         return this;
     }
 
-    public String getId() {
-        return id;
+    public String getFosId() {
+        return fosId;
     }
 
-    public GraphFTSResponse setId(String id) {
-        this.id = id;
+    public GraphFTSResponse setFosId(String fosId) {
+        this.fosId = fosId;
         return this;
     }
 

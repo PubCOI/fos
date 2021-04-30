@@ -162,13 +162,13 @@ public class MnisSvcImpl implements MnisSvc {
             flags.add("WARN_PWID_NOT_FOUND");
             member = mnisMembersRepo.findMnisMemberTypeByFullTitleContaining(entryType.getMemberName());
             if (null == member) {
-                logger.error(String.format("Unable to find member ID %s (%s)", entryType.getPersonId(), entryType.getMemberName()));
+                logger.error(Ansi.Red.format("Unable to find member ID %s (%s)", entryType.getPersonId(), entryType.getMemberName()));
                 return;
             }
         } else {
             Optional<MnisMemberType> mdbMember = mnisMembersRepo.findById(memberId);
             if (mdbMember.isEmpty()) {
-                logger.error("Unable to find member {} ({}) in MDB", memberId, entryType.getMemberName());
+                logger.error(Ansi.Red.format("Unable to find member %s (%s) in MDB", memberId, entryType.getMemberName()));
                 return;
             }
             member = mdbMember.get();
@@ -234,8 +234,8 @@ public class MnisSvcImpl implements MnisSvc {
                 }
             }
         });
-        logger.debug("Finished reindexing {} documents", count.get());
-        logger.debug("Upserted {} documents in total", insertions.get());
+        logger.debug(Ansi.Blue.format("Finished reindexing %d documents", count.get()));
+        logger.debug(Ansi.Blue.format("Upserted %s documents in total", insertions.get()));
     }
 
     private void logProgress(AtomicInteger count, float totalDocs) {

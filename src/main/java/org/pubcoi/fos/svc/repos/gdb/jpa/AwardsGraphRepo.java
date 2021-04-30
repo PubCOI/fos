@@ -31,24 +31,28 @@ import java.util.Optional;
 public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, Long> {
     Logger logger = LoggerFactory.getLogger(AwardsGraphRepo.class);
 
-    @Query("MATCH (a:Award)--(o:Organisation) " +
-            "WHERE o.fosId = $orgId " +
+    @Query("MATCH (a:Award)--(o:Organisation {fosId: $orgId}) " +
             "RETURN count (a)")
     Long countAwardsToSupplier(String orgId);
 
-    @Query("MATCH (a:Award)-[rel:AWARDED_TO]-(o:Organisation) " +
-            "WHERE o.fosId = $orgId " +
-            "RETURN a"
-    )
+    @Query("MATCH (a:Award)-[rel:AWARDED_TO]-(o:Organisation {fosId: $orgId}) RETURN a")
     List<AwardNode> getAwardsForSupplier(String orgId);
 
     @Query("MATCH (a:Award) RETURN a")
     List<AwardNode> findAllNotHydrating();
+
+    @Query("RETURN exists((:Award {fosId: $awardId})-[:AWARDED_TO]-(:Organisation {fosId: $orgId}))")
+    boolean relationshipExists(String awardId, String orgId);
 
     default List<AwardNode> findAll() {
         logger.error("Don't run this query, will cause runaway transaction");
         throw new FosRuntimeException("NOOP");
     }
 
-    Optional<AwardNode> findByFosId(String fosId);
+    @Query("MATCH(a:Award {fosId: $awardId}) RETURN a")
+    Optional<AwardNode> findByFosIdNotHydratingAwardees(String awardId);
+
+    @Query("MATCH paths = (a:Award {fosId: $awardId})-[rel]->(o:Organisation) " +
+            "RETURN a, collect(rel) AS AWARDED_TO, collect(o) AS AWARDEES")
+    Optional<AwardNode> findByFosIdHydratingAwardees(String awardId);
 }

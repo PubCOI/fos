@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.fos.svc.models.core.DRTask;
-import org.pubcoi.fos.svc.repos.mdb.TasksRepo;
+import org.pubcoi.fos.svc.repos.mdb.TasksMDBRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,18 +27,18 @@ import org.springframework.stereotype.Service;
 public class TasksSvcImpl implements TasksSvc {
     private static final Logger logger = LoggerFactory.getLogger(TasksSvcImpl.class);
 
-    TasksRepo tasksRepo;
+    TasksMDBRepo tasksMDBRepo;
 
-    public TasksSvcImpl(TasksRepo tasksRepo) {
-        this.tasksRepo = tasksRepo;
+    public TasksSvcImpl(TasksMDBRepo tasksMDBRepo) {
+        this.tasksMDBRepo = tasksMDBRepo;
     }
 
     @Override
     public void createTask(DRTask task) {
-        if (tasksRepo.existsById(task.getId())) {
+        if (tasksMDBRepo.existsById(task.getId())) {
             logger.warn("Task already created");
         } else {
-            tasksRepo.save(task.setCompleted(false));
+            tasksMDBRepo.save(task.setCompleted(false));
         }
     }
 }

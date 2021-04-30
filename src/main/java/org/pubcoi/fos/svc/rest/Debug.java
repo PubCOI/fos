@@ -77,7 +77,7 @@ public class Debug {
     final ScheduledSvc scheduledSvc;
     final ClientNodeFTS clientNodeFTS;
     final TransactionOrchestrationSvc transactionOrchestrationSvc;
-    final TasksRepo tasksRepo;
+    final TasksMDBRepo tasksMDBRepo;
     final ClientsGraphRepo clientsGraphRepo;
     final PersonsGraphRepo personsGraphRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
@@ -95,7 +95,7 @@ public class Debug {
             ScheduledSvc scheduledSvc,
             ClientNodeFTS clientNodeFTS,
             TransactionOrchestrationSvc transactionOrchestrationSvc,
-            TasksRepo tasksRepo,
+            TasksMDBRepo tasksMDBRepo,
             ClientsGraphRepo clientsGraphRepo,
             PersonsGraphRepo personsGraphRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
@@ -111,7 +111,7 @@ public class Debug {
         this.scheduledSvc = scheduledSvc;
         this.clientNodeFTS = clientNodeFTS;
         this.transactionOrchestrationSvc = transactionOrchestrationSvc;
-        this.tasksRepo = tasksRepo;
+        this.tasksMDBRepo = tasksMDBRepo;
         this.clientsGraphRepo = clientsGraphRepo;
         this.personsGraphRepo = personsGraphRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
@@ -141,7 +141,7 @@ public class Debug {
     @DeleteMapping("/api/debug/clear-mdb")
     public void clearMDB() {
         transactionOrchestrationSvc.clearTransactions();
-        tasksRepo.deleteAll();
+        tasksMDBRepo.deleteAll();
     }
 
     @PutMapping("/api/debug/populate-all")

@@ -151,6 +151,8 @@
                                 <class>org.pubcoi.fos.svc.models.dto.AddRelationshipDTO</class>
                                 <class>org.pubcoi.fos.svc.models.dto.UpdateProfileResponseDTO</class>
                                 <class>org.pubcoi.fos.svc.models.dto.UpdateProfileRequestDTO</class>
+                                <class>org.pubcoi.fos.svc.models.dto.GraphDetailedSearchResponseDTO</class>
+                                <class>org.pubcoi.fos.svc.models.dto.OrganisationDTO</class>
                             </classes>
                             <noFileComment>true</noFileComment>
                             <outputFile>fos-ui/src/generated/FosTypes.ts</outputFile>
@@ -161,9 +163,14 @@
                             <nonConstEnums>true</nonConstEnums>
                             <optionalProperties>useLibraryDefinition</optionalProperties>
                             <customTypeNaming>
-                                <naming>org.pubcoi.cdm.cf.search.response.NoticeSearchResponse$ByRegion$Items:RegionItems</naming>
-                                <naming>org.pubcoi.cdm.cf.search.response.NoticeSearchResponse$ByStatus$Items:StatusItems</naming>
-                                <naming>org.pubcoi.cdm.cf.search.response.NoticeSearchResponse$ByType$Items:TypeItems</naming>
+                                <naming>
+                                    org.pubcoi.cdm.cf.search.response.NoticeSearchResponse$ByRegion$Items:RegionItems
+                                </naming>
+                                <naming>
+                                    org.pubcoi.cdm.cf.search.response.NoticeSearchResponse$ByStatus$Items:StatusItems
+                                </naming>
+                                <naming>org.pubcoi.cdm.cf.search.response.NoticeSearchResponse$ByType$Items:TypeItems
+                                </naming>
                             </customTypeNaming>
                         </configuration>
                     </plugin>

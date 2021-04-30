@@ -197,4 +197,8 @@ public class OrganisationNode implements FosEntity {
                 ", verified=" + verified +
                 '}';
     }
+
+    public Long getGraphId() {
+        return graphId;
+    }
 }

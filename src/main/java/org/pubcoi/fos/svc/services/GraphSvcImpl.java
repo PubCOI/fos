@@ -61,6 +61,7 @@ public class GraphSvcImpl implements GraphSvc {
     final TasksSvc tasksSvc;
     final AttachmentMDBRepo attachmentMDBRepo;
     final BatchJobMDBRepo batchJobMDBRepo;
+    final GraphPersistenceSvc persistenceSvc;
 
     public GraphSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
@@ -75,8 +76,8 @@ public class GraphSvcImpl implements GraphSvc {
             ScheduledSvc scheduledSvc,
             TasksSvc tasksSvc,
             AttachmentMDBRepo attachmentMDBRepo,
-            BatchJobMDBRepo batchJobMDBRepo
-    ) {
+            BatchJobMDBRepo batchJobMDBRepo,
+            GraphPersistenceSvc persistenceSvc) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
         this.organisationsMDBRepo = organisationsMDBRepo;
@@ -90,6 +91,7 @@ public class GraphSvcImpl implements GraphSvc {
         this.tasksSvc = tasksSvc;
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.batchJobMDBRepo = batchJobMDBRepo;
+        this.persistenceSvc = persistenceSvc;
     }
 
     private void addNoticeToGraph(FullNotice notice) {
@@ -135,12 +137,13 @@ public class GraphSvcImpl implements GraphSvc {
                 if (!awardsGraphRepo.relationshipExists(awardNode.getFosId(), orgNode.getFosId())) {
                     logger.trace(Ansi.Yellow.format("Relationship between AwardNode %s and OrganisationNode %s does not exist: linking nodes", awardNode.getFosId(), orgNode.getFosId()));
                     AwardOrgLink awLink = new AwardOrgLink(orgNode, award.getAwardedDate().toLocalDate(), award.getStartDate().toLocalDate(), award.getEndDate().toLocalDate());
-                    awardNode.getAwardees().add(awLink);
+                    awardNode.addAwardee(awLink);
                     logger.debug("Saved {}", awLink);
                 }
 
-                orgGraphRepo.save(orgNode);
-                awardsGraphRepo.save(awardNode);
+                persistenceSvc.saveWithDepth(orgNode, 1);
+                persistenceSvc.saveWithDepth(awardNode, 1);
+//                awardsGraphRepo.save(awardNode);
 
                 logger.trace("Attempting to add backwards ref for notice {} to AwardNode {}", awardNode.getNoticeId(), awardNode.getFosId());
                 noticesGraphRepo.findByFosId(awardNode.getNoticeId()).ifPresent(notice -> {
@@ -207,7 +210,7 @@ public class GraphSvcImpl implements GraphSvc {
                         officer.getOfficer().getPosition(),
                         getZDT(officer.getOfficer().getStartDate()),
                         getZDT(officer.getOfficer().getEndDate()), transactionId);
-                orgNode.getOrgPersons().add(orgPersonLink);
+                orgNode.addPerson(orgPersonLink);
                 logger.trace("Completed adding person {} to organisation {}", personNode.getFosId(), orgNode.getFosId());
             }
             orgGraphRepo.save(orgNode);

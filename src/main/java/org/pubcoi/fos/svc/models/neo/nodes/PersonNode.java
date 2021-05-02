@@ -21,14 +21,19 @@ import com.opencorporates.schemas.OCOfficer__1;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
-import org.springframework.data.neo4j.core.schema.*;
+import org.springframework.data.neo4j.core.schema.DynamicLabels;
+import org.springframework.data.neo4j.core.schema.Node;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Node(primaryLabel = "Person")
+@NodeEntity(label = "Person")
 public class PersonNode implements FosEntity {
 
     // if the person is a director, they will have an OCID and a UUID
@@ -36,8 +41,12 @@ public class PersonNode implements FosEntity {
     // a user CANNOT be assigned as an office bearer unless they have an OCID
     // todo: allow records to be merged
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
+    @Index(unique = true)
     String fosId;
     Boolean hidden = false;
     String ocId;
@@ -49,9 +58,10 @@ public class PersonNode implements FosEntity {
     @DynamicLabels
     Set<String> labels = new HashSet<>();
     @Relationship("CONFLICT")
-    List<PersonConflictLink> conflicts = new ArrayList<>();
+    Set<PersonConflictLink> conflicts;
 
-    PersonNode() {}
+    PersonNode() {
+    }
 
     public PersonNode(PersonNodeType personNodeType, OCOfficer__1 officer, String transactionId) {
         this.ocId = convertPersonOCIdToString(officer.getId());
@@ -153,12 +163,9 @@ public class PersonNode implements FosEntity {
         return this;
     }
 
-    public List<PersonConflictLink> getConflicts() {
-        return conflicts;
-    }
-
-    public PersonNode setConflicts(List<PersonConflictLink> conflicts) {
-        this.conflicts = conflicts;
+    public PersonNode addConflict(PersonConflictLink personConflictLink) {
+        if (null == this.conflicts) this.conflicts = new HashSet<>();
+        this.conflicts.add(personConflictLink);
         return this;
     }
 
@@ -191,5 +198,9 @@ public class PersonNode implements FosEntity {
                 ", fosId='" + fosId + '\'' +
                 ", commonName='" + commonName + '\'' +
                 '}';
+    }
+
+    public Set<PersonConflictLink> getConflicts() {
+        return null == conflicts ? null : Collections.unmodifiableSet(conflicts);
     }
 }

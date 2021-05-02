@@ -249,7 +249,7 @@ public class Debug {
                                 if (null != mnisInterestType.getDeletedDT()) {
                                     conflictLink.setEndDT(mnisInterestType.getDeletedDT().toZonedDateTime());
                                 }
-                                p.getConflicts().add(conflictLink);
+                                p.addConflict(conflictLink);
                                 changed = true;
                             }
                         }

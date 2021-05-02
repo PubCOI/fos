@@ -365,9 +365,7 @@ public class GraphRest {
                 UUID.randomUUID().toString()
         );
 
-        if (!personNode.getConflicts().contains(conflictLink)) {
-            personNode.getConflicts().add(conflictLink);
-        }
+        personNode.addConflict(conflictLink);
         return new PersonNodeDTO(personsSvc.save(personNode));
     }
 

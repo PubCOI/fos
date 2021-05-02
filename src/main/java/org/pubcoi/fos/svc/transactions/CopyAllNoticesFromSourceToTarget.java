@@ -17,12 +17,15 @@
 
 package org.pubcoi.fos.svc.transactions;
 
+import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 public class CopyAllNoticesFromSourceToTarget implements IFosTransaction {
     private static final Logger logger = LoggerFactory.getLogger(CopyAllNoticesFromSourceToTarget.class);
@@ -44,15 +47,17 @@ public class CopyAllNoticesFromSourceToTarget implements IFosTransaction {
     @Override
     public FosTransaction exec() {
         logger.debug("{} currently has {} notices; {} has {}",
-                fromClient.getFosId(), fromClient.getNoticeRelationships().size(),
-                toClient.getFosId(), toClient.getNoticeRelationships().size()
+                fromClient.getFosId(), (null == fromClient.getNotices()) ? 0 : fromClient.getNotices().size(),
+                toClient.getFosId(), toClient.getNotices().size()
         );
 
-        for (ClientNoticeLink notice : fromClient.getNoticeRelationships()) {
-            if (toClient.getNoticeRelationships().contains(notice)) {
+        if (null == fromClient.getNotices()) throw new FosRuntimeException("FromClient Notices is null");
+
+        for (ClientNoticeLink notice : fromClient.getNotices()) {
+            if (null != toClient && null != toClient.getNotices() && toClient.getNotices().contains(notice)) {
                 logger.warn("Notice {} already exists on ClientNode {}", notice.getFosId(), toClient.getFosId());
             } else {
-                toClient.getNoticeRelationships().add(notice);
+                Objects.requireNonNull(toClient).addNotice(notice);
                 logger.debug("Added notice {} to ClientNode {}", notice.getFosId(), toClient.getFosId());
             }
         }

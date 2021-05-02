@@ -15,18 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.models.dto.search;
+package org.pubcoi.fos.svc.services;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-
-public class DateRangeEnumTest {
-
-    @Test
-    public void testReturnsCorrectDate() {
-        Assert.assertEquals(DateRangeEnum._3m.getDateFrom().atStartOfDay(), LocalDate.now().minus(3, ChronoUnit.MONTHS).atStartOfDay());
-    }
+public interface GraphPersistenceSvc {
+    void saveWithDepth(FosEntity entity, int depth);
 }

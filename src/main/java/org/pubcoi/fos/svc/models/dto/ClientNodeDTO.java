@@ -36,7 +36,7 @@ public class ClientNodeDTO {
         this.id = client.getFosId();
         this.name = client.getName();
         this.postCode = client.getPostCode();
-        this.noticeCount = client.getNoticeRelationships().size();
+        this.noticeCount = (null != client.getNotices()) ? client.getNotices().size() : null;
     }
 
     public String getName() {

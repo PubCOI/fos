@@ -20,22 +20,29 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 import com.opencorporates.schemas.OCCompanySchema;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.neo4j.ogm.annotation.*;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
-import org.springframework.data.neo4j.core.schema.*;
+import org.springframework.data.neo4j.core.schema.DynamicLabels;
+import org.springframework.data.neo4j.core.schema.Node;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Node(primaryLabel = "Organisation")
+@NodeEntity(label = "Organisation")
 public class OrganisationNode implements FosEntity {
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
+    @Index(unique = true)
     String fosId;
     String jurisdiction;
     String reference;
@@ -50,9 +57,10 @@ public class OrganisationNode implements FosEntity {
     OrgLELink legalEntity;
 
     @Relationship("ORG_PERSON")
-    List<OrgPersonLink> orgPersons = new ArrayList<>();
+    Set<OrgPersonLink> orgPersons;
 
-    public OrganisationNode() {}
+    public OrganisationNode() {
+    }
 
     public OrganisationNode(FosOrganisation org) {
         this.fosId = org.getFosId();
@@ -114,16 +122,6 @@ public class OrganisationNode implements FosEntity {
         return verified;
     }
 
-    public OrganisationNode setVerified(Boolean verified) {
-        this.verified = verified;
-        if (verified) {
-            labels.add("Verified");
-        } else {
-            labels.remove("Verified");
-        }
-        return this;
-    }
-
     @Override
     public Boolean getHidden() {
         return hidden;
@@ -139,12 +137,13 @@ public class OrganisationNode implements FosEntity {
         return verified;
     }
 
-    public List<OrgPersonLink> getOrgPersons() {
-        return orgPersons;
-    }
-
-    public OrganisationNode setOrgPersons(List<OrgPersonLink> orgPersons) {
-        this.orgPersons = orgPersons;
+    public OrganisationNode setVerified(Boolean verified) {
+        this.verified = verified;
+        if (verified) {
+            labels.add("Verified");
+        } else {
+            labels.remove("Verified");
+        }
         return this;
     }
 
@@ -188,17 +187,32 @@ public class OrganisationNode implements FosEntity {
                 .toHashCode();
     }
 
-    @Override
-    public String toString() {
-        return "OrganisationNode{" +
-                "graphId=" + graphId +
-                ", fosId='" + fosId + '\'' +
-                ", name='" + name + '\'' +
-                ", verified=" + verified +
-                '}';
-    }
-
     public Long getGraphId() {
         return graphId;
+    }
+
+    public OrganisationNode addPerson(OrgPersonLink orgPersonLink) {
+        if (null == this.orgPersons) this.orgPersons = new HashSet<>();
+        this.orgPersons.add(orgPersonLink);
+        return this;
+    }
+
+    public Set<OrgPersonLink> getOrgPersons() {
+        return null == orgPersons ? null : Collections.unmodifiableSet(orgPersons);
+    }
+
+    public OrganisationNode setOrgPersons(Set<OrgPersonLink> orgPersons) {
+        this.orgPersons = orgPersons;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("graphId", graphId)
+                .append("fosId", fosId)
+                .append("name", name)
+                .append("verified", verified)
+                .toString();
     }
 }

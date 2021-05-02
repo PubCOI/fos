@@ -15,18 +15,24 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.models.dto.search;
+package org.pubcoi.fos.svc.services;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.pubcoi.fos.svc.config.Neo4jSessionFactory;
+import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
+import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
+@Service
+public class GraphPersistenceSvcImpl implements GraphPersistenceSvc {
 
-public class DateRangeEnumTest {
+    final Neo4jSessionFactory sessionFactory;
 
-    @Test
-    public void testReturnsCorrectDate() {
-        Assert.assertEquals(DateRangeEnum._3m.getDateFrom().atStartOfDay(), LocalDate.now().minus(3, ChronoUnit.MONTHS).atStartOfDay());
+    public GraphPersistenceSvcImpl(Neo4jSessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
+
+    @Override
+    public void saveWithDepth(FosEntity entity, int depth) {
+        sessionFactory.getNeo4jSession().save(entity, depth);
+    }
+
 }

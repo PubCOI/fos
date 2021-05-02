@@ -19,10 +19,12 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.GeneratedValue;
+import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.Index;
+import org.neo4j.ogm.annotation.NodeEntity;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.springframework.data.neo4j.core.schema.DynamicLabels;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 
 import java.util.HashSet;
@@ -31,14 +33,19 @@ import java.util.Set;
 import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 
 @Node(primaryLabel = "Interest")
+@NodeEntity(label = "Interest")
 public class DeclaredInterest implements FosEntity {
 
     // for now we're just storing interests defined in parliamentary register
     // but in future we might also hold other declared interests here
     // and then link to the entities mentioned within blurb of declaration
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
+    @Index(unique = true)
     String fosId;
     String text;
     String comments;
@@ -46,7 +53,8 @@ public class DeclaredInterest implements FosEntity {
     Set<String> labels = new HashSet<>();
     Boolean hidden = false;
 
-    DeclaredInterest() {}
+    DeclaredInterest() {
+    }
 
     public DeclaredInterest(MnisInterestType interestType) {
         this.fosId = mnisIdHash(interestType.getId());

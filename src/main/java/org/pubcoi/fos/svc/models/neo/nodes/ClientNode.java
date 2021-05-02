@@ -19,6 +19,7 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
@@ -26,24 +27,27 @@ import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientPersonLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.util.DigestUtils;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.pubcoi.fos.svc.services.Utils.normalise;
 
 @Node(primaryLabel = "Client")
+@NodeEntity(label = "Client")
 public class ClientNode implements FosEntity {
     private static final Logger logger = LoggerFactory.getLogger(ClientNode.class);
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
+    @Index(unique = true)
     String fosId;
     String postCode;
     String name;
@@ -52,20 +56,26 @@ public class ClientNode implements FosEntity {
     @Relationship("AKA")
     ClientParentClientLink parent;
 
-    // TRUE
     Boolean canonical = false;
 
     @Relationship("PUBLISHED")
-    List<ClientNoticeLink> notices = new ArrayList<>();
+    Set<ClientNoticeLink> notices;
 
     @Relationship("REL_PERSON")
-    List<ClientPersonLink> persons = new ArrayList<>();
+    Set<ClientPersonLink> persons;
 
     public ClientNode() {
     }
 
     public ClientNode(NodeReference node) {
         this.fosId = node.getFosId();
+    }
+
+    public ClientNode(FullNotice notice) {
+        this.fosId = resolveId(notice);
+        this.name = notice.getNotice().getOrganisationName();
+        this.postCode = getNormalisedPostCode(notice);
+        logger.debug("Adding client {} -> (id:{})", resolveIdStr(notice), this.fosId);
     }
 
     static String resolveIdStr(FullNotice notice) {
@@ -79,13 +89,6 @@ public class ClientNode implements FosEntity {
         // not clear whether name + PC are enough
         String idStr = resolveIdStr(notice);
         return DigestUtils.md5DigestAsHex(idStr.getBytes());
-    }
-
-    public ClientNode(FullNotice notice) {
-        this.fosId = resolveId(notice);
-        this.name = notice.getNotice().getOrganisationName();
-        this.postCode = getNormalisedPostCode(notice);
-        logger.debug("Adding client {} -> (id:{})", resolveIdStr(notice), this.fosId);
     }
 
     private static String getNormalisedPostCode(FullNotice notice) {
@@ -139,7 +142,7 @@ public class ClientNode implements FosEntity {
     }
 
     public void addNotice(NoticeNode noticeNode, String noticeId, ZonedDateTime publishedZDT) {
-        notices.add(new ClientNoticeLink(this, noticeNode, noticeId, publishedZDT));
+        addNotice(new ClientNoticeLink(this, noticeNode, noticeId, publishedZDT));
     }
 
     public Boolean getHidden() {
@@ -159,23 +162,6 @@ public class ClientNode implements FosEntity {
     public ClientNode setParent(ClientParentClientLink parent) {
         this.parent = parent;
         return this;
-    }
-
-    public List<ClientNoticeLink> getNoticeRelationships() {
-        return notices;
-    }
-
-    public ClientNode setNotices(List<ClientNoticeLink> notices) {
-        this.notices = notices;
-        return this;
-    }
-
-    public List<ClientNoticeLink> getNotices() {
-        return notices;
-    }
-
-    public List<ClientPersonLink> getPersons() {
-        return persons;
     }
 
     @Override
@@ -208,5 +194,35 @@ public class ClientNode implements FosEntity {
                 ", name='" + name + '\'' +
                 ", canonical=" + canonical +
                 '}';
+    }
+
+    public Set<ClientNoticeLink> getNotices() {
+        return null == notices ? null : Collections.unmodifiableSet(notices);
+    }
+
+    public ClientNode setNotices(Set<ClientNoticeLink> notices) {
+        this.notices = notices;
+        return this;
+    }
+
+    public Set<ClientPersonLink> getPersons() {
+        return null == persons ? null : Collections.unmodifiableSet(persons);
+    }
+
+    public ClientNode setPersons(Set<ClientPersonLink> persons) {
+        this.persons = persons;
+        return this;
+    }
+
+    public ClientNode addPerson(ClientPersonLink personLink) {
+        if (null == this.persons) this.persons = new HashSet<>();
+        this.persons.add(personLink);
+        return this;
+    }
+
+    public ClientNode addNotice(ClientNoticeLink clientNoticeLink) {
+        if (null == this.notices) this.notices = new HashSet<>();
+        this.notices.add(clientNoticeLink);
+        return this;
     }
 }

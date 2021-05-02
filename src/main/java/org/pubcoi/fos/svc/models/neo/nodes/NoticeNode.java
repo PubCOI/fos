@@ -19,24 +19,28 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.cf.FullNotice;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "Notice")
+@NodeEntity(label = "Notice")
 public class NoticeNode implements FosEntity {
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
+    @Index(unique = true)
     String fosId;
 
     @Relationship("HAS_AWARD")
-    Set<AwardNode> awards = new HashSet<>();
+    Set<AwardNode> awards;
 
     Boolean hidden = false;
 
@@ -57,12 +61,13 @@ public class NoticeNode implements FosEntity {
     }
 
     public NoticeNode addAward(AwardNode awardNode) {
+        if (null == this.awards) this.awards = new HashSet<>();
         this.awards.add(awardNode);
         return this;
     }
 
     public Set<AwardNode> getAwards() {
-        return awards;
+        return null == awards ? null : Collections.unmodifiableSet(awards);
     }
 
     public NoticeNode setAwards(Set<AwardNode> awards) {

@@ -19,26 +19,27 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.*;
 import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "Award")
+@NodeEntity(label = "Award")
 public class AwardNode implements FosEntity {
-    private static final Logger logger = LoggerFactory.getLogger(AwardNode.class);
 
     @Relationship("AWARDED_TO")
-    Set<AwardOrgLink> awardees = new HashSet<>();
+    Set<AwardOrgLink> awardees;
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
+    @Index(unique = true)
     String fosId;
     Long value;
     String noticeId;
@@ -125,11 +126,17 @@ public class AwardNode implements FosEntity {
     }
 
     public Set<AwardOrgLink> getAwardees() {
-        return awardees;
+        return null == awardees ? null : Collections.unmodifiableSet(awardees);
     }
 
     public AwardNode setAwardees(Set<AwardOrgLink> awardees) {
         this.awardees = awardees;
+        return this;
+    }
+
+    public AwardNode addAwardee(AwardOrgLink awardOrgLink) {
+        if (null == this.awardees) awardees = new HashSet<>();
+        this.awardees.add(awardOrgLink);
         return this;
     }
 }

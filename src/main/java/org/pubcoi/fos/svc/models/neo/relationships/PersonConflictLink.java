@@ -20,11 +20,11 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.GeneratedValue;
+import org.neo4j.ogm.annotation.Id;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
@@ -37,7 +37,10 @@ import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
 @RelationshipProperties
 public class PersonConflictLink implements FosRelationship {
 
-    @Id @GeneratedValue
+    @Id
+    @org.springframework.data.neo4j.core.schema.Id
+    @GeneratedValue
+    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
 
     String fosId;

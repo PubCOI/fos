@@ -19,32 +19,24 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.*;
-import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.transactions.FosTransaction;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 import org.springframework.util.DigestUtils;
 
 import java.time.ZonedDateTime;
 
-@RelationshipEntity(Constants.Neo4J.REL_AKA)
 @RelationshipProperties
 public class ClientParentClientLink implements FosRelationship {
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
-
     String fosId;
 
-    @StartNode // only used by OGM
-    ClientNode startNode;
-
-    @EndNode
     @TargetNode
     ClientNode client;
 
@@ -56,8 +48,7 @@ public class ClientParentClientLink implements FosRelationship {
 
     ClientParentClientLink() {}
 
-    public ClientParentClientLink(ClientNode source, ClientNode target, FosTransaction transaction) {
-        this.startNode = source;
+    public ClientParentClientLink(ClientNode target, FosTransaction transaction) {
         this.fosId = DigestUtils.md5DigestAsHex(String.format("%s:%s", transaction.getId(), target.getFosId()).getBytes());
         this.transactionID = transaction.getId();
         this.transactionDT = transaction.getTransactionDT().toZonedDateTime();

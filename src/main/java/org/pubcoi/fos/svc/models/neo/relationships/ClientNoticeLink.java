@@ -19,29 +19,26 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.*;
-import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.NoticeNode;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
+import org.springframework.data.neo4j.core.schema.TargetNode;
 import org.springframework.util.DigestUtils;
 
 import java.time.ZonedDateTime;
 
-@RelationshipEntity(Constants.Neo4J.REL_PUBLISHED)
 @RelationshipProperties
 public class ClientNoticeLink implements FosRelationship {
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
 
     String fosId;
 
-    @EndNode
-    @org.springframework.data.neo4j.core.schema.TargetNode
+    @TargetNode
     NoticeNode notice;
 
     ZonedDateTime published;
@@ -49,9 +46,6 @@ public class ClientNoticeLink implements FosRelationship {
     String transactionID;
 
     Boolean hidden = false;
-
-    @StartNode // only used by OGM
-    ClientNode startNode;
 
     public ClientNoticeLink() {}
 
@@ -140,10 +134,5 @@ public class ClientNoticeLink implements FosRelationship {
                 ", fosId='" + fosId + '\'' +
                 ", published=" + published +
                 '}';
-    }
-
-    public ClientNoticeLink withStartNode(ClientNode clientNode) {
-        this.startNode = clientNode;
-        return this;
     }
 }

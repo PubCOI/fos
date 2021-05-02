@@ -17,22 +17,27 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.config.Neo4jSessionFactory;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GraphPersistenceSvcImpl implements GraphPersistenceSvc {
+    private static final Logger logger = LoggerFactory.getLogger(GraphPersistenceSvcImpl.class);
 
-    final Neo4jSessionFactory sessionFactory;
+    final Neo4jTemplate neo4jTemplate;
 
-    public GraphPersistenceSvcImpl(Neo4jSessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public GraphPersistenceSvcImpl(Neo4jTemplate neo4jTemplate) {
+        this.neo4jTemplate = neo4jTemplate;
     }
+
 
     @Override
     public void saveWithDepth(FosEntity entity, int depth) {
-        sessionFactory.getNeo4jSession().save(entity, depth);
+        logger.warn("Not fixed depth save");
+        neo4jTemplate.save(entity);
     }
 
 }

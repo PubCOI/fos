@@ -19,37 +19,31 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.*;
 import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "Award")
-@NodeEntity(label = "Award")
 public class AwardNode implements FosEntity {
 
     @Relationship(Constants.Neo4J.REL_AWARDED_TO)
-    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_AWARDED_TO)
     Set<AwardOrgLink> awardees;
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
-    @Index(unique = true)
     String fosId;
     Long value;
     String noticeId;
     Boolean groupAward;
     Boolean hidden = false;
-
-    @StartNode // only used by OGM
-    NoticeNode startNode;
 
     public AwardNode() {
     }
@@ -141,12 +135,7 @@ public class AwardNode implements FosEntity {
 
     public AwardNode addAwardee(AwardOrgLink awardOrgLink) {
         if (null == this.awardees) awardees = new HashSet<>();
-        this.awardees.add(awardOrgLink.withStartNode(this));
-        return this;
-    }
-
-    public AwardNode withStartNode(NoticeNode noticeNode) {
-        this.startNode = noticeNode;
+        this.awardees.add(awardOrgLink);
         return this;
     }
 }

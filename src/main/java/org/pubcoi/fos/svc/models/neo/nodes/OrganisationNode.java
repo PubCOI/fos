@@ -21,29 +21,27 @@ import com.opencorporates.schemas.OCCompanySchema;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.neo4j.ogm.annotation.*;
 import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.springframework.data.neo4j.core.schema.DynamicLabels;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "Organisation")
-@NodeEntity(label = "Organisation")
 public class OrganisationNode implements FosEntity {
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
-    @Index(unique = true)
     String fosId;
     String jurisdiction;
     String reference;
@@ -55,11 +53,9 @@ public class OrganisationNode implements FosEntity {
     Set<String> labels = new HashSet<>();
 
     @Relationship(Constants.Neo4J.REL_LEGAL_ENTITY)
-    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_LEGAL_ENTITY)
     OrgLELink legalEntity;
 
     @Relationship(Constants.Neo4J.REL_PERSON)
-    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_PERSON)
     Set<OrgPersonLink> orgPersons;
 
     public OrganisationNode() {
@@ -196,7 +192,7 @@ public class OrganisationNode implements FosEntity {
 
     public OrganisationNode addPerson(OrgPersonLink orgPersonLink) {
         if (null == this.orgPersons) this.orgPersons = new HashSet<>();
-        this.orgPersons.add(orgPersonLink.withStartNode(this));
+        this.orgPersons.add(orgPersonLink);
         return this;
     }
 

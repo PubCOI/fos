@@ -20,31 +20,24 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.*;
-import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@RelationshipEntity(Constants.Neo4J.REL_LEGAL_ENTITY)
 @RelationshipProperties
 public class OrgLELink implements FosRelationship {
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
 
     String fosId;
 
-    @StartNode // only used by OGM
-    OrganisationNode startNode;
-
-    @EndNode
     @TargetNode
     OrganisationNode organisation;
 
@@ -56,7 +49,6 @@ public class OrgLELink implements FosRelationship {
 
     public OrgLELink(OrganisationNode source, OrganisationNode target, String transactionId)  {
         this.fosId = DigestUtils.sha1Hex(String.format("%s:%s", source.getFosId(), target.getFosId()));
-        this.startNode = source;
         this.organisation = target;
         this.transactions.add(transactionId);
     }

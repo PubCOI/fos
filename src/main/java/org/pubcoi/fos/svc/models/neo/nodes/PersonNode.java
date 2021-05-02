@@ -21,20 +21,17 @@ import com.opencorporates.schemas.OCOfficer__1;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
-import org.springframework.data.neo4j.core.schema.DynamicLabels;
-import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.*;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Node(primaryLabel = "Person")
-@NodeEntity(label = "Person")
 public class PersonNode implements FosEntity {
 
     // if the person is a director, they will have an OCID and a UUID
@@ -43,11 +40,8 @@ public class PersonNode implements FosEntity {
     // todo: allow records to be merged
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
-    @Index(unique = true)
     String fosId;
     Boolean hidden = false;
     String ocId;
@@ -59,7 +53,6 @@ public class PersonNode implements FosEntity {
     @DynamicLabels
     Set<String> labels = new HashSet<>();
     @Relationship(Constants.Neo4J.REL_CONFLICT)
-    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_CONFLICT)
     Set<PersonConflictLink> conflicts;
 
     PersonNode() {
@@ -167,7 +160,7 @@ public class PersonNode implements FosEntity {
 
     public PersonNode addConflict(PersonConflictLink personConflictLink) {
         if (null == this.conflicts) this.conflicts = new HashSet<>();
-        this.conflicts.add(personConflictLink.withStartNode(this));
+        this.conflicts.add(personConflictLink);
         return this;
     }
 

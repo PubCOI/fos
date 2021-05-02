@@ -19,29 +19,21 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.*;
-import org.pubcoi.fos.svc.models.core.Constants;
-import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
 import java.time.LocalDate;
 
-@RelationshipEntity(Constants.Neo4J.REL_AWARDED_TO)
 @RelationshipProperties
 public class AwardOrgLink implements FosRelationship {
 
     @Id
-    @org.springframework.data.neo4j.core.schema.Id
     @GeneratedValue
-    @org.springframework.data.neo4j.core.schema.GeneratedValue
     Long graphId;
 
-    @StartNode // only used by OGM
-    AwardNode startNode;
-
-    @EndNode
     @TargetNode
     OrganisationNode organisationNode;
 
@@ -138,8 +130,4 @@ public class AwardOrgLink implements FosRelationship {
                 .toHashCode();
     }
 
-    public AwardOrgLink withStartNode(AwardNode startNode) {
-        this.startNode = startNode;
-        return this;
-    }
 }

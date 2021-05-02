@@ -23,6 +23,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.mnis.MnisMemberType;
+import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
 import org.springframework.data.neo4j.core.schema.DynamicLabels;
@@ -57,7 +58,8 @@ public class PersonNode implements FosEntity {
     Set<String> transactions = new HashSet<>();
     @DynamicLabels
     Set<String> labels = new HashSet<>();
-    @Relationship("CONFLICT")
+    @Relationship(Constants.Neo4J.REL_CONFLICT)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_CONFLICT)
     Set<PersonConflictLink> conflicts;
 
     PersonNode() {
@@ -165,7 +167,7 @@ public class PersonNode implements FosEntity {
 
     public PersonNode addConflict(PersonConflictLink personConflictLink) {
         if (null == this.conflicts) this.conflicts = new HashSet<>();
-        this.conflicts.add(personConflictLink);
+        this.conflicts.add(personConflictLink.withStartNode(this));
         return this;
     }
 

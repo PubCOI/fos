@@ -65,7 +65,7 @@ public class LinkSourceToParentClient implements IFosTransaction {
     @Override
     public FosTransaction exec() {
         logger.debug(Ansi.Blue.format("Linking %s to parent %s", source.getFosId(), target.getFosId()));
-        source.setParent(new ClientParentClientLink(target, transaction));
+        source.setParent(new ClientParentClientLink(source, target, transaction));
         clientsGraphRepo.save(source);
         return getTransaction();
     }

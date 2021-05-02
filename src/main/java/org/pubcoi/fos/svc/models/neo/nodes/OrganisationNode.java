@@ -22,6 +22,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.neo4j.ogm.annotation.*;
+import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
@@ -53,10 +54,12 @@ public class OrganisationNode implements FosEntity {
     @DynamicLabels
     Set<String> labels = new HashSet<>();
 
-    @Relationship("LEGAL_ENTITY")
+    @Relationship(Constants.Neo4J.REL_LEGAL_ENTITY)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_LEGAL_ENTITY)
     OrgLELink legalEntity;
 
-    @Relationship("ORG_PERSON")
+    @Relationship(Constants.Neo4J.REL_PERSON)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_PERSON)
     Set<OrgPersonLink> orgPersons;
 
     public OrganisationNode() {
@@ -193,7 +196,7 @@ public class OrganisationNode implements FosEntity {
 
     public OrganisationNode addPerson(OrgPersonLink orgPersonLink) {
         if (null == this.orgPersons) this.orgPersons = new HashSet<>();
-        this.orgPersons.add(orgPersonLink);
+        this.orgPersons.add(orgPersonLink.withStartNode(this));
         return this;
     }
 

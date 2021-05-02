@@ -20,8 +20,11 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.RelationshipEntity;
+import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -30,6 +33,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 
+@RelationshipEntity(Constants.Neo4J.REL_PERSON)
 @RelationshipProperties
 public class ClientPersonLink implements FosRelationship {
 
@@ -41,6 +45,7 @@ public class ClientPersonLink implements FosRelationship {
 
     String fosId;
 
+    @EndNode
     @TargetNode
     PersonNode person;
 

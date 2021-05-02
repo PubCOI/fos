@@ -32,6 +32,6 @@ public interface NoticesGraphRepo extends Neo4jRepository<NoticeNode, Long> {
 
     Optional<NoticeNode> findByFosId(String noticeId);
 
-    @Query("RETURN exists((:Notice {fosId: $noticeId})-[:HAS_AWARD]-(:Award {fosId: $awardId}))")
+    @Query("RETURN exists((:Notice {fosId: $noticeId})-[:AWARDED]-(:Award {fosId: $awardId}))")
     boolean isLinkedToAward(String noticeId, String awardId);
 }

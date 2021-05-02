@@ -20,8 +20,9 @@ package org.pubcoi.fos.svc.models.neo.relationships;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.neo4j.ogm.annotation.GeneratedValue;
-import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.*;
+import org.pubcoi.fos.svc.models.core.Constants;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
@@ -30,6 +31,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 
+@RelationshipEntity(Constants.Neo4J.REL_PERSON)
 @RelationshipProperties
 public class OrgPersonLink implements FosRelationship {
 
@@ -41,12 +43,16 @@ public class OrgPersonLink implements FosRelationship {
 
     String fosId;
 
+    @EndNode
     @TargetNode
     PersonNode person;
     String position;
     ZonedDateTime startDT;
     ZonedDateTime endDT;
     Collection<String> transactions = new HashSet<>();
+
+    @StartNode // only used by OGM
+    OrganisationNode startNode;
 
     OrgPersonLink() {}
 
@@ -137,5 +143,10 @@ public class OrgPersonLink implements FosRelationship {
                 "graphId=" + graphId +
                 ", fosId='" + fosId + '\'' +
                 '}';
+    }
+
+    public OrgPersonLink withStartNode(OrganisationNode organisationNode) {
+        this.startNode = organisationNode;
+        return this;
     }
 }

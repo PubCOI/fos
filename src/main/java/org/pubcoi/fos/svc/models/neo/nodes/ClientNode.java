@@ -21,6 +21,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.cf.FullNotice;
+import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientParentClientLink;
@@ -53,15 +54,18 @@ public class ClientNode implements FosEntity {
     String name;
     Boolean hidden = false;
 
-    @Relationship("AKA")
+    @Relationship(Constants.Neo4J.REL_AKA)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_AKA)
     ClientParentClientLink parent;
 
     Boolean canonical = false;
 
-    @Relationship("PUBLISHED")
+    @Relationship(Constants.Neo4J.REL_PUBLISHED)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_PUBLISHED)
     Set<ClientNoticeLink> notices;
 
-    @Relationship("REL_PERSON")
+    @Relationship(Constants.Neo4J.REL_PERSON)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_PERSON)
     Set<ClientPersonLink> persons;
 
     public ClientNode() {
@@ -222,7 +226,7 @@ public class ClientNode implements FosEntity {
 
     public ClientNode addNotice(ClientNoticeLink clientNoticeLink) {
         if (null == this.notices) this.notices = new HashSet<>();
-        this.notices.add(clientNoticeLink);
+        this.notices.add(clientNoticeLink.withStartNode(this));
         return this;
     }
 }

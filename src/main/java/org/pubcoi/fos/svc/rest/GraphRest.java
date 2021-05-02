@@ -216,7 +216,7 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 250));
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH(c:Client {hidden: false})-[ref:PUBLISHED {hidden: false}]-(n:Notice {hidden: false}) " +
-                        "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:HAS_AWARD]-())}} AS n " +
+                        "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:AWARDED]-())}} AS n " +
                         "LIMIT $limit").bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -265,8 +265,8 @@ public class GraphRest {
         bindParams.put("limit", getLimit(max, 50));
         bindParams.put("awardId", awardId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
-                "MATCH (:Award {fosId: $awardId})-[:HAS_AWARD]-(n:Notice) " +
-                        "MATCH (n)-[ref:HAS_AWARD]-(a:Award) return n, ref, a LIMIT $limit")
+                "MATCH (:Award {fosId: $awardId})-[:AWARDED]-(n:Notice) " +
+                        "MATCH (n)-[ref:AWARDED]-(a:Award) return n, ref, a LIMIT $limit")
                 .bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
@@ -287,7 +287,7 @@ public class GraphRest {
         bindParams.put("clientId", clientId);
         Neo4jClient.RunnableSpecTightToDatabase response = neo4jClient.query(
                 "MATCH(c:Client {fosId: $clientId})-[ref:PUBLISHED]-(n:Notice) " +
-                        "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:HAS_AWARD]-(:Award))}} AS n"
+                        "RETURN c, ref, {neo4j_id: id(n), labels: labels(n), properties: n{.*, has_awards: exists((n)-[:AWARDED]-(:Award))}} AS n"
         ).bindAll(bindParams);
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());

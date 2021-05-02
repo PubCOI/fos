@@ -20,6 +20,7 @@ package org.pubcoi.fos.svc.models.neo.nodes;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.neo4j.ogm.annotation.*;
+import org.pubcoi.fos.svc.models.core.Constants;
 import org.pubcoi.fos.svc.models.neo.relationships.AwardOrgLink;
 import org.springframework.data.neo4j.core.schema.Node;
 
@@ -31,7 +32,8 @@ import java.util.Set;
 @NodeEntity(label = "Award")
 public class AwardNode implements FosEntity {
 
-    @Relationship("AWARDED_TO")
+    @Relationship(Constants.Neo4J.REL_AWARDED_TO)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_AWARDED_TO)
     Set<AwardOrgLink> awardees;
 
     @Id
@@ -45,6 +47,9 @@ public class AwardNode implements FosEntity {
     String noticeId;
     Boolean groupAward;
     Boolean hidden = false;
+
+    @StartNode // only used by OGM
+    NoticeNode startNode;
 
     public AwardNode() {
     }
@@ -136,7 +141,12 @@ public class AwardNode implements FosEntity {
 
     public AwardNode addAwardee(AwardOrgLink awardOrgLink) {
         if (null == this.awardees) awardees = new HashSet<>();
-        this.awardees.add(awardOrgLink);
+        this.awardees.add(awardOrgLink.withStartNode(this));
+        return this;
+    }
+
+    public AwardNode withStartNode(NoticeNode noticeNode) {
+        this.startNode = noticeNode;
         return this;
     }
 }

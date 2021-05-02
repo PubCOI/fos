@@ -21,6 +21,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.neo4j.ogm.annotation.*;
 import org.pubcoi.cdm.cf.FullNotice;
+import org.pubcoi.fos.svc.models.core.Constants;
 import org.springframework.data.neo4j.core.schema.Node;
 
 import java.util.Collections;
@@ -39,7 +40,8 @@ public class NoticeNode implements FosEntity {
     @Index(unique = true)
     String fosId;
 
-    @Relationship("HAS_AWARD")
+    @Relationship(Constants.Neo4J.REL_AWARDED)
+    @org.springframework.data.neo4j.core.schema.Relationship(Constants.Neo4J.REL_AWARDED)
     Set<AwardNode> awards;
 
     Boolean hidden = false;
@@ -62,7 +64,7 @@ public class NoticeNode implements FosEntity {
 
     public NoticeNode addAward(AwardNode awardNode) {
         if (null == this.awards) this.awards = new HashSet<>();
-        this.awards.add(awardNode);
+        this.awards.add(awardNode.withStartNode(this));
         return this;
     }
 

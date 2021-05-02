@@ -27,9 +27,7 @@ import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
 import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Node(primaryLabel = "Person")
 public class PersonNode implements FosEntity {
@@ -53,7 +51,7 @@ public class PersonNode implements FosEntity {
     @DynamicLabels
     Set<String> labels = new HashSet<>();
     @Relationship(Constants.Neo4J.REL_CONFLICT)
-    Set<PersonConflictLink> conflicts;
+    List<PersonConflictLink> conflicts;
 
     PersonNode() {
     }
@@ -159,7 +157,7 @@ public class PersonNode implements FosEntity {
     }
 
     public PersonNode addConflict(PersonConflictLink personConflictLink) {
-        if (null == this.conflicts) this.conflicts = new HashSet<>();
+        if (null == this.conflicts) this.conflicts = new ArrayList<>();
         this.conflicts.add(personConflictLink);
         return this;
     }
@@ -195,7 +193,7 @@ public class PersonNode implements FosEntity {
                 '}';
     }
 
-    public Set<PersonConflictLink> getConflicts() {
-        return null == conflicts ? null : Collections.unmodifiableSet(conflicts);
+    public List<PersonConflictLink> getConflicts() {
+        return null == conflicts ? null : Collections.unmodifiableList(conflicts);
     }
 }

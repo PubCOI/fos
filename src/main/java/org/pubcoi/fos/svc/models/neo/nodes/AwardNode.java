@@ -26,15 +26,13 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Node(primaryLabel = "Award")
 public class AwardNode implements FosEntity {
 
     @Relationship(Constants.Neo4J.REL_AWARDED_TO)
-    Set<AwardOrgLink> awardees;
+    List<AwardOrgLink> awardees;
 
     @Id
     @GeneratedValue
@@ -124,17 +122,17 @@ public class AwardNode implements FosEntity {
                 '}';
     }
 
-    public Set<AwardOrgLink> getAwardees() {
-        return null == awardees ? null : Collections.unmodifiableSet(awardees);
+    public List<AwardOrgLink> getAwardees() {
+        return null == awardees ? null : Collections.unmodifiableList(awardees);
     }
 
-    public AwardNode setAwardees(Set<AwardOrgLink> awardees) {
+    public AwardNode setAwardees(List<AwardOrgLink> awardees) {
         this.awardees = awardees;
         return this;
     }
 
     public AwardNode addAwardee(AwardOrgLink awardOrgLink) {
-        if (null == this.awardees) awardees = new HashSet<>();
+        if (null == this.awardees) awardees = new ArrayList<>();
         this.awardees.add(awardOrgLink);
         return this;
     }

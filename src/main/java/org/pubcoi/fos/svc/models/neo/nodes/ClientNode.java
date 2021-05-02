@@ -34,9 +34,7 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.util.DigestUtils;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.pubcoi.fos.svc.services.Utils.normalise;
 
@@ -58,10 +56,10 @@ public class ClientNode implements FosEntity {
     Boolean canonical = false;
 
     @Relationship(Constants.Neo4J.REL_PUBLISHED)
-    Set<ClientNoticeLink> notices;
+    List<ClientNoticeLink> notices;
 
     @Relationship(Constants.Neo4J.REL_PERSON)
-    Set<ClientPersonLink> persons;
+    List<ClientPersonLink> persons;
 
     public ClientNode() {
     }
@@ -195,32 +193,32 @@ public class ClientNode implements FosEntity {
                 '}';
     }
 
-    public Set<ClientNoticeLink> getNotices() {
-        return null == notices ? null : Collections.unmodifiableSet(notices);
+    public List<ClientNoticeLink> getNotices() {
+        return null == notices ? null : Collections.unmodifiableList(notices);
     }
 
-    public ClientNode setNotices(Set<ClientNoticeLink> notices) {
+    public ClientNode setNotices(List<ClientNoticeLink> notices) {
         this.notices = notices;
         return this;
     }
 
-    public Set<ClientPersonLink> getPersons() {
-        return null == persons ? null : Collections.unmodifiableSet(persons);
+    public List<ClientPersonLink> getPersons() {
+        return null == persons ? null : Collections.unmodifiableList(persons);
     }
 
-    public ClientNode setPersons(Set<ClientPersonLink> persons) {
+    public ClientNode setPersons(List<ClientPersonLink> persons) {
         this.persons = persons;
         return this;
     }
 
     public ClientNode addPerson(ClientPersonLink personLink) {
-        if (null == this.persons) this.persons = new HashSet<>();
+        if (null == this.persons) this.persons = new ArrayList<>();
         this.persons.add(personLink);
         return this;
     }
 
     public ClientNode addNotice(ClientNoticeLink clientNoticeLink) {
-        if (null == this.notices) this.notices = new HashSet<>();
+        if (null == this.notices) this.notices = new ArrayList<>();
         this.notices.add(clientNoticeLink);
         return this;
     }

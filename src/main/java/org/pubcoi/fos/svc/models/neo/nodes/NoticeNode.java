@@ -26,9 +26,7 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Node(primaryLabel = "Notice")
 public class NoticeNode implements FosEntity {
@@ -39,7 +37,7 @@ public class NoticeNode implements FosEntity {
     String fosId;
 
     @Relationship(Constants.Neo4J.REL_AWARDED)
-    Set<AwardNode> awards;
+    List<AwardNode> awards;
 
     Boolean hidden = false;
 
@@ -60,16 +58,16 @@ public class NoticeNode implements FosEntity {
     }
 
     public NoticeNode addAward(AwardNode awardNode) {
-        if (null == this.awards) this.awards = new HashSet<>();
+        if (null == this.awards) this.awards = new ArrayList<>();
         this.awards.add(awardNode);
         return this;
     }
 
-    public Set<AwardNode> getAwards() {
-        return null == awards ? null : Collections.unmodifiableSet(awards);
+    public List<AwardNode> getAwards() {
+        return null == awards ? null : Collections.unmodifiableList(awards);
     }
 
-    public NoticeNode setAwards(Set<AwardNode> awards) {
+    public NoticeNode setAwards(List<AwardNode> awards) {
         this.awards = awards;
         return this;
     }

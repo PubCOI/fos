@@ -32,9 +32,7 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Node(primaryLabel = "Organisation")
 public class OrganisationNode implements FosEntity {
@@ -56,7 +54,7 @@ public class OrganisationNode implements FosEntity {
     OrgLELink legalEntity;
 
     @Relationship(Constants.Neo4J.REL_PERSON)
-    Set<OrgPersonLink> orgPersons;
+    List<OrgPersonLink> orgPersons;
 
     public OrganisationNode() {
     }
@@ -191,16 +189,16 @@ public class OrganisationNode implements FosEntity {
     }
 
     public OrganisationNode addPerson(OrgPersonLink orgPersonLink) {
-        if (null == this.orgPersons) this.orgPersons = new HashSet<>();
+        if (null == this.orgPersons) this.orgPersons = new ArrayList<>();
         this.orgPersons.add(orgPersonLink);
         return this;
     }
 
-    public Set<OrgPersonLink> getOrgPersons() {
-        return null == orgPersons ? null : Collections.unmodifiableSet(orgPersons);
+    public List<OrgPersonLink> getOrgPersons() {
+        return null == orgPersons ? null : Collections.unmodifiableList(orgPersons);
     }
 
-    public OrganisationNode setOrgPersons(Set<OrgPersonLink> orgPersons) {
+    public OrganisationNode setOrgPersons(List<OrgPersonLink> orgPersons) {
         this.orgPersons = orgPersons;
         return this;
     }

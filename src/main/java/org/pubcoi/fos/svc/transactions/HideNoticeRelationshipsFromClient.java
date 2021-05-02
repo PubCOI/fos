@@ -48,7 +48,7 @@ public class HideNoticeRelationshipsFromClient implements IFosTransaction {
         targetClient.setNotices(
                 targetClient.getNotices().stream()
                         .peek(rel -> rel.setHidden(true))
-                        .collect(Collectors.toSet())
+                        .collect(Collectors.toList())
         );
 
         clientsGraphRepo.save(targetClient);

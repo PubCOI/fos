@@ -22,7 +22,7 @@ import org.pubcoi.cdm.cf.search.request.NoticeSearchRequest;
 import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
 import org.pubcoi.cdm.cf.search.response.NoticeHitType;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
 import org.pubcoi.fos.svc.models.dto.search.NoticeSearchResponseWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +73,8 @@ public class ContractsFinderSvcImpl implements ContractsFinderSvc {
             // nb notice has bunch of different namespaces on it ... doing the naughty thing and just nuking them for now
             String noticeStr = restTemplate.getForObject(String.format(cfGetNoticeEndpoint, noticeId), String.class);
             FullNotice notice = xslSvc.cleanGetNoticeResponse(noticeStr);
-            if (null == notice || null == noticeId) throw new FosBadRequestException("Unable to get notice");
+            if (null == notice || null == noticeId)
+                throw new FosBadRequestResponseStatusException("Unable to get notice");
             return noticesSvc.addNotice(notice);
         }
     }

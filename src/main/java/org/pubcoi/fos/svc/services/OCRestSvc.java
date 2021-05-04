@@ -17,11 +17,13 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.JurisdictionEnum;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 
 public interface OCRestSvc {
-    OCWrapper doCompanySearch(String query);
+    OCWrapper doCompanySearch(String query) throws FosCoreException;
 
-    OCWrapper getCompany(String query, JurisdictionEnum jurisdiction);
+    OCWrapper getCompany(String query, JurisdictionEnum jurisdiction) throws FosRecordNotFoundException;
 }

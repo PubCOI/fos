@@ -17,8 +17,9 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 
 public interface OCCachedQuerySvc {
-    OCWrapper doRequest(String queryURL);
+    OCWrapper doRequest(String queryURL) throws FosCoreException;
 }

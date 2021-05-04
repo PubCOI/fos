@@ -40,8 +40,8 @@ public class LinkOrganisationToParent implements IFosTransaction {
             FosTransaction transaction
     ) {
         this.orgGraphRepo = orgGraphRepo;
-        this.source = orgGraphRepo.findByFosIdHydratingPersons(source.getFosId()).orElseThrow();
-        this.target = orgGraphRepo.findByFosIdHydratingPersons(target.getFosId()).orElseThrow();
+        this.source = orgGraphRepo.findByFosId(source.getFosId()).orElseThrow();
+        this.target = orgGraphRepo.findByFosId(target.getFosId()).orElseThrow();
         this.transaction = transaction;
     }
 

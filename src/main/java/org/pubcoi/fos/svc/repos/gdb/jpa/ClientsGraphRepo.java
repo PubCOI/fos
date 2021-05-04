@@ -17,7 +17,6 @@
 
 package org.pubcoi.fos.svc.repos.gdb.jpa;
 
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +28,7 @@ import java.util.Optional;
 public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
     Logger logger = LoggerFactory.getLogger(ClientsGraphRepo.class);
 
-    @Query("MATCH(c:Client {fosId: $clientId}) RETURN c")
-    Optional<ClientNode> findByFosIdEquals(String clientId);
+    Optional<ClientNode> findByFosId(String fosId);
 
     @Query("MATCH paths = (c:Client {fosId: $clientId})-[rel]->(n:Notice) " +
             "RETURN c, collect(rel) AS PUBLISHED, collect(n) AS NOTICES")
@@ -38,10 +36,5 @@ public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
 
     @Query("RETURN exists((:Client {fosId: $clientId})-[:PUBLISHED]-(:Notice {fosId: $noticeId}))")
     boolean relationshipExists(String clientId, String noticeId);
-
-    default Optional<ClientNode> findById(String id) {
-        logger.error("Don't run this query, it goes and executes a [:*] and merrily blows itself up");
-        throw new FosRuntimeException("NOOP");
-    }
 
 }

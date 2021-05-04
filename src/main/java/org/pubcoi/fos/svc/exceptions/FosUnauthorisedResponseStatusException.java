@@ -19,12 +19,12 @@ package org.pubcoi.fos.svc.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class FosUnauthorisedException extends FosException {
-    public FosUnauthorisedException() {
+public class FosUnauthorisedResponseStatusException extends FosResponseStatusException {
+    public FosUnauthorisedResponseStatusException() {
         super(HttpStatus.UNAUTHORIZED);
     }
 
-    public FosUnauthorisedException(Throwable e) {
+    public FosUnauthorisedResponseStatusException(Throwable e) {
         super(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 }

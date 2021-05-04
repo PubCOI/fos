@@ -22,31 +22,35 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-public class FosException extends ResponseStatusException {
-    private static final Logger logger = LoggerFactory.getLogger(FosException.class);
+public class FosResponseStatusException extends ResponseStatusException {
+    private static final Logger logger = LoggerFactory.getLogger(FosResponseStatusException.class);
 
-    public FosException() {
+    public FosResponseStatusException() {
         super(HttpStatus.INTERNAL_SERVER_ERROR);
         logger.error("Exception, returning 500");
     }
 
-    public FosException(String message) {
+    public FosResponseStatusException(String message) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
         logger.error("Exception, returning 500: {}", message);
     }
 
-    public FosException(HttpStatus status, String message) {
+    public FosResponseStatusException(HttpStatus status, String message) {
         super(status, message);
         logger.error("Exception, returning {}: {}", status, message);
     }
 
-    public FosException(HttpStatus status) {
+    public FosResponseStatusException(HttpStatus status) {
         super(status);
         logger.error("Exception, returning {}", status);
     }
 
-    public FosException(String message, Throwable e) {
+    public FosResponseStatusException(String message, Throwable e) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
         logger.error(e.getMessage(), e);
+    }
+
+    public FosResponseStatusException(Throwable e) {
+        super(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 }

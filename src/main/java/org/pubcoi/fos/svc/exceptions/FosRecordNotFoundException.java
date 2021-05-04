@@ -15,10 +15,18 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.exceptions;
 
-import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
+public class FosRecordNotFoundException extends FosCoreException {
+    public FosRecordNotFoundException(String message) {
+        super(message);
+    }
 
-public interface GraphPersistenceSvc {
-    void saveWithDepth(FosEntity entity, int depth);
+    public FosRecordNotFoundException(String message, Throwable e) {
+        super(message, e);
+    }
+
+    public FosRecordNotFoundException(FosCoreException e) {
+        super(e.getMessage(), e);
+    }
 }

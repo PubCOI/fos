@@ -17,10 +17,11 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.cdm.cf.ArrayOfFullNotice;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.pw.PWRootType;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -51,6 +52,7 @@ public class XslSvcImpl implements XslSvc {
     JAXBContext pwCtx;
     JAXBContext searchNoticeCtx;
     JAXBContext getNoticeCtx;
+    JAXBContext getNoticesCtx;
 
     @Value("${fos.xsl.pw.step_1:xsl/CleanROI_step1.xsl}")
     String pwStep1Xsl;
@@ -67,6 +69,7 @@ public class XslSvcImpl implements XslSvc {
             this.pwCtx = JAXBContext.newInstance(PWRootType.class);
             this.searchNoticeCtx = JAXBContext.newInstance(NoticeSearchResponse.class);
             this.getNoticeCtx = JAXBContext.newInstance(FullNotice.class);
+            this.getNoticesCtx = JAXBContext.newInstance(ArrayOfFullNotice.class);
         } catch (JAXBException e) {
             throw new FosRuntimeException(String.format(
                     "Unable to instantiate JAXBContext for %s", PWRootType.class.getCanonicalName()
@@ -120,7 +123,7 @@ public class XslSvcImpl implements XslSvc {
             Unmarshaller u = pwCtx.createUnmarshaller();
             return (PWRootType) u.unmarshal(new ByteArrayInputStream(step2Baos.toByteArray()));
         } catch (JAXBException | IOException | TransformerException e) {
-            throw new FosException(UNABLE_TO_TRANSFORM);
+            throw new FosResponseStatusException(UNABLE_TO_TRANSFORM);
         }
     }
 
@@ -134,6 +137,11 @@ public class XslSvcImpl implements XslSvc {
         return cleanMessage(noticeInput, FullNotice.class, getNoticeCtx);
     }
 
+    @Override
+    public ArrayOfFullNotice cleanAllNotices(String noticesInput) {
+        return cleanMessage(noticesInput, ArrayOfFullNotice.class, getNoticesCtx);
+    }
+
     private <T> T cleanMessage(String input, Class<T> type, JAXBContext context) {
         try (
                 ByteArrayOutputStream baos = new ByteArrayOutputStream()
@@ -145,7 +153,7 @@ public class XslSvcImpl implements XslSvc {
             Unmarshaller u = context.createUnmarshaller();
             return type.cast(u.unmarshal(new ByteArrayInputStream(baos.toByteArray())));
         } catch (JAXBException | IOException | TransformerException e) {
-            throw new FosException(UNABLE_TO_TRANSFORM);
+            throw new FosResponseStatusException(UNABLE_TO_TRANSFORM);
         }
     }
 

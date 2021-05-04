@@ -33,15 +33,22 @@ public class OCCachedQuery {
     OffsetDateTime requestDT;
     String queryURL;
     byte[] response;
+    int responseCode = -1;
 
-    OCCachedQuery() {}
+    OCCachedQuery() {
+        this.requestDT = OffsetDateTime.now();
+    }
 
     public OCCachedQuery(String queryURL, byte[] wrapper) {
+        this(queryURL);
+        this.response = wrapper;
+    }
+
+    public OCCachedQuery(String queryURL) {
+        this();
         // if the API token changes we wouldn't want to invalidate our lookups
         this.queryURL = redact(queryURL);
         this.id = getHash(this.queryURL);
-        this.response = wrapper;
-        this.requestDT = OffsetDateTime.now();
     }
 
     public static String redact(String queryURL) {
@@ -86,6 +93,15 @@ public class OCCachedQuery {
 
     public OCCachedQuery setQueryURL(String queryURL) {
         this.queryURL = queryURL;
+        return this;
+    }
+
+    public int getResponseCode() {
+        return responseCode;
+    }
+
+    public OCCachedQuery setResponseCode(int responseCode) {
+        this.responseCode = responseCode;
         return this;
     }
 }

@@ -19,12 +19,16 @@ package org.pubcoi.fos.svc.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.models.mdb.OCCachedQuery;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.repos.mdb.OCCachedQueryRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -49,25 +53,39 @@ public class OCCachedQuerySvcImpl implements OCCachedQuerySvc {
     }
 
     @Override
-    public OCWrapper doRequest(String queryURL) {
+    public OCWrapper doRequest(String queryURL) throws FosCoreException {
+        logger.debug(Ansi.Cyan.format("Requesting URL %s", OCCachedQuery.redact(queryURL)));
         OCCachedQuery query = cachedQueryRepo.getByIdAndRequestDTAfter(
                 OCCachedQuery.getHash(queryURL), OffsetDateTime.now().minus(3, ChronoUnit.MONTHS)
         );
         if (null != query) {
+            if (query.getResponseCode() != 200) {
+                throw new FosCoreException(String.format("Unable to pull back a valid response for hash %s", query.getId()));
+            }
             try {
                 return objectMapper.readValue(query.getResponse(), OCWrapper.class);
             } catch (IOException e) {
-                logger.error(String.format("Unable to cast cached object back to " +
-                        "OCWrapper object, will perform another request (err: %s)", e.getMessage()), e);
+                throw new FosCoreException(String.format(
+                        "Unable to cast cached object for hash %s back to OCWrapper object, will perform another request (err: %s)",
+                        query.getId(), e.getMessage()
+                ), e);
             }
         }
-        OCWrapper wrapper = restTemplate.getForObject(queryURL, OCWrapper.class);
+        OCCachedQuery cachedQuery = new OCCachedQuery(queryURL);
+        OCWrapper wrapper;
         try {
-            OCCachedQuery cachedQuery = new OCCachedQuery(queryURL, objectMapper.writeValueAsBytes(wrapper));
+            ResponseEntity<OCWrapper> response = restTemplate.exchange(queryURL, HttpMethod.GET, null, OCWrapper.class);
+            cachedQuery.setResponseCode(response.getStatusCode().value());
+            wrapper = response.getBody();
+            cachedQuery.setResponse(objectMapper.writeValueAsBytes(wrapper));
+        } catch (HttpClientErrorException e) {
+            cachedQuery.setResponseCode(e.getRawStatusCode());
+            throw new FosCoreException(String.format("Unable to make request for hash %s: %s", cachedQuery.getId(), e.getMessage()), e);
+        } catch (JsonProcessingException e) {
+            throw new FosCoreException(String.format("Unable to process response body for hash %s: %s", cachedQuery.getId(), e.getMessage()));
+        } finally {
             logger.debug("Caching OC request {} ({})", cachedQuery.getId(), cachedQuery.getQueryURL());
             cachedQueryRepo.save(cachedQuery);
-        } catch (JsonProcessingException e) {
-            logger.error("Unable to write OCWrapper to byte array, cannot cache response");
         }
         return wrapper;
     }

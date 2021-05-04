@@ -53,7 +53,5 @@ public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, Long> {
     @Query("MATCH(a:Award {fosId: $awardId}) RETURN a")
     Optional<AwardNode> findByFosIdNotHydratingAwardees(String awardId);
 
-    @Query("MATCH (a:Award {fosId: $awardId}) OPTIONAL MATCH (a:Award)-[rel]->(o:Organisation) " +
-            "RETURN a, collect(rel) AS AWARDED_TO, collect(o) AS AWARDEES")
-    Optional<AwardNode> findByFosIdHydratingAwardees(String awardId);
+    Optional<AwardNode> findByFosId(String fosId);
 }

@@ -43,8 +43,9 @@ import org.pubcoi.cdm.cf.base.NoticeStatusEnum;
 import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.fos.FosESFields;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDTO;
@@ -158,6 +159,7 @@ public class UI {
     public List<AwardsListResponseDTO> getContractAwards() {
         return awardsListRepo.getAwardsWithRels()
                 .stream().map(AwardsListResponseDTO::new)
+                .filter(a -> awardsMDBRepo.existsById(a.getId())) // todo show info stats for awards that are missing
                 .peek(a -> {
                     CFAward award = awardsMDBRepo.findById(a.getId()).orElseThrow();
                     a.setValueMin(award.getValueMin());
@@ -176,7 +178,7 @@ public class UI {
     public ResponseEntity<String> viewRedirect(
             @PathVariable String attachmentId
     ) {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestResponseStatusException("Unable to find attachment"));
         // todo - check that we've got the location on the object ... for now just return where we think the doc should be
         // attachment.getS3Locations()
         try {
@@ -185,7 +187,7 @@ public class UI {
                     .location(s3Services.getSignedURL(attachment).toURI())
                     .build();
         } catch (URISyntaxException e) {
-            throw new FosBadRequestException("Unable to get URL");
+            throw new FosBadRequestResponseStatusException("Unable to get URL");
         }
     }
 
@@ -193,7 +195,7 @@ public class UI {
     public AttachmentDTO getAttachmentMetadata(
             @PathVariable String attachmentId
     ) {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestException("Unable to find attachment"));
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestResponseStatusException("Unable to find attachment"));
         return new AttachmentDTO(attachment);
     }
 
@@ -261,7 +263,7 @@ public class UI {
                                 interestWrapper.setMnisPersonId(interest.getMnisPersonId());
                             }
                         } catch (JsonProcessingException e) {
-                            throw new FosException(e.getMessage(), e);
+                            throw new FosResponseStatusException(e.getMessage(), e);
                         }
                     }
                 }
@@ -373,7 +375,11 @@ public class UI {
             // if item is not already in db, add it
             if (!ocCompaniesRepo.existsById(objectId)) {
                 // todo - put into separate thread
-                scheduledSvc.getCompany(objectId);
+                try {
+                    scheduledSvc.getCompany(objectId);
+                } catch (FosRecordNotFoundException e) {
+                    logger.info(String.format("Unable to find company record: %s", e.getMessage()));
+                }
             }
             // should now be in MDB repo, check if it's in graph
             if (ocCompaniesRepo.existsById(objectId)) {

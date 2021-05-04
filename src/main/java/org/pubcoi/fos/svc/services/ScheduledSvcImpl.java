@@ -20,7 +20,8 @@ package org.pubcoi.fos.svc.services;
 import com.opencorporates.schemas.OCCompanySchema;
 import info.debatty.java.stringsimilarity.NGram;
 import org.pubcoi.cdm.cf.ReferenceTypeE;
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
@@ -30,9 +31,11 @@ import org.pubcoi.fos.svc.repos.mdb.TasksMDBRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service
@@ -73,8 +76,15 @@ public class ScheduledSvcImpl implements ScheduledSvc {
                 .forEach(award -> {
                     // as it turns out ... contracts finder doesn't always have the correct company number :(
                     // so we have to do a sense check ...
-                    OCCompanySchema ocCompany = (null != award.getOrgReferenceType() && award.getOrgReferenceType().equals(ReferenceTypeE.COMPANIES_HOUSE)) ?
-                            getCompany(award.getOrgReference(), JurisdictionEnum.gb) : null;
+                    OCCompanySchema ocCompany = null;
+                    try {
+                        ocCompany = (null != award.getOrgReferenceType()
+                                && award.getOrgReferenceType().equals(ReferenceTypeE.COMPANIES_HOUSE)
+                                && null != award.getOrgReference()
+                        ) ? getCompany(award.getOrgReference(), JurisdictionEnum.gb) : null;
+                    } catch (FosCoreException e) {
+                        logger.info("Unable to find record for company " + award.getOrgReference());
+                    }
 
                     FosOrganisation org = (null == ocCompany) ? new FosNonCanonicalOrg(award) :
                             new FosCanonicalOrg(ocCompany);
@@ -115,7 +125,10 @@ public class ScheduledSvcImpl implements ScheduledSvc {
      * @return {@link OCCompanySchema} if the company exists, otherwise null
      */
     @Override
-    public OCCompanySchema getCompany(String companyReference, JurisdictionEnum jurisdiction) {
+    public OCCompanySchema getCompany(@NonNull String companyReference, @NonNull JurisdictionEnum jurisdiction) throws FosRecordNotFoundException {
+        Objects.requireNonNull(companyReference);
+        Objects.requireNonNull(jurisdiction);
+
         // see if the company exists on our DB first
         OCCompanySchema mdbCompany = ocCompanies.findByCompanyNumberAndJurisdictionCode(companyReference, jurisdiction.toString());
         if (null != mdbCompany) return mdbCompany;
@@ -125,16 +138,16 @@ public class ScheduledSvcImpl implements ScheduledSvc {
         if (null != companyLookup.getResults() && null != companyLookup.getResults().getCompany()) {
             ocCompanies.save(companyLookup.getResults().getCompany());
         }
-        return (null != companyLookup.getResults()) ? companyLookup.getResults().getCompany() : null;
+        return null != companyLookup.getResults() ? companyLookup.getResults().getCompany() : null;
     }
 
     @Override
-    public OCCompanySchema getCompany(String objectId) {
+    public OCCompanySchema getCompany(String objectId) throws FosRecordNotFoundException {
         Matcher m = Utils.ocCompanyPattern.matcher(objectId);
         if (m.matches()) {
             return getCompany(m.group(2), JurisdictionEnum.valueOf(m.group(1)));
         } else {
-            throw new FosRuntimeException("Unable to find company");
+            throw new FosRecordNotFoundException("Unable to find company");
         }
     }
 

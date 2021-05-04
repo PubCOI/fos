@@ -20,12 +20,12 @@ package org.pubcoi.fos.svc.rest;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.dto.UpdateProfileRequestDTO;
-import org.pubcoi.fos.svc.models.dto.UserLoginDTO;
 import org.pubcoi.fos.svc.models.dto.UpdateProfileResponseDTO;
+import org.pubcoi.fos.svc.models.dto.UserLoginDTO;
 import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
 import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.slf4j.Logger;
@@ -64,7 +64,7 @@ public class UserAdmin {
             );
         } catch (FirebaseAuthException e) {
             logger.error(e.getMessage(), e);
-            throw new FosException();
+            throw new FosResponseStatusException();
         }
     }
 
@@ -83,7 +83,7 @@ public class UserAdmin {
     ) {
         String uid = authProvider.getUid(authToken);
         FosUser user = authProvider.getByUid(uid);
-        if (null == user) throw new FosBadRequestException("Unable to find user");
+        if (null == user) throw new FosBadRequestResponseStatusException("Unable to find user");
         return new UpdateProfileResponseDTO(authProvider.save(user.setDisplayName(updateProfileRequestDTO.getDisplayName())));
     }
 }

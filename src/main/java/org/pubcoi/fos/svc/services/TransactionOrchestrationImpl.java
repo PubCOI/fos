@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
@@ -70,10 +70,10 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
                         metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!s2p_toNode.getCanonical()) {
-                    throw new FosBadRequestException("Parent ClientNode is not canonical");
+                    throw new FosBadRequestResponseStatusException("Parent ClientNode is not canonical");
                 }
                 if (s2p_fromNode.getCanonical()) {
-                    throw new FosBadRequestException("Child ClientNode cannot be canonical");
+                    throw new FosBadRequestResponseStatusException("Child ClientNode cannot be canonical");
                 }
 
                 transactionRepo.save(tcf.linkClientToParent(s2p_fromNode, s2p_toNode, metaTransaction).exec().withMeta(metaTransaction));
@@ -94,12 +94,12 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
 
             case link_org_to_canonical:
                 OrganisationNode o2c_fromNode = orgGraphRepo
-                        .findByFosIdHydratingPersons(metaTransaction.getSource().getFosId()).orElseThrow();
+                        .findByFosId(metaTransaction.getSource().getFosId()).orElseThrow();
                 OrganisationNode o2c_toNode = orgGraphRepo
-                        .findByFosIdHydratingPersons(metaTransaction.getTarget().getFosId()).orElseThrow();
+                        .findByFosId(metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!o2c_toNode.isVerified()) {
-                    throw new FosBadRequestException("Target node must be verified");
+                    throw new FosBadRequestResponseStatusException("Target node must be verified");
                 }
 
                 transactionRepo.save(tcf.linkOrgToParent(o2c_fromNode, o2c_toNode, metaTransaction).exec().withMeta(metaTransaction));

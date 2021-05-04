@@ -28,4 +28,8 @@ public class FosCoreException extends Exception {
         logger.error("Exception: {}", message);
     }
 
+    public FosCoreException(String message, Throwable e) {
+        super(message, e);
+        logger.error("Exception: {}", message);
+    }
 }

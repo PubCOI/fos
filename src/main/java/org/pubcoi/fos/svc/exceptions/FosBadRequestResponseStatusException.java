@@ -15,29 +15,25 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.exceptions;
 
-import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.neo4j.core.Neo4jTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
 
-@Service
-public class GraphPersistenceSvcImpl implements GraphPersistenceSvc {
-    private static final Logger logger = LoggerFactory.getLogger(GraphPersistenceSvcImpl.class);
+public class FosBadRequestResponseStatusException extends FosResponseStatusException {
+    private static final Logger logger = LoggerFactory.getLogger(FosBadRequestResponseStatusException.class);
 
-    final Neo4jTemplate neo4jTemplate;
-
-    public GraphPersistenceSvcImpl(Neo4jTemplate neo4jTemplate) {
-        this.neo4jTemplate = neo4jTemplate;
+    public FosBadRequestResponseStatusException(String message) {
+        super(HttpStatus.BAD_REQUEST, message);
     }
 
-
-    @Override
-    public void saveWithDepth(FosEntity entity, int depth) {
-        logger.warn("Not fixed depth save");
-        neo4jTemplate.save(entity);
+    public FosBadRequestResponseStatusException(String message, Throwable e) {
+        super(HttpStatus.BAD_REQUEST, message);
+        logger.error(message, e);
     }
 
+    public FosBadRequestResponseStatusException() {
+        super(HttpStatus.BAD_REQUEST);
+    }
 }

@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.cdm.cf.ArrayOfFullNotice;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.pw.PWRootType;
@@ -27,4 +28,6 @@ public interface XslSvc {
     NoticeSearchResponse cleanNoticeSearchResponse(String noticeInput);
 
     FullNotice cleanGetNoticeResponse(String noticeInput);
+
+    ArrayOfFullNotice cleanAllNotices(String noticesInput);
 }

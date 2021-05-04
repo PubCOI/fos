@@ -19,13 +19,10 @@ package org.pubcoi.fos.svc.rest;
 
 import org.pubcoi.cdm.cf.ArrayOfFullNotice;
 import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
-import org.pubcoi.fos.svc.services.GraphSvc;
-import org.pubcoi.fos.svc.services.NoticesSvc;
-import org.pubcoi.fos.svc.services.ScheduledSvc;
-import org.pubcoi.fos.svc.services.TransactionOrchestrationSvc;
+import org.pubcoi.fos.svc.services.*;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -34,10 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
@@ -52,16 +45,19 @@ public class StandaloneEndpoints {
     final TransactionOrchestrationSvc transactionOrch;
     final ScheduledSvc scheduledSvc;
     final GraphSvc graphSvc;
+    final XslSvc xslSvc;
 
     public StandaloneEndpoints(
             NoticesSvc noticesSvc,
             TransactionOrchestrationSvc transactionOrch,
             ScheduledSvc scheduledSvc,
-            GraphSvc graphSvc) {
+            GraphSvc graphSvc,
+            XslSvc xslSvc) {
         this.noticesSvc = noticesSvc;
         this.transactionOrch = transactionOrch;
         this.scheduledSvc = scheduledSvc;
         this.graphSvc = graphSvc;
+        this.xslSvc = xslSvc;
     }
 
     @PutMapping("/api/transactions")
@@ -84,19 +80,17 @@ public class StandaloneEndpoints {
     public String uploadContracts(MultipartHttpServletRequest request) {
         MultipartFile file = request.getFile("file");
         if (null == file) {
-            throw new FosBadRequestException("Empty file");
+            throw new FosBadRequestResponseStatusException("Empty file");
         }
         try {
-            JAXBContext context = JAXBContext.newInstance(ArrayOfFullNotice.class);
-            Unmarshaller u = context.createUnmarshaller();
-            ArrayOfFullNotice array = (ArrayOfFullNotice) u.unmarshal(new ByteArrayInputStream(file.getBytes()));
+            ArrayOfFullNotice array = xslSvc.cleanAllNotices(new String(file.getBytes()));
             for (FullNotice notice : array.getNotices()) {
                 noticesSvc.addNotice(notice);
             }
             scheduledSvc.populateFosOrgsMDBFromAwards();
             graphSvc.populateGraphFromMDB();
-        } catch (IOException | JAXBException e) {
-            throw new FosException("Unable to read file stream");
+        } catch (IOException e) {
+            throw new FosResponseStatusException("Unable to read file stream");
         }
         return "ok";
     }

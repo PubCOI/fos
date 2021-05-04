@@ -25,7 +25,7 @@ import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.pubcoi.cdm.fos.AttachmentFactory;
 import org.pubcoi.cdm.fos.BatchJobFactory;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
@@ -61,7 +61,6 @@ public class GraphSvcImpl implements GraphSvc {
     final TasksSvc tasksSvc;
     final AttachmentMDBRepo attachmentMDBRepo;
     final BatchJobMDBRepo batchJobMDBRepo;
-    final GraphPersistenceSvc persistenceSvc;
 
     public GraphSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
@@ -76,8 +75,8 @@ public class GraphSvcImpl implements GraphSvc {
             ScheduledSvc scheduledSvc,
             TasksSvc tasksSvc,
             AttachmentMDBRepo attachmentMDBRepo,
-            BatchJobMDBRepo batchJobMDBRepo,
-            GraphPersistenceSvc persistenceSvc) {
+            BatchJobMDBRepo batchJobMDBRepo
+    ) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.awardsGraphRepo = awardsGraphRepo;
         this.organisationsMDBRepo = organisationsMDBRepo;
@@ -91,7 +90,6 @@ public class GraphSvcImpl implements GraphSvc {
         this.tasksSvc = tasksSvc;
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.batchJobMDBRepo = batchJobMDBRepo;
-        this.persistenceSvc = persistenceSvc;
     }
 
     private void addNoticeToGraph(FullNotice notice) {
@@ -116,14 +114,14 @@ public class GraphSvcImpl implements GraphSvc {
             FosOrganisation org = award.getFosOrganisation();
             try {
                 logger.trace("Looking up OrganisationNode {}", org.getFosId());
-                final OrganisationNode orgNode = orgGraphRepo.findByFosIdHydratingPersons(org.getFosId()).orElseGet(() -> {
+                final OrganisationNode orgNode = orgGraphRepo.findByFosId(org.getFosId()).orElseGet(() -> {
                             logger.trace(Ansi.Yellow.format("Did not find OrganisationNode %s: instantiating new instance", org.getFosId()));
                             return new OrganisationNode(org);
                         }
                 );
 
                 logger.trace("Looking up AwardNode {}", award.getId());
-                AwardNode awardNode = awardsGraphRepo.findByFosIdHydratingAwardees(award.getId()).orElseGet(() -> {
+                AwardNode awardNode = awardsGraphRepo.findByFosId(award.getId()).orElseGet(() -> {
                             logger.trace(Ansi.Yellow.format("Did not find AwardNode %s: instantiating new instance", award.getId()));
                             return new AwardNode()
                                     .setFosId(award.getId())
@@ -141,9 +139,8 @@ public class GraphSvcImpl implements GraphSvc {
                     logger.debug("Saved {}", awLink);
                 }
 
-                persistenceSvc.saveWithDepth(orgNode, 1);
-                persistenceSvc.saveWithDepth(awardNode, 1);
-//                awardsGraphRepo.save(awardNode);
+                orgGraphRepo.save(orgNode);
+                awardsGraphRepo.save(awardNode);
 
                 logger.trace("Attempting to add backwards ref for notice {} to AwardNode {}", awardNode.getNoticeId(), awardNode.getFosId());
                 noticesGraphRepo.findByFosId(awardNode.getNoticeId()).ifPresent(notice -> {
@@ -157,7 +154,7 @@ public class GraphSvcImpl implements GraphSvc {
                 });
 
                 logger.debug("Saved {}", awardNode);
-            } catch (FosException e) {
+            } catch (FosResponseStatusException e) {
                 logger.error(Ansi.Red.colorize("Unable to insert entry into graph: is source MDB fully populated?"), e);
             }
         } else {

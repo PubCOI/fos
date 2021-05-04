@@ -17,10 +17,9 @@
 
 package org.pubcoi.fos.svc.models.queries;
 
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
@@ -45,21 +44,21 @@ public class AwardsListResponseDTO {
     AwardsListResponseDTO() {}
 
     public AwardsListResponseDTO(AwardsGraphResponse graphResponse) {
-        if (null == graphResponse.getAwardNode()) throw new FosException("Cannot deserialise response");
+        if (null == graphResponse.getAwardNode()) throw new FosResponseStatusException("Cannot deserialise response");
         Map<String, Object> award = graphResponse.getAwardNode().asMap();
         Map<String, Object> awardee = graphResponse.getAwardee().asMap();
         Map<String, Object> awardOrg = graphResponse.getAwardOrgLink().asMap();
-        this.id = (String) award.get("id");
+        this.id = (String) award.get("fosId");
         this.client = graphResponse.getClientName().asString();
         this.awardee = (String) awardee.get("name");
         this.value = (Long) award.get("value");
-        this.awardDate = ((ZonedDateTime) awardOrg.get("awardedDate")).toLocalDate();
-        this.startDate = ((ZonedDateTime) awardOrg.get("startDate")).toLocalDate();
-        this.endDate = ((ZonedDateTime) awardOrg.get("endDate")).toLocalDate();
+        this.awardDate = (LocalDate) awardOrg.get("awardedDate");
+        this.startDate = (LocalDate) awardOrg.get("startDate");
+        this.endDate = (LocalDate) awardOrg.get("endDate");
         this.groupAward = (Boolean) award.get("groupAward");
         if (null != graphResponse.getLegalEntity()) {
             this.knownAs = new KnownAsDTO(
-                    (String) graphResponse.getLegalEntity().asMap().get("id"),
+                    (String) graphResponse.getLegalEntity().asMap().get("fosId"),
                     (String) graphResponse.getLegalEntity().asMap().get("name")
             );
         }

@@ -19,12 +19,10 @@ package org.pubcoi.fos.svc.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class FosBadRequestException extends FosException {
-    public FosBadRequestException(String message) {
-        super(HttpStatus.BAD_REQUEST, message);
+public class ItemNotFoundResponseStatusException extends FosResponseStatusException {
+
+    public ItemNotFoundResponseStatusException() {
+        super(HttpStatus.NOT_FOUND);
     }
 
-    public FosBadRequestException() {
-        super(HttpStatus.BAD_REQUEST);
-    }
 }

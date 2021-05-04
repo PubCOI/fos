@@ -17,6 +17,9 @@
 
 package org.pubcoi.fos.svc.models.core;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -109,5 +112,36 @@ public abstract class FosOrganisation implements FosEntity {
     public FosOrganisation setJurisdiction(String jurisdiction) {
         this.jurisdiction = jurisdiction;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("fosId", fosId)
+                .append("companyName", companyName)
+                .append("referenceType", referenceType)
+                .append("reference", reference)
+                .append("verified", verified)
+                .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FosOrganisation that = (FosOrganisation) o;
+
+        return new EqualsBuilder()
+                .append(fosId, that.fosId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(fosId)
+                .toHashCode();
     }
 }

@@ -24,9 +24,9 @@ import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.cdm.mnis.MnisMembersType;
 import org.pubcoi.cdm.pw.PWRootType;
 import org.pubcoi.cdm.pw.RegisterEntryType;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
 import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
@@ -153,7 +153,7 @@ public class Debug {
             try {
                 mnisSvc.addInterestsToMDB(register, dataset);
             } catch (FosCoreException e) {
-                throw new FosException();
+                throw new FosResponseStatusException();
             }
         }
         return "ok";
@@ -173,7 +173,7 @@ public class Debug {
     public String uploadMnisData(MultipartHttpServletRequest request) {
         MultipartFile file = request.getFile("file");
         if (null == file) {
-            throw new FosBadRequestException("Empty file");
+            throw new FosBadRequestResponseStatusException("Empty file");
         }
         try {
             JAXBContext context = JAXBContext.newInstance(MnisMembersType.class);
@@ -184,7 +184,7 @@ public class Debug {
                 mnisMembersRepo.save(mnisMemberType);
             }
         } catch (IOException | JAXBException e) {
-            throw new FosException("Unable to read file stream");
+            throw new FosResponseStatusException("Unable to read file stream");
         }
         return "ok";
     }

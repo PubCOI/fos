@@ -18,8 +18,10 @@
 package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestException;
-import org.pubcoi.fos.svc.exceptions.FosException;
+import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dto.*;
 import org.pubcoi.fos.svc.models.dto.tasks.TaskDTO;
@@ -95,12 +97,17 @@ public class Tasks {
         String uid = authProvider.getUid(authToken);
         FosUser user = authProvider.getByUid(uid);
         logger.debug("Performing search on behalf of {}", user);
-        OrganisationNode org = organisationsGraphRepo.findByFosIdHydratingPersons(requestDTO.getCompanyId()).orElseThrow();
-        OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
-        return wrapper.getResults().getCompanies().stream()
-                .map(company -> new VerifyCompanySearchResponse(company))
-                .peek(response -> response.setFlagged(objectFlagsRepo.existsByEntityIdAndUid(response.getId(), user.getUid())))
-                .collect(Collectors.toList());
+        OrganisationNode org = organisationsGraphRepo.findByFosId(requestDTO.getCompanyId()).orElseThrow();
+        try {
+            OCWrapper wrapper = ocRestSvc.doCompanySearch(org.getName());
+            return wrapper.getResults().getCompanies().stream()
+                    .map(company -> new VerifyCompanySearchResponse(company))
+                    .peek(response -> response.setFlagged(objectFlagsRepo.existsByEntityIdAndUid(response.getId(), user.getUid())))
+                    .collect(Collectors.toList());
+        } catch (FosCoreException e) {
+            logger.error("Unable to perform search");
+            throw new FosResponseStatusException(e);
+        }
     }
 
     @GetMapping("/api/ui/tasks")
@@ -110,7 +117,7 @@ public class Tasks {
                 .map(TaskDTO::new)
                 .peek(task -> {
                     if (task.getTaskType().equals(FosTaskType.resolve_client)) {
-                        Optional<ClientNode> clientNode = clientGRepo.findByFosIdEquals(task.getEntity());
+                        Optional<ClientNode> clientNode = clientGRepo.findByFosId(task.getEntity());
                         if (!clientNode.isPresent()) {
                             logger.error("Unable to find ClientNode {}", task.getEntity());
                             task = null;
@@ -145,7 +152,7 @@ public class Tasks {
 
     @GetMapping("/api/ui/tasks/{taskType}/{refId}")
     public ResolveClientDTO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
-        return new ResolveClientDTO(clientGRepo.findByFosIdEquals(refID).orElseThrow(() -> new FosException("Unable to find entity")));
+        return new ResolveClientDTO(clientGRepo.findByFosId(refID).orElseThrow(() -> new FosResponseStatusException("Unable to find entity")));
     }
 
     @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
@@ -166,10 +173,10 @@ public class Tasks {
 
         if (taskType == FosUITasks.mark_canonical_clientNode) {
             if (null == req.getTaskId() || null == req.getTarget()) {
-                throw new FosBadRequestException("Task ID and target must not be null");
+                throw new FosBadRequestResponseStatusException("Task ID and target must not be null");
             }
 
-            clientGRepo.findByFosIdEquals(req.getTarget()).ifPresent(clientNode -> {
+            clientGRepo.findByFosId(req.getTarget()).ifPresent(clientNode -> {
                 transactionOrch.exec(FosTransactionBuilder.markCanonicalNode(clientNode, user, null));
             });
 
@@ -179,7 +186,7 @@ public class Tasks {
 
         if (taskType == FosUITasks.link_clientNode_to_parentClientNode) {
             if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
-                throw new FosBadRequestException("Task ID, Source and Target must be populated");
+                throw new FosBadRequestResponseStatusException("Task ID, Source and Target must be populated");
             }
 
             ClientNode source = clientGRepo.findClientHydratingNotices(req.getSource()).orElseThrow();
@@ -196,22 +203,27 @@ public class Tasks {
 
         if (taskType == FosUITasks.verify_company) {
             if (null == req.getSource() || null == req.getTarget()) {
-                throw new FosBadRequestException("Source and target must be populated");
+                throw new FosBadRequestResponseStatusException("Source and target must be populated");
             }
 
             DRTask task = tasksMDBRepo.getByTaskTypeAndEntity(FosTaskType.resolve_company, orgMDBRepo.findById(req.getSource()).orElseThrow());
             if (null == task) {
-                throw new FosBadRequestException("Unable to find relevant task");
+                throw new FosBadRequestResponseStatusException("Unable to find relevant task");
             }
 
             // looking up target ensures we have it in db
-            OCCompanySchema companySchema = scheduledSvc.getCompany(req.getTarget());
+            OCCompanySchema companySchema;
+            try {
+                companySchema = scheduledSvc.getCompany(req.getTarget());
+            } catch (FosRecordNotFoundException e) {
+                throw new FosBadRequestResponseStatusException(e.getMessage());
+            }
 
             OrganisationNode source = organisationsGraphRepo
                     .findByFosId(req.getSource()).orElseThrow();
             OrganisationNode target = organisationsGraphRepo
                     .findByFosId(Utils.convertOCCompanyToGraphID(req.getTarget())).orElseGet(() -> {
-                        logger.info(Ansi.Yellow.format("Did not find OrganisationNode %s: instantiating new instance"));
+                        logger.info(Ansi.Yellow.format("Did not find OrganisationNode %s: instantiating new instance", req.getTarget()));
                         return organisationsGraphRepo.save(new OrganisationNode(companySchema));
                     });
 
@@ -220,7 +232,7 @@ public class Tasks {
             return new UpdateNodeDTO().setResponse(String.format("Linked %s to %s", source.getFosId(), target.getFosId()));
         }
 
-        throw new FosBadRequestException("Unable to find request type");
+        throw new FosBadRequestResponseStatusException("Unable to find request type");
     }
 
     private void markTaskCompleted(String taskId, FosUser user) {

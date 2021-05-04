@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.pubcoi.fos</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
 
     <artifactId>fos-svc</artifactId>
@@ -67,7 +67,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-depends-aspects</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-cdm</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -121,6 +121,7 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-neo4j</artifactId>
+            <version>6.0.8</version>
         </dependency>
     </dependencies>
 

@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.models.queries;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
 
 import java.time.LocalDate;
@@ -26,24 +27,27 @@ import java.util.Map;
  * Used when returning list of awards on 'datasets' view
  * Embeds LEGAL_ENTITY entries (so you can clearly see what the company is known as)
  */
-public class AwardsListResponseDTO {
+public class AwardsGraphListResponseDTO {
 
+    @JsonProperty(required = true)
     String id;
+    @JsonProperty(required = true)
     String noticeId;
     String client;
     String awardee;
     Long value;
     Long valueMin;
     Long valueMax;
+    @JsonProperty(required = true)
     LocalDate awardDate;
     LocalDate startDate;
     LocalDate endDate;
     Boolean groupAward;
     KnownAsDTO knownAs;
 
-    AwardsListResponseDTO() {}
+    AwardsGraphListResponseDTO() {}
 
-    public AwardsListResponseDTO(AwardsGraphResponse graphResponse) {
+    public AwardsGraphListResponseDTO(AwardsGraphResponse graphResponse) {
         if (null == graphResponse.getAwardNode()) throw new FosResponseStatusException("Cannot deserialise response");
         Map<String, Object> award = graphResponse.getAwardNode().asMap();
         Map<String, Object> awardee = graphResponse.getAwardee().asMap();
@@ -68,7 +72,7 @@ public class AwardsListResponseDTO {
         return id;
     }
 
-    public AwardsListResponseDTO setId(String id) {
+    public AwardsGraphListResponseDTO setId(String id) {
         this.id = id;
         return this;
     }
@@ -77,7 +81,7 @@ public class AwardsListResponseDTO {
         return client;
     }
 
-    public AwardsListResponseDTO setClient(String client) {
+    public AwardsGraphListResponseDTO setClient(String client) {
         this.client = client;
         return this;
     }
@@ -86,7 +90,7 @@ public class AwardsListResponseDTO {
         return awardee;
     }
 
-    public AwardsListResponseDTO setAwardee(String awardee) {
+    public AwardsGraphListResponseDTO setAwardee(String awardee) {
         this.awardee = awardee;
         return this;
     }
@@ -95,7 +99,7 @@ public class AwardsListResponseDTO {
         return value;
     }
 
-    public AwardsListResponseDTO setValue(Long value) {
+    public AwardsGraphListResponseDTO setValue(Long value) {
         this.value = value;
         return this;
     }
@@ -104,7 +108,7 @@ public class AwardsListResponseDTO {
         return awardDate;
     }
 
-    public AwardsListResponseDTO setAwardDate(LocalDate awardDate) {
+    public AwardsGraphListResponseDTO setAwardDate(LocalDate awardDate) {
         this.awardDate = awardDate;
         return this;
     }
@@ -113,7 +117,7 @@ public class AwardsListResponseDTO {
         return startDate;
     }
 
-    public AwardsListResponseDTO setStartDate(LocalDate startDate) {
+    public AwardsGraphListResponseDTO setStartDate(LocalDate startDate) {
         this.startDate = startDate;
         return this;
     }
@@ -122,7 +126,7 @@ public class AwardsListResponseDTO {
         return endDate;
     }
 
-    public AwardsListResponseDTO setEndDate(LocalDate endDate) {
+    public AwardsGraphListResponseDTO setEndDate(LocalDate endDate) {
         this.endDate = endDate;
         return this;
     }
@@ -131,7 +135,7 @@ public class AwardsListResponseDTO {
         return groupAward;
     }
 
-    public AwardsListResponseDTO setGroupAward(Boolean groupAward) {
+    public AwardsGraphListResponseDTO setGroupAward(Boolean groupAward) {
         this.groupAward = groupAward;
         return this;
     }
@@ -140,7 +144,7 @@ public class AwardsListResponseDTO {
         return knownAs;
     }
 
-    public AwardsListResponseDTO setKnownAs(KnownAsDTO knownAs) {
+    public AwardsGraphListResponseDTO setKnownAs(KnownAsDTO knownAs) {
         this.knownAs = knownAs;
         return this;
     }
@@ -149,7 +153,7 @@ public class AwardsListResponseDTO {
         return valueMin;
     }
 
-    public AwardsListResponseDTO setValueMin(Long valueMin) {
+    public AwardsGraphListResponseDTO setValueMin(Long valueMin) {
         this.valueMin = valueMin;
         return this;
     }
@@ -158,7 +162,7 @@ public class AwardsListResponseDTO {
         return valueMax;
     }
 
-    public AwardsListResponseDTO setValueMax(Long valueMax) {
+    public AwardsGraphListResponseDTO setValueMax(Long valueMax) {
         this.valueMax = valueMax;
         return this;
     }
@@ -167,7 +171,7 @@ public class AwardsListResponseDTO {
         return noticeId;
     }
 
-    public AwardsListResponseDTO setNoticeId(String noticeId) {
+    public AwardsGraphListResponseDTO setNoticeId(String noticeId) {
         this.noticeId = noticeId;
         return this;
     }
@@ -181,7 +185,9 @@ public class AwardsListResponseDTO {
             this.name = name;
         }
 
+        @JsonProperty(required = true)
         String id;
+        @JsonProperty(required = true)
         String name;
 
         public String getId() {

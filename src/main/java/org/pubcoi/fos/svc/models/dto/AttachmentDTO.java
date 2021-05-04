@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.models.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.pubcoi.cdm.cf.attachments.DocTypeEnum;
 import org.pubcoi.cdm.cf.attachments.S3LocationType;
@@ -24,9 +25,12 @@ import org.pubcoi.cdm.cf.attachments.S3LocationType;
 // corresponds to the 'additional detail' type
 public class AttachmentDTO {
 
+    @JsonProperty(required = true)
     String id;
+    @JsonProperty(required = true)
     String noticeId;
     String description;
+    @JsonProperty(required = true)
     String type;
     String href;
     String textData;

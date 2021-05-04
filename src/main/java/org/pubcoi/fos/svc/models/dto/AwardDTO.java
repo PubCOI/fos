@@ -32,8 +32,10 @@ import java.util.List;
 public class AwardDTO {
 
     @JsonView(FosViews.Summary.class)
+    @JsonProperty(required = true)
     String id;
     @JsonView(FosViews.Summary.class)
+    @JsonProperty(required = true)
     String noticeId;
     @JsonView(FosViews.Details.class)
     String noticeTitle;
@@ -44,12 +46,14 @@ public class AwardDTO {
     @JsonView(FosViews.Details.class)
     Long supplierNumTotalAwards;
     @JsonView(FosViews.Details.class)
+    @JsonProperty(required = true)
     Long value;
     @JsonView(FosViews.Details.class)
     Long valueMin;
     @JsonView(FosViews.Details.class)
     Long valueMax;
     @JsonView(FosViews.Details.class)
+    @JsonProperty(required = true)
     LocalDate awardDate;
     @JsonView(FosViews.Details.class)
     LocalDate startDate;

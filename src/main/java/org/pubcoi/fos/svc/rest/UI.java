@@ -57,7 +57,7 @@ import org.pubcoi.fos.svc.models.dto.search.SearchByDateTypeEnum;
 import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
-import org.pubcoi.fos.svc.models.queries.AwardsListResponseDTO;
+import org.pubcoi.fos.svc.models.queries.AwardsGraphListResponseDTO;
 import org.pubcoi.fos.svc.repos.gdb.custom.AwardsListRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
@@ -156,9 +156,9 @@ public class UI {
     }
 
     @GetMapping("/api/awards")
-    public List<AwardsListResponseDTO> getContractAwards() {
+    public List<AwardsGraphListResponseDTO> getContractAwards() {
         return awardsListRepo.getAwardsWithRels()
-                .stream().map(AwardsListResponseDTO::new)
+                .stream().map(AwardsGraphListResponseDTO::new)
                 .filter(a -> awardsMDBRepo.existsById(a.getId())) // todo show info stats for awards that are missing
                 .peek(a -> {
                     CFAward award = awardsMDBRepo.findById(a.getId()).orElseThrow();

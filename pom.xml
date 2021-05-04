@@ -153,11 +153,14 @@
                                 <class>org.pubcoi.fos.svc.models.dto.UpdateProfileRequestDTO</class>
                                 <class>org.pubcoi.fos.svc.models.dto.GraphDetailedSearchResponseDTO</class>
                                 <class>org.pubcoi.fos.svc.models.dto.OrganisationDTO</class>
+                                <class>org.pubcoi.fos.svc.models.dto.AwardDTO</class>
+                                <class>org.pubcoi.fos.svc.models.queries.AwardsGraphListResponseDTO</class>
                             </classes>
                             <noFileComment>true</noFileComment>
                             <outputFile>fos-ui/src/generated/FosTypes.ts</outputFile>
                             <outputKind>module</outputKind>
                             <outputFileType>implementationFile</outputFileType>
+                            <optionalProperties>useLibraryDefinition</optionalProperties>
                             <mapClasses>asInterfaces</mapClasses>
                             <mapEnum>asEnum</mapEnum>
                             <nonConstEnums>true</nonConstEnums>

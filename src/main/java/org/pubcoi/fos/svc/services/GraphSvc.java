@@ -21,4 +21,6 @@ public interface GraphSvc {
     void populateGraphFromMDB();
 
     void createAndUpdateAttachmentObjects();
+
+    void populateGraphFromMDB(String noticeId);
 }

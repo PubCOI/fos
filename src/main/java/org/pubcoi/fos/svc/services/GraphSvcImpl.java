@@ -177,6 +177,21 @@ public class GraphSvcImpl implements GraphSvc {
         orgGraphRepo.findAllNotHydrating().forEach(this::populateOfficeBearers);
     }
 
+    @Override
+    public void populateGraphFromMDB(String noticeId) {
+        // overhead is near-zero, might as well do this initial step without filtering
+        scheduledSvc.populateFosOrgsMDBFromAwards();
+        noticesMDBRepo.findById(noticeId).ifPresent(this::addNoticeToGraph);
+        awardsMDBRepo.findAllByNoticeId(noticeId).forEach(this::addAwardToGraph);
+        noticesGraphRepo.findByFosId(noticeId).ifPresent(n -> {
+            n.getAwards().forEach(award -> {
+                award.getAwardees().forEach(awardee -> {
+                    populateOfficeBearers(awardee.getOrganisationNode());
+                });
+            });
+        });
+    }
+
     private void populateOfficeBearers(OrganisationNode orgNode) {
         if (null == orgNode.getReference() || null == orgNode.getJurisdiction()) {
             logger.info("{} not an OC node, skipping", orgNode);

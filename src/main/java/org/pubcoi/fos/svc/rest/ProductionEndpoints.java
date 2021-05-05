@@ -19,6 +19,7 @@ package org.pubcoi.fos.svc.rest;
 
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.fos.svc.services.ContractsFinderSvc;
+import org.pubcoi.fos.svc.services.GraphSvc;
 import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,10 +33,12 @@ public class ProductionEndpoints {
 
     final FosAuthProvider authProvider;
     final ContractsFinderSvc contractsFinderSvc;
+    final GraphSvc graphSvc;
 
-    public ProductionEndpoints(FosAuthProvider authProvider, ContractsFinderSvc contractsFinderSvc) {
+    public ProductionEndpoints(FosAuthProvider authProvider, ContractsFinderSvc contractsFinderSvc, GraphSvc graphSvc) {
         this.authProvider = authProvider;
         this.contractsFinderSvc = contractsFinderSvc;
+        this.graphSvc = graphSvc;
     }
 
     /**
@@ -48,6 +51,7 @@ public class ProductionEndpoints {
     public String putNotice(@PathVariable String noticeId, @RequestHeader("authToken") String authToken) {
         authProvider.checkAuth(authToken);
         FullNotice notice = contractsFinderSvc.addNotice(noticeId);
+        graphSvc.populateGraphFromMDB(noticeId);
         return String.format("%s added", notice.getId());
     }
 

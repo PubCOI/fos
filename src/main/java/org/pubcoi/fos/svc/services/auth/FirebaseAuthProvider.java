@@ -19,9 +19,13 @@ package org.pubcoi.fos.svc.services.auth;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import org.pubcoi.fos.svc.exceptions.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.FosUnauthorisedResponseStatusException;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -30,6 +34,7 @@ import org.springframework.stereotype.Service;
 @ConditionalOnMissingBean(NoAuthProvider.class)
 @Service
 public class FirebaseAuthProvider implements FosAuthProvider {
+    private static final Logger logger = LoggerFactory.getLogger(FirebaseAuthProvider.class);
 
     final FosUserRepo userRepo;
 
@@ -49,24 +54,41 @@ public class FirebaseAuthProvider implements FosAuthProvider {
     @Override
     public String getUid(String authToken) {
         try {
-            return FirebaseAuth.getInstance().verifyIdToken(authToken).getUid();
-        } catch (FirebaseAuthException e) {
+            return getInstance(authToken).getUid();
+        } catch (FosCoreException e) {
             throw new FosUnauthorisedResponseStatusException(e);
         }
     }
 
     @Override
     public FosUser getByUid(String uid) {
+        // todo revisit this - should we actually instantiate the entire user object if it doesn't exist ie by
+        // going back to the remote user db ...
         return userRepo.getByUid(uid);
     }
 
     @Override
     public boolean existsByUid(String uid) {
+        // todo as above
         return userRepo.existsByUid(uid);
     }
 
     @Override
     public FosUser save(FosUser user) {
         return userRepo.save(user);
+    }
+
+    private FosUser getInstance(String authToken) throws FosCoreException {
+        try {
+            FirebaseToken token = FirebaseAuth.getInstance().verifyIdToken(authToken);
+            if (!existsByUid(token.getUid())) {
+                return userRepo.save(new FosUser(token));
+            } else {
+                return getByUid(token.getUid());
+            }
+        } catch (FirebaseAuthException e) {
+            logger.error(e.getMessage(), e);
+            throw new FosCoreException(e.getMessage(), e);
+        }
     }
 }

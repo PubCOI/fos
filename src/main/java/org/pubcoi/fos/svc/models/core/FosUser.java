@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.models.core;
 
+import com.google.firebase.auth.FirebaseToken;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -35,6 +36,12 @@ public class FosUser {
     OffsetDateTime lastLogin;
 
     public FosUser() {
+    }
+
+    public FosUser(FirebaseToken token) {
+        this.uid = token.getUid();
+        this.displayName = token.getName();
+        this.lastLogin = OffsetDateTime.now();
     }
 
     public String getDisplayName() {

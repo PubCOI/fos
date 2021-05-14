@@ -45,7 +45,7 @@ public class DeclaredInterest implements FosEntity {
     String comments;
     @DynamicLabels
     Set<String> labels = new HashSet<>();
-    Boolean hidden = false;
+    boolean hidden = false;
 
     DeclaredInterest() {
     }
@@ -66,12 +66,12 @@ public class DeclaredInterest implements FosEntity {
     }
 
     @Override
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public FosEntity setHidden(Boolean hidden) {
+    public FosEntity setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }

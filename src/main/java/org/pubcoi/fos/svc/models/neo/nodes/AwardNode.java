@@ -26,13 +26,14 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Node(primaryLabel = "Award")
 public class AwardNode implements FosEntity {
 
     @Relationship(Constants.Neo4J.REL_AWARDED_TO)
-    List<AwardOrgLink> awardees;
+    List<AwardOrgLink> awardees = new ArrayList<>();
 
     @Id
     @GeneratedValue
@@ -40,8 +41,8 @@ public class AwardNode implements FosEntity {
     String fosId;
     Long value;
     String noticeId;
-    Boolean groupAward;
-    Boolean hidden = false;
+    boolean groupAward = false;
+    boolean hidden = false;
 
     public AwardNode() {
     }
@@ -73,22 +74,17 @@ public class AwardNode implements FosEntity {
         return this;
     }
 
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
-    public AwardNode setHidden(Boolean hidden) {
+    public AwardNode setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }
 
-    public Boolean getGroupAward() {
-        return groupAward;
-    }
-
-    public AwardNode setGroupAward(Boolean groupAward) {
-        this.groupAward = groupAward;
-        return this;
+    public Long getGraphId() {
+        return graphId;
     }
 
     @Override
@@ -122,10 +118,6 @@ public class AwardNode implements FosEntity {
                 '}';
     }
 
-    public List<AwardOrgLink> getAwardees() {
-        return null == awardees ? null : Collections.unmodifiableList(awardees);
-    }
-
     public AwardNode setAwardees(List<AwardOrgLink> awardees) {
         this.awardees = awardees;
         return this;
@@ -135,5 +127,18 @@ public class AwardNode implements FosEntity {
         if (null == this.awardees) awardees = new ArrayList<>();
         this.awardees.add(awardOrgLink);
         return this;
+    }
+
+    public boolean isGroupAward() {
+        return groupAward;
+    }
+
+    public AwardNode setGroupAward(boolean groupAward) {
+        this.groupAward = groupAward;
+        return this;
+    }
+
+    public List<AwardOrgLink> getAwardees() {
+        return awardees;
     }
 }

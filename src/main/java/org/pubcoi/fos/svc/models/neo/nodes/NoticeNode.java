@@ -26,7 +26,8 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Node(primaryLabel = "Notice")
 public class NoticeNode implements FosEntity {
@@ -37,9 +38,9 @@ public class NoticeNode implements FosEntity {
     String fosId;
 
     @Relationship(Constants.Neo4J.REL_AWARDED)
-    List<AwardNode> awards;
+    List<AwardNode> awards = new ArrayList<>();
 
-    Boolean hidden = false;
+    boolean hidden = false;
 
     public NoticeNode() {
     }
@@ -63,22 +64,18 @@ public class NoticeNode implements FosEntity {
         return this;
     }
 
-    public List<AwardNode> getAwards() {
-        return null == awards ? null : Collections.unmodifiableList(awards);
-    }
-
     public NoticeNode setAwards(List<AwardNode> awards) {
         this.awards = awards;
         return this;
     }
 
     @Override
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public NoticeNode setHidden(Boolean hidden) {
+    public NoticeNode setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }
@@ -111,5 +108,13 @@ public class NoticeNode implements FosEntity {
                 "graphId=" + graphId +
                 ", fosId='" + fosId + '\'' +
                 '}';
+    }
+
+    public Long getGraphId() {
+        return graphId;
+    }
+
+    public List<AwardNode> getAwards() {
+        return awards;
     }
 }

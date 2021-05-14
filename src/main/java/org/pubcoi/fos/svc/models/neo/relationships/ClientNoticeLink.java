@@ -91,10 +91,6 @@ public class ClientNoticeLink implements FosRelationship {
         return this;
     }
 
-    public Boolean getHidden() {
-        return hidden;
-    }
-
     public ClientNoticeLink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;

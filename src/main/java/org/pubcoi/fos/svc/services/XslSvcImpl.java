@@ -146,15 +146,24 @@ public class XslSvcImpl implements XslSvc {
         try (
                 ByteArrayOutputStream baos = new ByteArrayOutputStream()
         ) {
-            Source inputStep1 = new StreamSource(new ByteArrayInputStream(input.getBytes()));
+            // kludge: contract finder returns invalid XML as &pound; and &bull; entities are included
+            final String escapedXml = removeInvalidEntities(input);
+            Source inputStep1 = new StreamSource(new ByteArrayInputStream(escapedXml.getBytes()));
             Result step1Output = new StreamResult(baos);
             cfsDataXF.transform(inputStep1, step1Output);
 
             Unmarshaller u = context.createUnmarshaller();
             return type.cast(u.unmarshal(new ByteArrayInputStream(baos.toByteArray())));
         } catch (JAXBException | IOException | TransformerException e) {
-            throw new FosEndpointException(UNABLE_TO_TRANSFORM);
+            throw new FosEndpointException(UNABLE_TO_TRANSFORM, e);
         }
+    }
+
+    String removeInvalidEntities(String input) {
+        return input
+                .replaceAll("&pound;", "£")
+                .replaceAll("&bull;", "•")
+                .replaceAll("&(?!quot|apos|lt|gt|amp|;$)[a-zA-Z0-9]{0,9};", "");
     }
 
 }

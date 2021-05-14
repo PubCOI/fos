@@ -18,6 +18,7 @@
 package org.pubcoi.fos.svc.services.auth;
 
 import org.pubcoi.fos.svc.models.core.FosUser;
+import org.pubcoi.fos.svc.services.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -37,7 +38,7 @@ public class NoAuthProvider implements FosAuthProvider {
 
     @Override
     public void checkAuth(String authToken) {
-        logger.warn("Standalone profile active: Token is valid by default (no checks performed on token validity)");
+        logger.warn(Ansi.Yellow.colorize("Standalone profile active: Token is valid by default (no checks performed on token validity)"));
     }
 
     @Override

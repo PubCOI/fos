@@ -46,8 +46,8 @@ public class ClientsGraphListResponseDTO {
         this.fosId = node.getFosId();
         this.name = node.getName();
         this.total = null == node.getNotices() ? 0 : node.getNotices().size();
-        this.canonical = node.getCanonical();
-        this.hidden = node.getHidden();
+        this.canonical = node.isCanonical();
+        this.hidden = node.isHidden();
         List<ClientNoticeLink> sorted = node.getNotices().stream().sorted(Comparator.comparing(ClientNoticeLink::getPublished)).collect(Collectors.toList());
         this.lastNotice = sorted.get(sorted.size() - 1).getPublished();
         this.firstNotice = sorted.get(0).getPublished();

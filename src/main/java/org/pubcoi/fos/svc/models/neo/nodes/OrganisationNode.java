@@ -28,7 +28,10 @@ import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
 import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Node(primaryLabel = "Organisation")
 public class OrganisationNode implements FosEntity {
@@ -40,8 +43,8 @@ public class OrganisationNode implements FosEntity {
     String jurisdiction;
     String reference;
     String name;
-    Boolean verified;
-    Boolean hidden = false;
+    boolean verified = false;
+    boolean hidden = false;
 
     @DynamicLabels
     Set<String> labels = new HashSet<>();
@@ -50,7 +53,7 @@ public class OrganisationNode implements FosEntity {
     OrgLELink legalEntity;
 
     @Relationship(Constants.Neo4J.REL_PERSON)
-    List<OrgPersonLink> orgPersons;
+    List<OrgPersonLink> orgPersons = new ArrayList<>();
 
     public OrganisationNode() {
     }
@@ -117,21 +120,21 @@ public class OrganisationNode implements FosEntity {
     }
 
     @Override
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public OrganisationNode setHidden(Boolean hidden) {
+    public OrganisationNode setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }
 
-    public Boolean getVerified() {
+    public boolean getVerified() {
         return verified;
     }
 
-    public OrganisationNode setVerified(Boolean verified) {
+    public OrganisationNode setVerified(boolean verified) {
         this.verified = verified;
         if (verified) {
             labels.add("Verified");
@@ -191,10 +194,6 @@ public class OrganisationNode implements FosEntity {
         return this;
     }
 
-    public List<OrgPersonLink> getOrgPersons() {
-        return null == orgPersons ? null : Collections.unmodifiableList(orgPersons);
-    }
-
     public OrganisationNode setOrgPersons(List<OrgPersonLink> orgPersons) {
         this.orgPersons = orgPersons;
         return this;
@@ -208,5 +207,9 @@ public class OrganisationNode implements FosEntity {
                 .append("name", name)
                 .append("verified", verified)
                 .toString();
+    }
+
+    public List<OrgPersonLink> getOrgPersons() {
+        return orgPersons;
     }
 }

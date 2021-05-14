@@ -24,6 +24,8 @@ import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
 import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class NoticesSvcImpl implements NoticesSvc {
+    private static final Logger logger = LoggerFactory.getLogger(NoticesSvcImpl.class);
 
     final NoticesMDBRepo noticesMDBRepo;
     final NoticesGraphRepo noticesGRepo;
@@ -54,7 +57,13 @@ public class NoticesSvcImpl implements NoticesSvc {
         notice.setCreatedByUser(null);
         noticesMDBRepo.save(notice);
         for (AwardDetailType awardDetail : notice.getAwards().getAwardDetails()) {
-            awardsSvc.addAward(new CFAward(notice, awardDetail));
+            CFAward award = new CFAward(notice, awardDetail);
+            // guess what - the bastarts will sometimes set the award ID to NULL ... WTF ?!?!?!?
+            if (!awardIdIsValid(award)) {
+                logger.error(Ansi.Red.format("Award GUID '%s' is not valid, using an internal ID", award.getId()));
+                award.setId(String.format("FOS_GENERATED:%s:%s", notice.getId(), award.hashCode()));
+            }
+            awardsSvc.addAward(award);
         }
         return notice;
     }
@@ -79,6 +88,19 @@ public class NoticesSvcImpl implements NoticesSvc {
 
     @Override
     public FullNotice getNotice(String noticeId) {
-        return noticesMDBRepo.findById(noticeId).orElseThrow();
+        return noticesMDBRepo.findFullNoticeById(noticeId).orElseThrow();
+    }
+
+    boolean awardIdIsValid(CFAward award) {
+        // we probably shouldn't expect it to be a guid
+        if (null != award.getId()) {
+            if (award.getId().matches("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")) {
+                return true;
+            } else if (award.getId().matches("[a-zA-Z0-9-]{10,}")) {
+                logger.warn(Ansi.Yellow.format("Award GUID %s does not match usual regex", award.getId()));
+                return true;
+            }
+        }
+        return false;
     }
 }

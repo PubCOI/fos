@@ -28,22 +28,22 @@ public class FosEndpointException extends ResponseStatusException {
 
     public FosEndpointException() {
         super(HttpStatus.INTERNAL_SERVER_ERROR);
-        logger.error("Exception, returning 500");
+        logger.error("Exception, returning 500", this);
     }
 
     public FosEndpointException(String message) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
-        logger.error("Exception, returning 500: {}", message);
+        logger.error(String.format("Exception, returning 500: %s", message), this);
     }
 
     public FosEndpointException(HttpStatus status, String message) {
         super(status, message);
-        logger.error("Exception, returning {}: {}", status, message);
+        logger.error(String.format("Exception, returning %s: %s", status, message), this);
     }
 
     public FosEndpointException(HttpStatus status) {
         super(status);
-        logger.error("Exception, returning {}", status);
+        logger.error(String.format("Exception, returning %s", status), this);
     }
 
     public FosEndpointException(String message, Throwable e) {
@@ -53,5 +53,6 @@ public class FosEndpointException extends ResponseStatusException {
 
     public FosEndpointException(@NotNull Throwable e) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        logger.error(e.getMessage(), e);
     }
 }

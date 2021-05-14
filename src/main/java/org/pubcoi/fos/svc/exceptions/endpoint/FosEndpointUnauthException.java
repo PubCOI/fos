@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.exceptions.endpoint;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 public class FosEndpointUnauthException extends FosEndpointException {
@@ -24,7 +25,7 @@ public class FosEndpointUnauthException extends FosEndpointException {
         super(HttpStatus.UNAUTHORIZED);
     }
 
-    public FosEndpointUnauthException(Throwable e) {
+    public FosEndpointUnauthException(@NotNull Throwable e) {
         super(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 }

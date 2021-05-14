@@ -36,7 +36,7 @@ public class ResolveClientDTO {
     public ResolveClientDTO(ClientNode clientNode) {
         this.id = clientNode.getFosId();
         this.name = clientNode.getName();
-        this.isCanonical = clientNode.getCanonical();
+        this.isCanonical = clientNode.isCanonical();
         this.postCode = clientNode.getPostCode();
         this.canonicalId = (null != clientNode.getParent() ? clientNode.getParent().getClient().getFosId() : null);
         if (this.isCanonical && null != clientNode.getParent()) {
@@ -74,10 +74,6 @@ public class ResolveClientDTO {
     public ResolveClientDTO setName(String name) {
         this.name = name;
         return this;
-    }
-
-    public Boolean getCanonical() {
-        return isCanonical;
     }
 
     public String getCanonicalId() {

@@ -52,7 +52,7 @@ public class ContractsFinderSvcImpl implements ContractsFinderSvc {
 
     @Override
     public NoticeSearchResponse postSearchRequest(SearchCriteriaType searchCriteria) {
-        NoticeSearchRequest searchRequest = new NoticeSearchRequest().withSearchCriteria(searchCriteria).withSize(10);
+        NoticeSearchRequest searchRequest = new NoticeSearchRequest().withSearchCriteria(searchCriteria).withSize(1000);
         NoticeSearchResponseWrapper searchResponse = restTemplate.postForObject(cfSearchEndpoint, searchRequest, NoticeSearchResponseWrapper.class);
         if (searchResponse != null) {
             for (NoticeHitType hitOfNoticeIndex : searchResponse.getNoticeSearchResponse().getNoticeList().getHitOfNoticeIndices()) {

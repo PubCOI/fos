@@ -34,8 +34,8 @@ public abstract class FosOrganisation implements FosEntity {
     String companyAddress;
     String referenceType;
     String reference;
-    Boolean hidden = false;
-    Boolean verified = false;
+    boolean hidden = false;
+    boolean verified = false;
 
     public String getFosId() {
         return fosId;
@@ -45,12 +45,12 @@ public abstract class FosOrganisation implements FosEntity {
     }
 
     @Override
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public FosOrganisation setHidden(Boolean hidden) {
+    public FosOrganisation setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }
@@ -60,11 +60,11 @@ public abstract class FosOrganisation implements FosEntity {
         return this;
     }
 
-    public Boolean getVerified() {
+    public boolean getVerified() {
         return verified;
     }
 
-    public FosOrganisation setVerified(Boolean verified) {
+    public FosOrganisation setVerified(boolean verified) {
         this.verified = verified;
         return this;
     }

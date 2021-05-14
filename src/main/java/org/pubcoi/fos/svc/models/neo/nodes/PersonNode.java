@@ -28,7 +28,10 @@ import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
 import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Node(primaryLabel = "Person")
 public class PersonNode implements FosEntity {
@@ -42,7 +45,7 @@ public class PersonNode implements FosEntity {
     @GeneratedValue
     Long graphId;
     String fosId;
-    Boolean hidden = false;
+    boolean hidden = false;
     String ocId;
     Integer parliamentaryId;
     String commonName;
@@ -52,7 +55,7 @@ public class PersonNode implements FosEntity {
     @DynamicLabels
     Set<String> labels = new HashSet<>();
     @Relationship(Constants.Neo4J.REL_CONFLICT)
-    List<PersonConflictLink> conflicts;
+    List<PersonConflictLink> conflicts = new ArrayList<>();
 
     PersonNode() {
     }
@@ -107,12 +110,12 @@ public class PersonNode implements FosEntity {
     }
 
     @Override
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public FosEntity setHidden(Boolean hidden) {
+    public FosEntity setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
     }
@@ -199,7 +202,15 @@ public class PersonNode implements FosEntity {
                 '}';
     }
 
+    public Long getGraphId() {
+        return graphId;
+    }
+
+    public Set<String> getLabels() {
+        return labels;
+    }
+
     public List<PersonConflictLink> getConflicts() {
-        return null == conflicts ? null : Collections.unmodifiableList(conflicts);
+        return conflicts;
     }
 }

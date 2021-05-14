@@ -17,9 +17,14 @@
 
 package org.pubcoi.fos.svc.repos.mdb;
 
+import org.jetbrains.annotations.NotNull;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.Optional;
+
 public interface NoticesMDBRepo extends MongoRepository<FullNotice, String> {
 
+    @NotNull
+    Optional<FullNotice> findFullNoticeById(@NotNull String s);
 }

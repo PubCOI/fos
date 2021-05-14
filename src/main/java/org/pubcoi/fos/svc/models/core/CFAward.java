@@ -17,6 +17,9 @@
 
 package org.pubcoi.fos.svc.models.core;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.pubcoi.cdm.cf.AwardDetailType;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.ReferenceTypeE;
@@ -182,13 +185,6 @@ public class CFAward {
         return this;
     }
 
-    @Override
-    public String toString() {
-        return "CFAward{" +
-                "id='" + id + '\'' +
-                '}';
-    }
-
     public FosOrganisation getFosOrganisation() {
         return fosOrganisation;
     }
@@ -214,5 +210,47 @@ public class CFAward {
     public CFAward setGroup(Boolean group) {
         this.group = group;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CFAward cfAward = (CFAward) o;
+
+        return new EqualsBuilder()
+                .append(id, cfAward.id)
+                .append(noticeId, cfAward.noticeId)
+                .append(value, cfAward.value)
+                .append(startDate, cfAward.startDate)
+                .append(endDate, cfAward.endDate)
+                .append(awardedDate, cfAward.awardedDate)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(noticeId)
+                .append(value)
+                .append(startDate)
+                .append(endDate)
+                .append(awardedDate)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("noticeId", noticeId)
+                .append("value", value)
+                .append("client", client)
+                .append("awardedDate", awardedDate)
+                .append("supplierName", supplierName)
+                .toString();
     }
 }

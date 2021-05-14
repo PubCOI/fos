@@ -34,7 +34,8 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.util.DigestUtils;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.pubcoi.fos.svc.services.Utils.normalise;
 
@@ -48,18 +49,18 @@ public class ClientNode implements FosEntity {
     String fosId;
     String postCode;
     String name;
-    Boolean hidden = false;
+    boolean hidden = false;
 
     @Relationship(Constants.Neo4J.REL_AKA)
     ClientParentClientLink parent;
 
-    Boolean canonical = false;
+    boolean canonical = false;
 
     @Relationship(Constants.Neo4J.REL_PUBLISHED)
-    List<ClientNoticeLink> notices;
+    List<ClientNoticeLink> notices = new ArrayList<>();
 
     @Relationship(Constants.Neo4J.REL_PERSON)
-    List<ClientPersonLink> persons;
+    List<ClientPersonLink> persons = new ArrayList<>();
 
     public ClientNode() {
     }
@@ -129,27 +130,22 @@ public class ClientNode implements FosEntity {
         return this;
     }
 
-    public Boolean getCanonical() {
-        return canonical;
-    }
-
-    public ClientNode setCanonical(Boolean canonical) {
-        this.canonical = canonical;
-        return this;
+    public boolean isHidden() {
+        return hidden;
     }
 
     public void addNotice(NoticeNode noticeNode, String noticeId, ZonedDateTime publishedZDT) {
         addNotice(new ClientNoticeLink(this, noticeNode, noticeId, publishedZDT));
     }
 
-    public Boolean getHidden() {
-        return hidden;
-    }
-
     @Override
-    public ClientNode setHidden(Boolean hidden) {
+    public ClientNode setHidden(boolean hidden) {
         this.hidden = hidden;
         return this;
+    }
+
+    public Long getGraphId() {
+        return graphId;
     }
 
     public ClientParentClientLink getParent() {
@@ -193,17 +189,9 @@ public class ClientNode implements FosEntity {
                 '}';
     }
 
-    public List<ClientNoticeLink> getNotices() {
-        return null == notices ? null : Collections.unmodifiableList(notices);
-    }
-
     public ClientNode setNotices(List<ClientNoticeLink> notices) {
         this.notices = notices;
         return this;
-    }
-
-    public List<ClientPersonLink> getPersons() {
-        return null == persons ? null : Collections.unmodifiableList(persons);
     }
 
     public ClientNode setPersons(List<ClientPersonLink> persons) {
@@ -221,5 +209,22 @@ public class ClientNode implements FosEntity {
         if (null == this.notices) this.notices = new ArrayList<>();
         this.notices.add(clientNoticeLink);
         return this;
+    }
+
+    public boolean isCanonical() {
+        return canonical;
+    }
+
+    public ClientNode setCanonical(boolean canonical) {
+        this.canonical = canonical;
+        return this;
+    }
+
+    public List<ClientNoticeLink> getNotices() {
+        return notices;
+    }
+
+    public List<ClientPersonLink> getPersons() {
+        return persons;
     }
 }

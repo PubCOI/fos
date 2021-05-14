@@ -74,10 +74,10 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
                 ClientNode s2p_toNode = clientsGraphRepo.findClientHydratingNotices(
                         metaTransaction.getTarget().getFosId()).orElseThrow();
 
-                if (!s2p_toNode.getCanonical()) {
+                if (!s2p_toNode.isCanonical()) {
                     throw new FosEndpointBadRequestException("Parent ClientNode is not canonical");
                 }
-                if (s2p_fromNode.getCanonical()) {
+                if (s2p_fromNode.isCanonical()) {
                     throw new FosEndpointBadRequestException("Child ClientNode cannot be canonical");
                 }
 

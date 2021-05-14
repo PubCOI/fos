@@ -88,10 +88,6 @@ public class AwardOrgLink implements FosRelationship {
         return this;
     }
 
-    public Boolean getHidden() {
-        return hidden;
-    }
-
     public AwardOrgLink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;

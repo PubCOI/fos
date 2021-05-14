@@ -17,20 +17,12 @@
 
 package org.pubcoi.fos.svc.exceptions.endpoint;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class FosEndpointBadRequestException extends FosEndpointException {
-    private static final Logger logger = LoggerFactory.getLogger(FosEndpointBadRequestException.class);
 
     public FosEndpointBadRequestException(String message) {
         super(HttpStatus.BAD_REQUEST, message);
-    }
-
-    public FosEndpointBadRequestException(String message, Throwable e) {
-        super(HttpStatus.BAD_REQUEST, message);
-        logger.error(message, e);
     }
 
     public FosEndpointBadRequestException() {

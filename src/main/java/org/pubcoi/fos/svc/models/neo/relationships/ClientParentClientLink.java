@@ -71,10 +71,6 @@ public class ClientParentClientLink implements FosRelationship {
         return transactionID;
     }
 
-    public Boolean getHidden() {
-        return hidden;
-    }
-
     public ClientParentClientLink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;

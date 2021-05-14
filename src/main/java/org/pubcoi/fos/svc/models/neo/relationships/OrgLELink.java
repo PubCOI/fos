@@ -53,10 +53,6 @@ public class OrgLELink implements FosRelationship {
         this.transactions.add(transactionId);
     }
 
-    public Boolean getHidden() {
-        return hidden;
-    }
-
     public OrgLELink setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;

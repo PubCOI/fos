@@ -77,6 +77,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import java.net.URISyntaxException;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
@@ -243,11 +244,11 @@ public class UI {
         );
         if (searchRequestDTO.getDateType().equals(SearchByDateTypeEnum.awarded)) {
             searchCriteria.setAwardedFrom(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
-            searchCriteria.setAwardedTo(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
+            searchCriteria.setAwardedTo(OffsetDateTime.now());
         }
         else {
             searchCriteria.setPublishedFrom(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
-            searchCriteria.setPublishedTo(searchRequestDTO.getDateRange().getDateFrom().atStartOfDay().atOffset(ZoneOffset.UTC));
+            searchCriteria.setPublishedTo(OffsetDateTime.now());
         }
         return contractsFinderSvc.postSearchRequest(searchCriteria);
     }

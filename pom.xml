@@ -59,6 +59,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
         <!-- for resttemplatecustomiser -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -67,7 +72,7 @@
         <dependency>
             <groupId>org.pubcoi.fos</groupId>
             <artifactId>fos-depends-aspects</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>

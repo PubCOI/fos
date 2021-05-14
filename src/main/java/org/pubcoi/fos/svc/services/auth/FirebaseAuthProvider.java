@@ -20,8 +20,8 @@ package org.pubcoi.fos.svc.services.auth;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosUnauthorisedResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointUnauthException;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.repos.mdb.FosUserRepo;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public class FirebaseAuthProvider implements FosAuthProvider {
         try {
             FirebaseAuth.getInstance().verifyIdToken(authToken);
         } catch (FirebaseAuthException e) {
-            throw new FosUnauthorisedResponseStatusException(e);
+            throw new FosEndpointUnauthException(e);
         }
     }
 
@@ -56,7 +56,7 @@ public class FirebaseAuthProvider implements FosAuthProvider {
         try {
             return getInstance(authToken).getUid();
         } catch (FosCoreException e) {
-            throw new FosUnauthorisedResponseStatusException(e);
+            throw new FosEndpointUnauthException(e);
         }
     }
 

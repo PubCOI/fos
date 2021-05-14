@@ -15,11 +15,16 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.transactions;
+package org.pubcoi.fos.svc.exceptions.endpoint;
 
-public enum FosTransactionType {
-    link_source_to_parent_clientNode,
-    mark_canonical_clientNode,
-    link_org_to_canonical,
-    link_person_to_org,
+import org.springframework.http.HttpStatus;
+
+public class FosEndpointUnauthException extends FosEndpointException {
+    public FosEndpointUnauthException() {
+        super(HttpStatus.UNAUTHORIZED);
+    }
+
+    public FosEndpointUnauthException(Throwable e) {
+        super(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
 }

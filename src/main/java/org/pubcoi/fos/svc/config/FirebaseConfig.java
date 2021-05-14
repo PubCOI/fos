@@ -20,7 +20,7 @@ package org.pubcoi.fos.svc.config;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +45,7 @@ public class FirebaseConfig {
         try {
             FirebaseOptions options;
             logger.info("Attempting to load Firebase properties at {}", firebaseCreds);
-            if (!firebaseCreds.exists()) throw new FosRuntimeException(credsError);
+            if (!firebaseCreds.exists()) throw new FosCoreRuntimeException(credsError);
             try (FileInputStream serviceAccount = new FileInputStream(firebaseCreds.getFile())) {
                 options = new FirebaseOptions.Builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -53,7 +53,7 @@ public class FirebaseConfig {
             }
             FirebaseApp.initializeApp(options);
         } catch (IOException e) {
-            throw new FosRuntimeException(credsError);
+            throw new FosCoreRuntimeException(credsError);
         }
     }
 

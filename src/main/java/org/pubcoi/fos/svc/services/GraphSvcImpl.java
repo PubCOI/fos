@@ -25,7 +25,7 @@ import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.pubcoi.cdm.fos.AttachmentFactory;
 import org.pubcoi.cdm.fos.BatchJobFactory;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosOrganisation;
@@ -154,7 +154,7 @@ public class GraphSvcImpl implements GraphSvc {
                 });
 
                 logger.debug("Saved {}", awardNode);
-            } catch (FosResponseStatusException e) {
+            } catch (FosEndpointException e) {
                 logger.error(Ansi.Red.colorize("Unable to insert entry into graph: is source MDB fully populated?"), e);
             }
         } else {

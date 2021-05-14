@@ -21,6 +21,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.pubcoi.cdm.mnis.MnisMemberType;
@@ -28,7 +34,8 @@ import org.pubcoi.cdm.mnis.MnisMembersType;
 import org.pubcoi.cdm.pw.RegisterCategoryType;
 import org.pubcoi.cdm.pw.RegisterEntryType;
 import org.pubcoi.cdm.pw.RegisterRecordType;
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.pubcoi.fos.svc.models.core.MnisInterestsCache;
 import org.pubcoi.fos.svc.models.dto.es.MemberInterestDTO;
 import org.pubcoi.fos.svc.models.dto.es.MemberInterestsDTO;
@@ -36,6 +43,7 @@ import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.es.PWDeclaredInterest;
 import org.pubcoi.fos.svc.models.es.PWDeclaredInterestFactory;
 import org.pubcoi.fos.svc.models.es.PWDeclaredInterestMDBType;
+import org.pubcoi.fos.svc.models.queries.ResultAndScore;
 import org.pubcoi.fos.svc.repos.es.MembersInterestsESRepo;
 import org.pubcoi.fos.svc.repos.mdb.MnisInterestsCacheRepo;
 import org.pubcoi.fos.svc.repos.mdb.MnisMembersRepo;
@@ -69,6 +77,7 @@ public class MnisSvcImpl implements MnisSvc {
     final RestTemplate restTemplate;
     final PWDeclaredInterestFactory declaredInterestFactory;
     final ParentRecordTypeMDBRepo parentRecordTypeMDBRepo;
+    final RestHighLevelClient esClient;
     Map<String, Integer> pwToMemberLookup = new HashMap<>();
     Map<Integer, String> memberToPwLookup = new HashMap<>();
 
@@ -78,13 +87,31 @@ public class MnisSvcImpl implements MnisSvc {
     @Value("${fos.xsl.pw.mnis-input:mnisid_to_pwid.json}")
     String mnisMapInput;
 
+    public MnisSvcImpl(MnisMembersRepo mnisMembersRepo,
+                       MnisInterestsCacheRepo mnisInterestsCacheRepo,
+                       MembersInterestsESRepo membersInterestsESRepo,
+                       PWDeclaredInterestMDBRepo pwDeclaredInterestMDBRepo,
+                       RestTemplate restTemplate,
+                       PWDeclaredInterestFactory declaredInterestFactory,
+                       ParentRecordTypeMDBRepo parentRecordTypeMDBRepo,
+                       RestHighLevelClient esClient) {
+        this.mnisMembersRepo = mnisMembersRepo;
+        this.mnisInterestsCacheRepo = mnisInterestsCacheRepo;
+        this.membersInterestsESRepo = membersInterestsESRepo;
+        this.pwDeclaredInterestMDBRepo = pwDeclaredInterestMDBRepo;
+        this.restTemplate = restTemplate;
+        this.declaredInterestFactory = declaredInterestFactory;
+        this.parentRecordTypeMDBRepo = parentRecordTypeMDBRepo;
+        this.esClient = esClient;
+    }
+
     @PostConstruct
     public void populateMap() {
         // we don't need any models in this case
         // see https://gist.github.com/rmacd/7ee7c5a781f50e5984f9bad2a2dda0ff
         ClassPathResource mapInputResource = new ClassPathResource(mnisMapInput);
         if (!mapInputResource.exists()) {
-            throw new FosRuntimeException(String.format("Unable to find file at path %s", mnisMapInput));
+            throw new FosCoreRuntimeException(String.format("Unable to find file at path %s", mnisMapInput));
         }
         try (InputStream is = mapInputResource.getInputStream()) {
             JSONArray arr = new JSONArray(new String(is.readAllBytes()));
@@ -110,24 +137,8 @@ public class MnisSvcImpl implements MnisSvc {
                         });
             }
         } catch (IOException | JSONException e) {
-            throw new FosRuntimeException("Unable to construct member ID lookup map");
+            throw new FosCoreRuntimeException("Unable to construct member ID lookup map");
         }
-    }
-
-    public MnisSvcImpl(MnisMembersRepo mnisMembersRepo,
-                       MnisInterestsCacheRepo mnisInterestsCacheRepo,
-                       MembersInterestsESRepo membersInterestsESRepo,
-                       PWDeclaredInterestMDBRepo pwDeclaredInterestMDBRepo,
-                       RestTemplate restTemplate,
-                       PWDeclaredInterestFactory declaredInterestFactory,
-                       ParentRecordTypeMDBRepo parentRecordTypeMDBRepo) {
-        this.mnisMembersRepo = mnisMembersRepo;
-        this.mnisInterestsCacheRepo = mnisInterestsCacheRepo;
-        this.membersInterestsESRepo = membersInterestsESRepo;
-        this.pwDeclaredInterestMDBRepo = pwDeclaredInterestMDBRepo;
-        this.restTemplate = restTemplate;
-        this.declaredInterestFactory = declaredInterestFactory;
-        this.parentRecordTypeMDBRepo = parentRecordTypeMDBRepo;
     }
 
     @Override
@@ -192,6 +203,25 @@ public class MnisSvcImpl implements MnisSvc {
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public List<ResultAndScore> searchInterestsForConflicts(String query) throws FosCoreException {
+        SearchRequest request = new SearchRequest().indices("members_interests");
+        SearchSourceBuilder sb = new SearchSourceBuilder();
+        sb.query(QueryBuilders.matchQuery("text", query)
+                .minimumShouldMatch("75%")
+        );
+        sb.minScore(9.9f);
+        request.source(sb);
+        try {
+            SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
+            return Arrays.stream(response.getHits().getHits())
+                    .map(hit -> new ResultAndScore(hit.getId(), hit.getScore()))
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new FosCoreException(e.getMessage(), e);
         }
     }
 

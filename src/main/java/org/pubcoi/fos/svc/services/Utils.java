@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.services;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -37,10 +37,11 @@ public class Utils {
 
     public static String convertOCCompanyToGraphID(String objectId) {
         if (!objectId.startsWith("oc_company")) {
-            throw new FosRuntimeException("Object ID must start with oc_company");
+            throw new FosCoreRuntimeException("Object ID must start with oc_company");
         }
         Matcher m = ocCompanyPattern.matcher(objectId);
-        if (!m.matches()) throw new FosRuntimeException("Object ID " + objectId + " does not match expected pattern");
+        if (!m.matches())
+            throw new FosCoreRuntimeException("Object ID " + objectId + " does not match expected pattern");
         return (String.format("%s:%s", m.group(1), m.group(2)));
     }
 

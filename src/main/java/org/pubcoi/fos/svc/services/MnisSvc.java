@@ -18,13 +18,18 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.cdm.pw.RegisterEntryType;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
 import org.pubcoi.fos.svc.models.dto.es.MemberInterestsDTO;
+import org.pubcoi.fos.svc.models.queries.ResultAndScore;
+
+import java.util.List;
 
 public interface MnisSvc {
     void populateInterestsForMember(Integer memberId);
 
     void addInterestsToMDB(RegisterEntryType entryType, String datasetName) throws FosCoreException;
+
+    List<ResultAndScore> searchInterestsForConflicts(String query) throws FosCoreException;
 
     void reindex();
 

@@ -24,9 +24,9 @@ import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.cdm.mnis.MnisMembersType;
 import org.pubcoi.cdm.pw.PWRootType;
 import org.pubcoi.cdm.pw.RegisterEntryType;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.pubcoi.fos.svc.models.neo.nodes.DeclaredInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
@@ -153,10 +153,19 @@ public class Debug {
             try {
                 mnisSvc.addInterestsToMDB(register, dataset);
             } catch (FosCoreException e) {
-                throw new FosResponseStatusException();
+                throw new FosEndpointException();
             }
         }
         return "ok";
+    }
+
+    @GetMapping("/api/debug/run-coi-check")
+    public void runCOICheck() {
+        try {
+            scheduledSvc.flagPotentialConflicts();
+        } catch (FosCoreException e) {
+            throw new FosEndpointException(e.getMessage(), e);
+        }
     }
 
     @PostMapping("/api/datasets/members-interests/reindex")
@@ -173,7 +182,7 @@ public class Debug {
     public String uploadMnisData(MultipartHttpServletRequest request) {
         MultipartFile file = request.getFile("file");
         if (null == file) {
-            throw new FosBadRequestResponseStatusException("Empty file");
+            throw new FosEndpointBadRequestException("Empty file");
         }
         try {
             JAXBContext context = JAXBContext.newInstance(MnisMembersType.class);
@@ -184,7 +193,7 @@ public class Debug {
                 mnisMembersRepo.save(mnisMemberType);
             }
         } catch (IOException | JAXBException e) {
-            throw new FosResponseStatusException("Unable to read file stream");
+            throw new FosEndpointException("Unable to read file stream");
         }
         return "ok";
     }

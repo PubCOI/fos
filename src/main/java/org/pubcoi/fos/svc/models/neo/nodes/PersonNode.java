@@ -23,6 +23,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.models.core.Constants;
+import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.services.Utils;
 import org.springframework.data.neo4j.core.schema.*;
@@ -72,6 +73,11 @@ public class PersonNode implements FosEntity {
         this.occupation = String.format("politician: Member_Id %d", memberType.getMemberId());
         this.labels.add(PersonNodeType.Politician.name());
         this.commonName = memberType.getFullTitle();
+    }
+
+    // used for replaying transactions
+    public PersonNode(NodeReference node) {
+        this.fosId = node.getFosId();
     }
 
     public static String generatePersonId(OCOfficer__1 officer) {

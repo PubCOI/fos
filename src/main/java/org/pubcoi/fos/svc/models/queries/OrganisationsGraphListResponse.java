@@ -15,25 +15,31 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.models.queries;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import org.neo4j.driver.internal.value.ListValue;
+import org.neo4j.driver.internal.value.NodeValue;
 
-public class FosBadRequestResponseStatusException extends FosResponseStatusException {
-    private static final Logger logger = LoggerFactory.getLogger(FosBadRequestResponseStatusException.class);
+public class OrganisationsGraphListResponse {
 
-    public FosBadRequestResponseStatusException(String message) {
-        super(HttpStatus.BAD_REQUEST, message);
+    NodeValue organisation;
+    ListValue awards;
+
+    public ListValue getAwards() {
+        return awards;
     }
 
-    public FosBadRequestResponseStatusException(String message, Throwable e) {
-        super(HttpStatus.BAD_REQUEST, message);
-        logger.error(message, e);
+    public OrganisationsGraphListResponse setAwards(ListValue awards) {
+        this.awards = awards;
+        return this;
     }
 
-    public FosBadRequestResponseStatusException() {
-        super(HttpStatus.BAD_REQUEST);
+    public NodeValue getOrganisation() {
+        return organisation;
+    }
+
+    public OrganisationsGraphListResponse setOrganisation(NodeValue organisation) {
+        this.organisation = organisation;
+        return this;
     }
 }

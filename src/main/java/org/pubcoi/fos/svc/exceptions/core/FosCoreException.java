@@ -15,11 +15,21 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.transactions;
+package org.pubcoi.fos.svc.exceptions.core;
 
-public enum FosTransactionType {
-    link_source_to_parent_clientNode,
-    mark_canonical_clientNode,
-    link_org_to_canonical,
-    link_person_to_org,
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class FosCoreException extends Exception {
+    private static final Logger logger = LoggerFactory.getLogger(FosCoreException.class);
+
+    public FosCoreException(String message) {
+        super(message);
+        logger.error("Exception: {}", message);
+    }
+
+    public FosCoreException(String message, Throwable e) {
+        super(message, e);
+        logger.error("Exception: {}", message);
+    }
 }

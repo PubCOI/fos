@@ -15,11 +15,14 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.transactions;
+package org.pubcoi.fos.svc.exceptions.core;
 
-public enum FosTransactionType {
-    link_source_to_parent_clientNode,
-    mark_canonical_clientNode,
-    link_org_to_canonical,
-    link_person_to_org,
+public class FosCoreRuntimeException extends RuntimeException {
+    public FosCoreRuntimeException(String message) {
+        super(message);
+    }
+
+    public FosCoreRuntimeException(String message, Throwable e) {
+        super(message, e);
+    }
 }

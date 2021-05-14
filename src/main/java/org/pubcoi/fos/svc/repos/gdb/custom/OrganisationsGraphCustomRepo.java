@@ -19,12 +19,13 @@ package org.pubcoi.fos.svc.repos.gdb.custom;
 
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.queries.GraphFTSResponse;
+import org.pubcoi.fos.svc.models.queries.OrganisationsGraphListResponse;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface OrgNodeFTS extends CrudRepository<OrganisationNode, Long> {
+public interface OrganisationsGraphCustomRepo extends CrudRepository<OrganisationNode, Long> {
 
     @Query("CALL db.index.fulltext.queryNodes(\"orgs-fts\", $query) " +
             "YIELD node, score " +
@@ -32,5 +33,9 @@ public interface OrgNodeFTS extends CrudRepository<OrganisationNode, Long> {
             "LIMIT $limit"
     )
     List<GraphFTSResponse> findAnyOrgsMatching(String query, Integer limit);
+
+    @Query("MATCH (o:Organisation) OPTIONAL MATCH (o)-[rel:AWARDED_TO]-(a:Award) RETURN o AS organisation, collect(a.fosId) AS awards")
+        // todo note that orgs with AKA references will be counted separately from their parent entity at least for now
+    List<OrganisationsGraphListResponse> findOrgsWithAwardIds();
 
 }

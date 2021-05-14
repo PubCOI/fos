@@ -15,42 +15,43 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.exceptions.endpoint;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-public class FosResponseStatusException extends ResponseStatusException {
-    private static final Logger logger = LoggerFactory.getLogger(FosResponseStatusException.class);
+public class FosEndpointException extends ResponseStatusException {
+    private static final Logger logger = LoggerFactory.getLogger(FosEndpointException.class);
 
-    public FosResponseStatusException() {
+    public FosEndpointException() {
         super(HttpStatus.INTERNAL_SERVER_ERROR);
         logger.error("Exception, returning 500");
     }
 
-    public FosResponseStatusException(String message) {
+    public FosEndpointException(String message) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
         logger.error("Exception, returning 500: {}", message);
     }
 
-    public FosResponseStatusException(HttpStatus status, String message) {
+    public FosEndpointException(HttpStatus status, String message) {
         super(status, message);
         logger.error("Exception, returning {}: {}", status, message);
     }
 
-    public FosResponseStatusException(HttpStatus status) {
+    public FosEndpointException(HttpStatus status) {
         super(status);
         logger.error("Exception, returning {}", status);
     }
 
-    public FosResponseStatusException(String message, Throwable e) {
+    public FosEndpointException(String message, Throwable e) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
         logger.error(e.getMessage(), e);
     }
 
-    public FosResponseStatusException(Throwable e) {
+    public FosEndpointException(@NotNull Throwable e) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 }

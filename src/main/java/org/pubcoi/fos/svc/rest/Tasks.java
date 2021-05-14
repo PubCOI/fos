@@ -18,19 +18,25 @@
 package org.pubcoi.fos.svc.rest;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dto.*;
+import org.pubcoi.fos.svc.models.dto.tasks.ResolvePotentialCOIDTO;
+import org.pubcoi.fos.svc.models.dto.tasks.ResolvedCOIDTOResponse;
 import org.pubcoi.fos.svc.models.dto.tasks.TaskDTO;
 import org.pubcoi.fos.svc.models.dto.tasks.UpdateNodeDTO;
+import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
+import org.pubcoi.fos.svc.repos.es.MembersInterestsESRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.PersonsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.TasksMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
@@ -60,6 +66,8 @@ public class Tasks {
     final OCRestSvc ocRestSvc;
     final UserObjectFlagRepo objectFlagsRepo;
     final ScheduledSvc scheduledSvc;
+    final MembersInterestsESRepo membersInterestsESRepo;
+    final PersonsGraphRepo personsGraphRepo;
 
     public Tasks(
             FosAuthProvider authProvider,
@@ -70,7 +78,9 @@ public class Tasks {
             OrganisationsGraphRepo organisationsGraphRepo,
             OCRestSvc ocRestSvc,
             UserObjectFlagRepo objectFlagsRepo,
-            ScheduledSvc scheduledSvc) {
+            ScheduledSvc scheduledSvc,
+            MembersInterestsESRepo membersInterestsESRepo,
+            PersonsGraphRepo personsGraphRepo) {
         this.authProvider = authProvider;
         this.tasksMDBRepo = tasksMDBRepo;
         this.transactionOrch = transactionOrch;
@@ -80,6 +90,8 @@ public class Tasks {
         this.ocRestSvc = ocRestSvc;
         this.objectFlagsRepo = objectFlagsRepo;
         this.scheduledSvc = scheduledSvc;
+        this.membersInterestsESRepo = membersInterestsESRepo;
+        this.personsGraphRepo = personsGraphRepo;
     }
 
     /**
@@ -106,7 +118,7 @@ public class Tasks {
                     .collect(Collectors.toList());
         } catch (FosCoreException e) {
             logger.error("Unable to perform search");
-            throw new FosResponseStatusException(e);
+            throw new FosEndpointException(e);
         }
     }
 
@@ -122,15 +134,20 @@ public class Tasks {
                             logger.error("Unable to find ClientNode {}", task.getEntity());
                             task = null;
                         } else {
-                            task.setDescription(String.format(
-                                    "Verify details for entity: %s", clientNode.get().getName())
-                            );
+                            task.setDescription(String.format("Verify details for entity: %s", clientNode.get().getName()));
                         }
                     } else if (task.getTaskType().equals(FosTaskType.resolve_company)) {
-                        logger.debug("Resolving task details for entity {}", task.getEntity());
                         Optional<FosOrganisation> org = orgMDBRepo.findById(task.getEntity());
                         if (org.isPresent()) {
                             task.setDescription(String.format("Verify details for company: %s", org.get().getCompanyName()));
+                        } else {
+                            logger.warn("Unable to resolve task for entity {}", task.getEntity());
+                            task = null;
+                        }
+                    } else if (task.getTaskType().equals(FosTaskType.resolve_potential_coi)) {
+                        Optional<FosOrganisation> org = orgMDBRepo.findById(task.getEntity());
+                        if (org.isPresent()) {
+                            task.setDescription(String.format("Resolve potential conflict of interest for organisation %s", org.get().getCompanyName()));
                         } else {
                             logger.warn("Unable to resolve task for entity {}", task.getEntity());
                             task = null;
@@ -150,9 +167,37 @@ public class Tasks {
         return new CreateTaskResponseDTO().setTaskId(UUID.randomUUID().toString());
     }
 
-    @GetMapping("/api/ui/tasks/{taskType}/{refId}")
-    public ResolveClientDTO getTaskDetails(@PathVariable("taskType") String taskType, @PathVariable("refId") String refID) {
-        return new ResolveClientDTO(clientGRepo.findByFosId(refID).orElseThrow(() -> new FosResponseStatusException("Unable to find entity")));
+    @GetMapping("/api/ui/tasks/resolve_client/{refId}")
+    public ResolveClientDTO getTaskDetails(@PathVariable("refId") String refID) {
+        return new ResolveClientDTO(clientGRepo.findByFosId(refID).orElseThrow(() -> new FosEndpointException("Unable to find entity")));
+    }
+
+    @GetMapping("/api/ui/tasks/resolve_potential_coi/{taskId}")
+    public ResolvePotentialCOIDTO getCOITaskDetails(@PathVariable("taskId") String taskId) {
+        DRTask task = tasksMDBRepo.findById(taskId).orElseThrow();
+        if (task instanceof DRResolvePotentialCOITask) {
+            MemberInterest interest = membersInterestsESRepo.findById(((DRResolvePotentialCOITask) task).getLinkedId()).orElseThrow();
+            FosOrganisation org = orgMDBRepo.findById(task.getEntity().getFosId()).orElseThrow();
+            return new ResolvePotentialCOIDTO(task, org, interest);
+        }
+        throw new FosEndpointBadRequestException();
+    }
+
+    @PutMapping("/api/ui/tasks/resolve_potential_coi/{taskId}/{action}")
+    public ResolvedCOIDTOResponse ignorePotentialCOI(@PathVariable("taskId") String taskId, @PathVariable String action, @RequestHeader("authToken") String authToken) {
+        FosUser currentUser = authProvider.getByUid(authProvider.getUid(authToken));
+        DRTask task = tasksMDBRepo.findById(taskId).orElseThrow();
+        if (!(task instanceof DRResolvePotentialCOITask))
+            throw new FosEndpointBadRequestException("Not correct task type");
+        OrganisationNode organisationNode = organisationsGraphRepo.findByFosId(task.getEntity().getFosId()).orElseThrow();
+        MemberInterest interest = membersInterestsESRepo.findById(((DRResolvePotentialCOITask) task).getLinkedId()).orElseThrow();
+        PersonNode personNode = personsGraphRepo.findByFosId(interest.getPersonNodeId()).orElseThrow();
+        if (action.equals("flag")) {
+            transactionOrch.exec(FosTransactionBuilder.markPotentialCOI(personNode, organisationNode, currentUser));
+        }
+        tasksMDBRepo.save(task.setCompleted(true).setCompletedBy(currentUser).setCompletedDT(OffsetDateTime.now()));
+        Optional<DRTask> nextTask = tasksMDBRepo.findAllByTaskType(FosTaskType.resolve_potential_coi).stream().filter(c -> !c.getCompleted()).findFirst();
+        return new ResolvedCOIDTOResponse(nextTask.orElse(null));
     }
 
     @PutMapping(value = "/api/ui/tasks/{taskType}", consumes = "application/json")
@@ -173,7 +218,7 @@ public class Tasks {
 
         if (taskType == FosUITasks.mark_canonical_clientNode) {
             if (null == req.getTaskId() || null == req.getTarget()) {
-                throw new FosBadRequestResponseStatusException("Task ID and target must not be null");
+                throw new FosEndpointBadRequestException("Task ID and target must not be null");
             }
 
             clientGRepo.findByFosId(req.getTarget()).ifPresent(clientNode -> {
@@ -186,7 +231,7 @@ public class Tasks {
 
         if (taskType == FosUITasks.link_clientNode_to_parentClientNode) {
             if (null == req.getSource() || null == req.getTarget() || null == req.getTaskId()) {
-                throw new FosBadRequestResponseStatusException("Task ID, Source and Target must be populated");
+                throw new FosEndpointBadRequestException("Task ID, Source and Target must be populated");
             }
 
             ClientNode source = clientGRepo.findClientHydratingNotices(req.getSource()).orElseThrow();
@@ -203,20 +248,22 @@ public class Tasks {
 
         if (taskType == FosUITasks.verify_company) {
             if (null == req.getSource() || null == req.getTarget()) {
-                throw new FosBadRequestResponseStatusException("Source and target must be populated");
+                throw new FosEndpointBadRequestException("Source and target must be populated");
             }
 
-            DRTask task = tasksMDBRepo.getByTaskTypeAndEntity(FosTaskType.resolve_company, orgMDBRepo.findById(req.getSource()).orElseThrow());
-            if (null == task) {
-                throw new FosBadRequestResponseStatusException("Unable to find relevant task");
-            }
+            FosOrganisation org = orgMDBRepo.findById(req.getSource()).orElseThrow();
+            DRTask task = tasksMDBRepo.findByTaskTypeAndEntity(FosTaskType.resolve_company, org)
+                    .orElseGet(() -> {
+                        logger.warn("Task does not exist - creating ad-hoc task to resolve company {}", org);
+                        return new DRTask(FosTaskType.resolve_company, org);
+                    });
 
             // looking up target ensures we have it in db
             OCCompanySchema companySchema;
             try {
                 companySchema = scheduledSvc.getCompany(req.getTarget());
-            } catch (FosRecordNotFoundException e) {
-                throw new FosBadRequestResponseStatusException(e.getMessage());
+            } catch (FosCoreRecordNotFoundException e) {
+                throw new FosEndpointBadRequestException(e.getMessage());
             }
 
             OrganisationNode source = organisationsGraphRepo
@@ -232,7 +279,7 @@ public class Tasks {
             return new UpdateNodeDTO().setResponse(String.format("Linked %s to %s", source.getFosId(), target.getFosId()));
         }
 
-        throw new FosBadRequestResponseStatusException("Unable to find request type");
+        throw new FosEndpointBadRequestException("Unable to find request type");
     }
 
     private void markTaskCompleted(String taskId, FosUser user) {

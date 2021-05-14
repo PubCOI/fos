@@ -18,6 +18,7 @@
 package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.cdm.cf.FullNotice;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dto.AttachmentDTO;
 import org.pubcoi.fos.svc.models.dto.AwardDTO;
@@ -61,8 +62,8 @@ public class AwardsSvcImpl implements AwardsSvc {
     }
 
     @Override
-    public AwardDTO getAwardDetailsDTOWithAttachments(String awardId) {
-        final CFAward award = awardsMDBRepo.findById(awardId).orElseThrow();
+    public AwardDTO getAwardDetailsDTOWithAttachments(String awardId) throws FosCoreRecordNotFoundException {
+        final CFAward award = awardsMDBRepo.findById(awardId).orElseThrow(() -> new FosCoreRecordNotFoundException("Award details not found"));
         AwardDTO awardDTO = new AwardDTO(award);
         List<AttachmentDTO> attachments = attachmentSvc.findAttachmentsByNoticeId(award.getNoticeId());
         if (null != award.getFosOrganisation() && null != award.getFosOrganisation().getFosId()) {
@@ -70,7 +71,7 @@ public class AwardsSvcImpl implements AwardsSvc {
                     award.getFosOrganisation().getFosId()
             ));
         }
-        FullNotice notice = noticesMDBRepo.findById(award.getNoticeId()).orElseThrow();
+        FullNotice notice = noticesMDBRepo.findById(award.getNoticeId()).orElseThrow(() -> new FosCoreRecordNotFoundException("Notice details not found"));
         awardDTO.setNoticeTitle(notice.getNotice().getTitle());
         return awardDTO.setAttachments(attachments);
     }

@@ -20,10 +20,12 @@ package org.pubcoi.fos.svc.services;
 import com.opencorporates.schemas.OCCompanySchema;
 import info.debatty.java.stringsimilarity.NGram;
 import org.pubcoi.cdm.cf.ReferenceTypeE;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.*;
+import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
+import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.AwardsMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.repos.mdb.OrganisationsMDBRepo;
@@ -48,6 +50,8 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     final RestTemplate restTemplate;
     final OrganisationsMDBRepo orgMDBRepo;
     final TasksMDBRepo tasksMDBRepo;
+    final OrganisationsGraphRepo organisationsGraphRepo;
+    final MnisSvc mnisSvc;
 
     @Value("${pubcoi.fos.opencorporates.api-key}")
     String apiToken;
@@ -55,16 +59,36 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     public ScheduledSvcImpl(
             AwardsMDBRepo awardsMDBRepo,
             OCCompaniesRepo ocCompanies,
-            OCRestSvc ocRestSvc, RestTemplate restTemplate,
+            OCRestSvc ocRestSvc,
+            RestTemplate restTemplate,
             OrganisationsMDBRepo orgMDBRepo,
-            TasksMDBRepo tasksMDBRepo
-    ) {
+            TasksMDBRepo tasksMDBRepo,
+            OrganisationsGraphRepo organisationsGraphRepo,
+            MnisSvc mnisSvc) {
         this.awardsMDBRepo = awardsMDBRepo;
         this.ocCompanies = ocCompanies;
         this.ocRestSvc = ocRestSvc;
         this.restTemplate = restTemplate;
         this.orgMDBRepo = orgMDBRepo;
         this.tasksMDBRepo = tasksMDBRepo;
+        this.organisationsGraphRepo = organisationsGraphRepo;
+        this.mnisSvc = mnisSvc;
+    }
+
+    @Override
+    public void flagPotentialConflicts() throws FosCoreException {
+        for (OrganisationNode organisationNode : organisationsGraphRepo.findAllNotHydrating()) {
+            mnisSvc.searchInterestsForConflicts(organisationNode.getName()).forEach(c -> {
+                DRResolvePotentialCOITask task = new DRResolvePotentialCOITask(organisationNode, c);
+                if (!tasksMDBRepo.existsById(task.getId())) {
+                    tasksMDBRepo.save(task);
+                    logger.info(Ansi.Yellow.format(
+                            "Saved task %s to resolve potential interest between org %s and interest %s",
+                            task.getId(), organisationNode.getFosId(), c)
+                    );
+                }
+            });
+        }
     }
 
     /**
@@ -125,7 +149,7 @@ public class ScheduledSvcImpl implements ScheduledSvc {
      * @return {@link OCCompanySchema} if the company exists, otherwise null
      */
     @Override
-    public OCCompanySchema getCompany(@NonNull String companyReference, @NonNull JurisdictionEnum jurisdiction) throws FosRecordNotFoundException {
+    public OCCompanySchema getCompany(@NonNull String companyReference, @NonNull JurisdictionEnum jurisdiction) throws FosCoreRecordNotFoundException {
         Objects.requireNonNull(companyReference);
         Objects.requireNonNull(jurisdiction);
 
@@ -142,12 +166,12 @@ public class ScheduledSvcImpl implements ScheduledSvc {
     }
 
     @Override
-    public OCCompanySchema getCompany(String objectId) throws FosRecordNotFoundException {
+    public OCCompanySchema getCompany(String objectId) throws FosCoreRecordNotFoundException {
         Matcher m = Utils.ocCompanyPattern.matcher(objectId);
         if (m.matches()) {
             return getCompany(m.group(2), JurisdictionEnum.valueOf(m.group(1)));
         } else {
-            throw new FosRecordNotFoundException("Unable to find company");
+            throw new FosCoreRecordNotFoundException("Unable to find company");
         }
     }
 

@@ -21,6 +21,7 @@ import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.springframework.lang.Nullable;
 
 public class FosTransactionBuilder {
@@ -66,5 +67,18 @@ public class FosTransactionBuilder {
                 .setTarget(new NodeReference(target))
                 .setUid(currentUser.getUid())
                 .setNotes(notes);
+    }
+
+    public static FosTransaction markPotentialCOI(
+            PersonNode source,
+            OrganisationNode target,
+            FosUser currentUser
+    ) {
+        return new FosTransaction()
+                .setTransactionType(FosTransactionType.link_person_to_org)
+                .setSource(new NodeReference(source))
+                .setTarget(new NodeReference(target))
+                .setUid(currentUser.getUid())
+                .setNotes(null);
     }
 }

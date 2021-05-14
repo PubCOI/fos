@@ -15,16 +15,25 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.models.dto.tasks;
 
-import org.springframework.http.HttpStatus;
+import org.pubcoi.fos.svc.models.core.DRResolvePotentialCOITask;
+import org.pubcoi.fos.svc.models.core.DRTask;
 
-public class FosUnauthorisedResponseStatusException extends FosResponseStatusException {
-    public FosUnauthorisedResponseStatusException() {
-        super(HttpStatus.UNAUTHORIZED);
+public class ResolvedCOIDTOResponse {
+
+    String nextTaskId;
+
+    ResolvedCOIDTOResponse() {
     }
 
-    public FosUnauthorisedResponseStatusException(Throwable e) {
-        super(HttpStatus.UNAUTHORIZED, e.getMessage());
+    public ResolvedCOIDTOResponse(DRTask next) {
+        if (null != next && next instanceof DRResolvePotentialCOITask) {
+            this.nextTaskId = next.getId();
+        }
+    }
+
+    public String getNextTaskId() {
+        return nextTaskId;
     }
 }

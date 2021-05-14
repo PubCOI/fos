@@ -26,11 +26,7 @@ import org.pubcoi.fos.svc.models.core.FosOrganisation;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.models.neo.relationships.OrgPersonLink;
-import org.springframework.data.neo4j.core.schema.DynamicLabels;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
+import org.springframework.data.neo4j.core.schema.*;
 
 import java.util.*;
 
@@ -75,6 +71,7 @@ public class OrganisationNode implements FosEntity {
         this.verified = true;
     }
 
+    // used for replaying transactions
     public OrganisationNode(NodeReference target) {
         this.fosId = target.getFosId();
     }

@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.models.queries;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -48,7 +48,7 @@ public class AwardsGraphListResponseDTO {
     AwardsGraphListResponseDTO() {}
 
     public AwardsGraphListResponseDTO(AwardsGraphResponse graphResponse) {
-        if (null == graphResponse.getAwardNode()) throw new FosResponseStatusException("Cannot deserialise response");
+        if (null == graphResponse.getAwardNode()) throw new FosEndpointException("Cannot deserialise response");
         Map<String, Object> award = graphResponse.getAwardNode().asMap();
         Map<String, Object> awardee = graphResponse.getAwardee().asMap();
         Map<String, Object> awardOrg = graphResponse.getAwardOrgLink().asMap();

@@ -15,14 +15,18 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.exceptions.core;
 
-public class FosRuntimeException extends RuntimeException {
-    public FosRuntimeException(String message) {
+public class FosCoreRecordNotFoundException extends FosCoreException {
+    public FosCoreRecordNotFoundException(String message) {
         super(message);
     }
 
-    public FosRuntimeException(String message, Throwable e) {
+    public FosCoreRecordNotFoundException(String message, Throwable e) {
         super(message, e);
+    }
+
+    public FosCoreRecordNotFoundException(FosCoreException e) {
+        super(e.getMessage(), e);
     }
 }

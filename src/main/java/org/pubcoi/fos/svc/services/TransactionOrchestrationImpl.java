@@ -17,13 +17,15 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.PersonsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.TransactionMDBRepo;
 import org.pubcoi.fos.svc.transactions.FosTransaction;
 import org.pubcoi.fos.svc.transactions.TransactionFactory;
@@ -45,18 +47,21 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
     final NoticesGraphRepo noticesGRepo;
     final ClientsGraphRepo clientsGraphRepo;
     final OrganisationsGraphRepo orgGraphRepo;
+    final PersonsGraphRepo personsGraphRepo;
 
     TransactionOrchestrationImpl(
             TransactionFactory tcf,
             TransactionMDBRepo transactionRepo,
             NoticesGraphRepo noticesGRepo,
             ClientsGraphRepo clientsGraphRepo,
-            OrganisationsGraphRepo orgGraphRepo) {
+            OrganisationsGraphRepo orgGraphRepo,
+            PersonsGraphRepo personsGraphRepo) {
         this.tcf = tcf;
         this.transactionRepo = transactionRepo;
         this.noticesGRepo = noticesGRepo;
         this.clientsGraphRepo = clientsGraphRepo;
         this.orgGraphRepo = orgGraphRepo;
+        this.personsGraphRepo = personsGraphRepo;
     }
 
     @Override
@@ -70,10 +75,10 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
                         metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!s2p_toNode.getCanonical()) {
-                    throw new FosBadRequestResponseStatusException("Parent ClientNode is not canonical");
+                    throw new FosEndpointBadRequestException("Parent ClientNode is not canonical");
                 }
                 if (s2p_fromNode.getCanonical()) {
-                    throw new FosBadRequestResponseStatusException("Child ClientNode cannot be canonical");
+                    throw new FosEndpointBadRequestException("Child ClientNode cannot be canonical");
                 }
 
                 transactionRepo.save(tcf.linkClientToParent(s2p_fromNode, s2p_toNode, metaTransaction).exec().withMeta(metaTransaction));
@@ -99,10 +104,16 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
                         .findByFosId(metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!o2c_toNode.isVerified()) {
-                    throw new FosBadRequestResponseStatusException("Target node must be verified");
+                    throw new FosEndpointBadRequestException("Target node must be verified");
                 }
 
                 transactionRepo.save(tcf.linkOrgToParent(o2c_fromNode, o2c_toNode, metaTransaction).exec().withMeta(metaTransaction));
+                return true;
+
+            case link_person_to_org:
+                PersonNode p2o_fromNode = personsGraphRepo.findByFosId(metaTransaction.getSource().getFosId()).orElseThrow();
+                OrganisationNode p2o_toNode = orgGraphRepo.findByFosId(metaTransaction.getTarget().getFosId()).orElseThrow();
+                transactionRepo.save(tcf.linkPersonToOrg(p2o_fromNode, p2o_toNode, metaTransaction).exec().withMeta(metaTransaction));
                 return true;
 
             default:

@@ -19,6 +19,6 @@ package org.pubcoi.fos.svc.models.core;
 
 public enum FosTaskType {
 
-    resolve_client, resolve_company
+    resolve_client, resolve_potential_coi, resolve_company
 
 }

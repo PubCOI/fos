@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.config.converters;
 
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.pubcoi.fos.svc.models.dto.search.NoticeSearchResponseWrapper;
 import org.pubcoi.fos.svc.services.XslSvc;
 import org.springframework.http.HttpInputMessage;
@@ -49,7 +49,7 @@ public class NoticeSearchResponseMessageConverter extends AbstractHttpMessageCon
             mediaTypeList.add(MediaType.APPLICATION_XML);
             super.setSupportedMediaTypes(mediaTypeList);
         } catch (JAXBException e) {
-            throw new FosRuntimeException(e.getMessage(), e);
+            throw new FosCoreRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -62,7 +62,7 @@ public class NoticeSearchResponseMessageConverter extends AbstractHttpMessageCon
     protected NoticeSearchResponseWrapper readInternal(Class<? extends NoticeSearchResponseWrapper> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
         MediaType contentType = inputMessage.getHeaders().getContentType();
         if (null == contentType) {
-            throw new FosRuntimeException("Unable to convert data: missing charset");
+            throw new FosCoreRuntimeException("Unable to convert data: missing charset");
         }
         Charset charset = (contentType.getCharset() != null ? contentType.getCharset() : StandardCharsets.UTF_8);
 
@@ -73,6 +73,6 @@ public class NoticeSearchResponseMessageConverter extends AbstractHttpMessageCon
 
     @Override
     protected void writeInternal(NoticeSearchResponseWrapper noticeSearchResponse, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-        throw new FosRuntimeException("Should not be using this class to write NoticeSearchResponseWrapper objects");
+        throw new FosCoreRuntimeException("Should not be using this class to write NoticeSearchResponseWrapper objects");
     }
 }

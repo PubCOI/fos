@@ -35,6 +35,12 @@ public class OrganisationDTO {
         this.verified = organisationNode.getVerified();
     }
 
+    public OrganisationDTO(String fosId, String name, Boolean verified) {
+        this.fosId = fosId;
+        this.name = name;
+        this.verified = verified;
+    }
+
     public String getFosId() {
         return fosId;
     }

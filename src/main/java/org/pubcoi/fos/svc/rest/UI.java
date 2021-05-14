@@ -37,15 +37,16 @@ import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.metrics.ParsedTopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.neo4j.driver.Value;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.attachments.Attachment;
 import org.pubcoi.cdm.cf.base.NoticeStatusEnum;
 import org.pubcoi.cdm.cf.search.request.SearchCriteriaType;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.fos.FosESFields;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
-import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.core.FosUser;
 import org.pubcoi.fos.svc.models.core.SearchRequestDTO;
@@ -58,7 +59,10 @@ import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.mdb.UserObjectFlag;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.queries.AwardsGraphListResponseDTO;
+import org.pubcoi.fos.svc.models.queries.ClientsGraphListResponseDTO;
+import org.pubcoi.fos.svc.models.queries.OrganisationsGraphListResponseDTO;
 import org.pubcoi.fos.svc.repos.gdb.custom.AwardsListRepo;
+import org.pubcoi.fos.svc.repos.gdb.custom.OrganisationsGraphCustomRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.*;
@@ -98,7 +102,9 @@ public class UI {
     final ApplicationStatusBean applicationStatus;
     final UserObjectFlagRepo userObjectFlagRepo;
     final OCCompaniesRepo ocCompaniesRepo;
+    final OrganisationsMDBRepo organisationsMDBRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
+    final OrganisationsGraphCustomRepo organisationsGraphCustomRepo;
     final MnisMembersRepo mnisMembersRepo;
     final MnisSvc mnisSvc;
     final AwardsListRepo awardsListRepo;
@@ -120,7 +126,9 @@ public class UI {
             ApplicationStatusBean applicationStatus,
             UserObjectFlagRepo userObjectFlagRepo,
             OCCompaniesRepo ocCompaniesRepo,
+            OrganisationsMDBRepo organisationsMDBRepo,
             OrganisationsGraphRepo organisationsGraphRepo,
+            OrganisationsGraphCustomRepo organisationsGraphCustomRepo,
             MnisMembersRepo mnisMembersRepo,
             MnisSvc mnisSvc,
             AwardsListRepo awardsListRepo,
@@ -140,7 +148,9 @@ public class UI {
         this.applicationStatus = applicationStatus;
         this.userObjectFlagRepo = userObjectFlagRepo;
         this.ocCompaniesRepo = ocCompaniesRepo;
+        this.organisationsMDBRepo = organisationsMDBRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
+        this.organisationsGraphCustomRepo = organisationsGraphCustomRepo;
         this.mnisMembersRepo = mnisMembersRepo;
         this.mnisSvc = mnisSvc;
         this.awardsListRepo = awardsListRepo;
@@ -155,7 +165,7 @@ public class UI {
         esSearchResponseObjectMapper.registerModule(new JavaTimeModule());
     }
 
-    @GetMapping("/api/awards")
+    @GetMapping("/api/datasets/awards")
     public List<AwardsGraphListResponseDTO> getContractAwards() {
         return awardsListRepo.getAwardsWithRels()
                 .stream().map(AwardsGraphListResponseDTO::new)
@@ -169,6 +179,24 @@ public class UI {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/api/datasets/clients")
+    public List<ClientsGraphListResponseDTO> getClients() {
+        return clientGRepo.getClientsWithRels()
+                .stream().map(ClientsGraphListResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/datasets/organisations")
+    public List<OrganisationsGraphListResponseDTO> getOrganisations() {
+        return organisationsGraphCustomRepo.findOrgsWithAwardIds().stream()
+                .map(entry -> new OrganisationsGraphListResponseDTO(
+                        entry.getOrganisation().asMap(),
+                        entry.getAwards().size(),
+                        entry.getAwards().asList().stream().map(a -> (String) a).collect(Collectors.toList()),
+                        awardsMDBRepo.findAllById(entry.getAwards().values(Value::asString))
+                )).collect(Collectors.toList());
+    }
+
     @GetMapping("/api/transactions")
     public List<TransactionDTO> getTransactions() {
         return transactionOrch.getTransactions();
@@ -178,7 +206,7 @@ public class UI {
     public ResponseEntity<String> viewRedirect(
             @PathVariable String attachmentId
     ) {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestResponseStatusException("Unable to find attachment"));
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosEndpointBadRequestException("Unable to find attachment"));
         // todo - check that we've got the location on the object ... for now just return where we think the doc should be
         // attachment.getS3Locations()
         try {
@@ -187,7 +215,7 @@ public class UI {
                     .location(s3Services.getSignedURL(attachment).toURI())
                     .build();
         } catch (URISyntaxException e) {
-            throw new FosBadRequestResponseStatusException("Unable to get URL");
+            throw new FosEndpointBadRequestException("Unable to get URL");
         }
     }
 
@@ -195,7 +223,7 @@ public class UI {
     public AttachmentDTO getAttachmentMetadata(
             @PathVariable String attachmentId
     ) {
-        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosBadRequestResponseStatusException("Unable to find attachment"));
+        Attachment attachment = attachmentMDBRepo.findById(attachmentId).orElseThrow(() -> new FosEndpointBadRequestException("Unable to find attachment"));
         return new AttachmentDTO(attachment);
     }
 
@@ -263,7 +291,7 @@ public class UI {
                                 interestWrapper.setMnisPersonId(interest.getMnisPersonId());
                             }
                         } catch (JsonProcessingException e) {
-                            throw new FosResponseStatusException(e.getMessage(), e);
+                            throw new FosEndpointException(e.getMessage(), e);
                         }
                     }
                 }
@@ -377,7 +405,7 @@ public class UI {
                 // todo - put into separate thread
                 try {
                     scheduledSvc.getCompany(objectId);
-                } catch (FosRecordNotFoundException e) {
+                } catch (FosCoreRecordNotFoundException e) {
                     logger.info(String.format("Unable to find company record: %s", e.getMessage()));
                 }
             }

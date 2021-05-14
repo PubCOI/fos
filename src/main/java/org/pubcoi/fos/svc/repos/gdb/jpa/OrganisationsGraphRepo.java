@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.repos.gdb.jpa;
 
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +53,6 @@ public interface OrganisationsGraphRepo extends Neo4jRepository<OrganisationNode
 
     default List<OrganisationNode> findAll() {
         logger.error("Don't run this query, will cause runaway transaction");
-        throw new FosRuntimeException("NOOP");
+        throw new FosCoreRuntimeException("NOOP");
     }
 }

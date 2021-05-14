@@ -17,8 +17,8 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.JurisdictionEnum;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.slf4j.Logger;
@@ -59,12 +59,12 @@ public class OCRestSvcImpl implements OCRestSvc {
     }
 
     @Override
-    public OCWrapper getCompany(String companyReference, JurisdictionEnum jurisdiction) throws FosRecordNotFoundException {
+    public OCWrapper getCompany(String companyReference, JurisdictionEnum jurisdiction) throws FosCoreRecordNotFoundException {
         String queryURL = String.format(getGBCompanyRequestURL, jurisdiction, URLEncoder.encode(companyReference, StandardCharsets.UTF_8));
         try {
             return cachedQuerySvc.doRequest(queryURL);
         } catch (FosCoreException e) {
-            throw new FosRecordNotFoundException(e);
+            throw new FosCoreRecordNotFoundException(e);
         }
     }
 }

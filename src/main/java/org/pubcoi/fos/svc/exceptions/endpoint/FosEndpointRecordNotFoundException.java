@@ -15,21 +15,19 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.exceptions.endpoint;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
+import org.springframework.http.HttpStatus;
 
-public class FosCoreException extends Exception {
-    private static final Logger logger = LoggerFactory.getLogger(FosCoreException.class);
+public class FosEndpointRecordNotFoundException extends FosEndpointException {
 
-    public FosCoreException(String message) {
-        super(message);
-        logger.error("Exception: {}", message);
+    public FosEndpointRecordNotFoundException() {
+        super(HttpStatus.NOT_FOUND);
     }
 
-    public FosCoreException(String message, Throwable e) {
-        super(message, e);
-        logger.error("Exception: {}", message);
+    public FosEndpointRecordNotFoundException(@NotNull FosCoreRecordNotFoundException e) {
+        super(HttpStatus.NOT_FOUND, e.getMessage());
     }
 }

@@ -22,8 +22,13 @@ import org.pubcoi.fos.svc.models.core.FosTaskType;
 import org.pubcoi.fos.svc.models.neo.nodes.FosEntity;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface TasksMDBRepo extends MongoRepository<DRTask, String> {
     DRTask getById(String taskId);
 
-    DRTask getByTaskTypeAndEntity(FosTaskType taskType, FosEntity entity);
+    Optional<DRTask> findByTaskTypeAndEntity(FosTaskType taskType, FosEntity entity);
+
+    List<DRTask> findAllByTaskType(FosTaskType taskType);
 }

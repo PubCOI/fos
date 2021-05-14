@@ -127,6 +127,12 @@
             <groupId>org.jvnet.jaxb2_commons</groupId>
             <artifactId>jaxb2-basics-runtime</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>17.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -160,6 +166,10 @@
                                 <class>org.pubcoi.fos.svc.models.dto.OrganisationDTO</class>
                                 <class>org.pubcoi.fos.svc.models.dto.AwardDTO</class>
                                 <class>org.pubcoi.fos.svc.models.queries.AwardsGraphListResponseDTO</class>
+                                <class>org.pubcoi.fos.svc.models.queries.ClientsGraphListResponseDTO</class>
+                                <class>org.pubcoi.fos.svc.models.queries.OrganisationsGraphListResponseDTO</class>
+                                <class>org.pubcoi.fos.svc.models.dto.tasks.ResolvePotentialCOIDTO</class>
+                                <class>org.pubcoi.fos.svc.models.dto.tasks.ResolvedCOIDTOResponse</class>
                             </classes>
                             <noFileComment>true</noFileComment>
                             <outputFile>fos-ui/src/generated/FosTypes.ts</outputFile>

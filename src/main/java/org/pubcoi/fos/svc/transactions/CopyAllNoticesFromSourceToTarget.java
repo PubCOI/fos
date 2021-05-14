@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.transactions;
 
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.relationships.ClientNoticeLink;
@@ -51,7 +51,7 @@ public class CopyAllNoticesFromSourceToTarget implements IFosTransaction {
                 toClient.getFosId(), toClient.getNotices().size()
         );
 
-        if (null == fromClient.getNotices()) throw new FosRuntimeException("FromClient Notices is null");
+        if (null == fromClient.getNotices()) throw new FosCoreRuntimeException("FromClient Notices is null");
 
         for (ClientNoticeLink notice : fromClient.getNotices()) {
             if (null != toClient && null != toClient.getNotices() && toClient.getNotices().contains(notice)) {

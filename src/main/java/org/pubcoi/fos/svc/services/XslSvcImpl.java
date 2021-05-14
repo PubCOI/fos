@@ -21,8 +21,8 @@ import org.pubcoi.cdm.cf.ArrayOfFullNotice;
 import org.pubcoi.cdm.cf.FullNotice;
 import org.pubcoi.cdm.cf.search.response.NoticeSearchResponse;
 import org.pubcoi.cdm.pw.PWRootType;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -71,7 +71,7 @@ public class XslSvcImpl implements XslSvc {
             this.getNoticeCtx = JAXBContext.newInstance(FullNotice.class);
             this.getNoticesCtx = JAXBContext.newInstance(ArrayOfFullNotice.class);
         } catch (JAXBException e) {
-            throw new FosRuntimeException(String.format(
+            throw new FosCoreRuntimeException(String.format(
                     "Unable to instantiate JAXBContext for %s", PWRootType.class.getCanonicalName()
             ));
         }
@@ -93,13 +93,13 @@ public class XslSvcImpl implements XslSvc {
             this.pwData2XF = TransformerFactory.newDefaultInstance().newTransformer(pwData2XFS);
             this.cfsDataXF = TransformerFactory.newDefaultInstance().newTransformer(cfsDataXFS);
         } catch (IOException | TransformerConfigurationException e) {
-            throw new FosRuntimeException(e.getMessage(), e);
+            throw new FosCoreRuntimeException(e.getMessage(), e);
         }
     }
 
     private void checkExists(ClassPathResource resource) {
         if (!resource.exists()) {
-            throw new FosRuntimeException(String.format("Unable to find %s", resource.getFilename()));
+            throw new FosCoreRuntimeException(String.format("Unable to find %s", resource.getFilename()));
         }
     }
 
@@ -123,7 +123,7 @@ public class XslSvcImpl implements XslSvc {
             Unmarshaller u = pwCtx.createUnmarshaller();
             return (PWRootType) u.unmarshal(new ByteArrayInputStream(step2Baos.toByteArray()));
         } catch (JAXBException | IOException | TransformerException e) {
-            throw new FosResponseStatusException(UNABLE_TO_TRANSFORM);
+            throw new FosEndpointException(UNABLE_TO_TRANSFORM);
         }
     }
 
@@ -153,7 +153,7 @@ public class XslSvcImpl implements XslSvc {
             Unmarshaller u = context.createUnmarshaller();
             return type.cast(u.unmarshal(new ByteArrayInputStream(baos.toByteArray())));
         } catch (JAXBException | IOException | TransformerException e) {
-            throw new FosResponseStatusException(UNABLE_TO_TRANSFORM);
+            throw new FosEndpointException(UNABLE_TO_TRANSFORM);
         }
     }
 

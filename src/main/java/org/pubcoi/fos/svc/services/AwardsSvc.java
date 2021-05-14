@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dto.AwardDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
@@ -30,7 +31,7 @@ public interface AwardsSvc {
 
     Set<AwardDTO> getAwardsForNotice(String noticeID);
 
-    AwardDTO getAwardDetailsDTOWithAttachments(String awardId);
+    AwardDTO getAwardDetailsDTOWithAttachments(String awardId) throws FosCoreRecordNotFoundException;
 
     List<AwardNode> getAwardsForOrg(String orgId);
 }

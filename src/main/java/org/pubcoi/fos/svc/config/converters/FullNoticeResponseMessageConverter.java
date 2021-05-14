@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.config.converters;
 
 import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.pubcoi.fos.svc.services.XslSvc;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
@@ -49,7 +49,7 @@ public class FullNoticeResponseMessageConverter extends AbstractHttpMessageConve
             mediaTypeList.add(MediaType.APPLICATION_XML);
             super.setSupportedMediaTypes(mediaTypeList);
         } catch (JAXBException e) {
-            throw new FosRuntimeException(e.getMessage(), e);
+            throw new FosCoreRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -62,7 +62,7 @@ public class FullNoticeResponseMessageConverter extends AbstractHttpMessageConve
     protected FullNotice readInternal(Class<? extends FullNotice> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
         MediaType contentType = inputMessage.getHeaders().getContentType();
         if (null == contentType) {
-            throw new FosRuntimeException("Unable to convert data: missing charset");
+            throw new FosCoreRuntimeException("Unable to convert data: missing charset");
         }
         Charset charset = (contentType.getCharset() != null ? contentType.getCharset() : StandardCharsets.UTF_8);
         return xslSvc.cleanGetNoticeResponse(StreamUtils.copyToString(inputMessage.getBody(), charset));
@@ -70,6 +70,6 @@ public class FullNoticeResponseMessageConverter extends AbstractHttpMessageConve
 
     @Override
     protected void writeInternal(FullNotice fullNotice, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-        throw new FosRuntimeException("Should not be using this class to write FullNotice objects");
+        throw new FosCoreRuntimeException("Should not be using this class to write FullNotice objects");
     }
 }

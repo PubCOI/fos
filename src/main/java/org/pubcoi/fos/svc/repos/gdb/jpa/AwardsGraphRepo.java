@@ -18,7 +18,7 @@
 package org.pubcoi.fos.svc.repos.gdb.jpa;
 
 
-import org.pubcoi.fos.svc.exceptions.FosRuntimeException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.pubcoi.fos.svc.models.neo.nodes.AwardNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public interface AwardsGraphRepo extends Neo4jRepository<AwardNode, Long> {
 
     default List<AwardNode> findAll() {
         logger.error("Don't run this query, will cause runaway transaction");
-        throw new FosRuntimeException("NOOP");
+        throw new FosCoreRuntimeException("NOOP");
     }
 
     @Query("MATCH(a:Award {fosId: $awardId}) RETURN a")

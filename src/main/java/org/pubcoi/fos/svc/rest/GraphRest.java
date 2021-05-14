@@ -25,7 +25,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.neo4j.driver.internal.InternalNode;
 import org.neo4j.driver.internal.InternalRelationship;
 import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointRecordNotFoundException;
 import org.pubcoi.fos.svc.models.dto.*;
 import org.pubcoi.fos.svc.models.dto.fts.GenericIDNameFTSResponse;
 import org.pubcoi.fos.svc.models.dto.neo.InternalNodeSerializer;
@@ -35,7 +37,7 @@ import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.models.neo.relationships.PersonConflictLink;
 import org.pubcoi.fos.svc.repos.gdb.custom.ClientNodeFTS;
-import org.pubcoi.fos.svc.repos.gdb.custom.OrgNodeFTS;
+import org.pubcoi.fos.svc.repos.gdb.custom.OrganisationsGraphCustomRepo;
 import org.pubcoi.fos.svc.repos.gdb.custom.PersonNodeFTS;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.services.AwardsSvc;
@@ -58,7 +60,7 @@ public class GraphRest {
     final FosAuthProvider authProvider;
     final Neo4jClient neo4jClient;
     final ClientNodeFTS clientNodeFTS;
-    final OrgNodeFTS orgNodeFTS;
+    final OrganisationsGraphCustomRepo organisationsGraphCustomRepo;
     final PersonNodeFTS personNodeFTS;
     final ClientsSvc clientSvc;
     final NoticesSvc noticesSvc;
@@ -81,7 +83,7 @@ public class GraphRest {
             FosAuthProvider authProvider,
             Neo4jClient neo4jClient,
             ClientNodeFTS clientNodeFTS,
-            OrgNodeFTS orgNodeFTS,
+            OrganisationsGraphCustomRepo organisationsGraphCustomRepo,
             PersonNodeFTS personNodeFTS,
             ClientsSvc clientSvc,
             NoticesSvc noticesSvc,
@@ -92,7 +94,7 @@ public class GraphRest {
         this.authProvider = authProvider;
         this.neo4jClient = neo4jClient;
         this.clientNodeFTS = clientNodeFTS;
-        this.orgNodeFTS = orgNodeFTS;
+        this.organisationsGraphCustomRepo = organisationsGraphCustomRepo;
         this.personNodeFTS = personNodeFTS;
         this.clientSvc = clientSvc;
         this.noticesSvc = noticesSvc;
@@ -143,12 +145,12 @@ public class GraphRest {
         if (query.isEmpty()) return new ArrayList<>();
 
         // open / wildcard
-        Set<GenericIDNameFTSResponse> responses = orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
+        Set<GenericIDNameFTSResponse> responses = organisationsGraphCustomRepo.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
                 map(r -> new GraphSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet());
 
         // entire token
-        responses.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
+        responses.addAll(organisationsGraphCustomRepo.findAnyOrgsMatching(query, 5).stream().
                 map(r -> new GraphSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet()));
 
@@ -182,12 +184,12 @@ public class GraphRest {
                 .map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.client))
                 .collect(Collectors.toSet()));
 
-        response.addAll(orgNodeFTS.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
+        response.addAll(organisationsGraphCustomRepo.findAnyOrgsMatching(String.format("*%s*", query), 5).stream().
                 map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet())
         );
 
-        response.addAll(orgNodeFTS.findAnyOrgsMatching(query, 5).stream().
+        response.addAll(organisationsGraphCustomRepo.findAnyOrgsMatching(query, 5).stream().
                 map(r -> new GraphDetailedSearchResponseDTO(r, NodeTypeEnum.organisation))
                 .collect(Collectors.toSet())
         );
@@ -221,7 +223,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -233,7 +235,11 @@ public class GraphRest {
      */
     @GetMapping("/api/graphs/awards/{awardId}/metadata")
     public AwardDTO getAward(@PathVariable String awardId) {
-        return awardsSvc.getAwardDetailsDTOWithAttachments(awardId);
+        try {
+            return awardsSvc.getAwardDetailsDTOWithAttachments(awardId);
+        } catch (FosCoreRecordNotFoundException e) {
+            throw new FosEndpointRecordNotFoundException(e);
+        }
     }
 
     @GetMapping("/api/graphs/awards/{awardId}/children")
@@ -252,7 +258,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -271,7 +277,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -292,7 +298,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -321,7 +327,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -392,7 +398,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -411,7 +417,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -426,7 +432,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -455,7 +461,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 
@@ -486,7 +492,7 @@ public class GraphRest {
         try {
             return neo4jObjectMapper.writeValueAsString(response.fetch().all());
         } catch (JsonProcessingException e) {
-            throw new FosBadRequestResponseStatusException();
+            throw new FosEndpointBadRequestException();
         }
     }
 

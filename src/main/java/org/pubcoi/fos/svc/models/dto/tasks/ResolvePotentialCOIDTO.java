@@ -15,18 +15,31 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.models.dto.tasks;
 
-public class FosRecordNotFoundException extends FosCoreException {
-    public FosRecordNotFoundException(String message) {
-        super(message);
+import org.pubcoi.fos.svc.models.core.DRTask;
+import org.pubcoi.fos.svc.models.core.FosOrganisation;
+import org.pubcoi.fos.svc.models.es.MemberInterest;
+
+public class ResolvePotentialCOIDTO extends TaskDTO {
+
+    FosOrganisation organisation;
+    MemberInterest memberInterest;
+
+    ResolvePotentialCOIDTO() {
     }
 
-    public FosRecordNotFoundException(String message, Throwable e) {
-        super(message, e);
+    public ResolvePotentialCOIDTO(DRTask task, FosOrganisation organisation, MemberInterest interest) {
+        super(task);
+        this.memberInterest = interest;
+        this.organisation = organisation;
     }
 
-    public FosRecordNotFoundException(FosCoreException e) {
-        super(e.getMessage(), e);
+    public FosOrganisation getOrganisation() {
+        return organisation;
+    }
+
+    public MemberInterest getMemberInterest() {
+        return memberInterest;
     }
 }

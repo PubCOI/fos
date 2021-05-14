@@ -19,8 +19,8 @@ package org.pubcoi.fos.svc.rest;
 
 import org.pubcoi.cdm.cf.ArrayOfFullNotice;
 import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.exceptions.FosBadRequestResponseStatusException;
-import org.pubcoi.fos.svc.exceptions.FosResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.pubcoi.fos.svc.models.dto.TransactionDTO;
 import org.pubcoi.fos.svc.services.*;
 import org.springframework.context.annotation.Profile;
@@ -80,7 +80,7 @@ public class StandaloneEndpoints {
     public String uploadContracts(MultipartHttpServletRequest request) {
         MultipartFile file = request.getFile("file");
         if (null == file) {
-            throw new FosBadRequestResponseStatusException("Empty file");
+            throw new FosEndpointBadRequestException("Empty file");
         }
         try {
             ArrayOfFullNotice array = xslSvc.cleanAllNotices(new String(file.getBytes()));
@@ -90,7 +90,7 @@ public class StandaloneEndpoints {
             scheduledSvc.populateFosOrgsMDBFromAwards();
             graphSvc.populateGraphFromMDB();
         } catch (IOException e) {
-            throw new FosResponseStatusException("Unable to read file stream");
+            throw new FosEndpointException("Unable to read file stream");
         }
         return "ok";
     }

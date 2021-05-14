@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.models.dto.tasks;
 
+import org.pubcoi.fos.svc.models.core.DRResolvePotentialCOITask;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosTaskType;
 
@@ -26,6 +27,7 @@ public class TaskDTO {
     FosTaskType taskType;
     String entity;
     String description;
+    String linkedEntity;
 
     public TaskDTO() {}
 
@@ -33,6 +35,9 @@ public class TaskDTO {
         this.taskId = task.getId();
         this.taskType = task.getTaskType();
         this.entity = task.getEntity().getFosId();
+        if (task instanceof DRResolvePotentialCOITask) {
+            this.linkedEntity = ((DRResolvePotentialCOITask) task).getLinkedId();
+        }
     }
 
     public FosTaskType getTaskType() {
@@ -68,6 +73,15 @@ public class TaskDTO {
 
     public TaskDTO setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public String getLinkedEntity() {
+        return linkedEntity;
+    }
+
+    public TaskDTO setLinkedEntity(String linkedEntity) {
+        this.linkedEntity = linkedEntity;
         return this;
     }
 }

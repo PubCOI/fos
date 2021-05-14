@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
@@ -37,4 +38,7 @@ public interface ClientsGraphRepo extends Neo4jRepository<ClientNode, Long> {
     @Query("RETURN exists((:Client {fosId: $clientId})-[:PUBLISHED]-(:Notice {fosId: $noticeId}))")
     boolean relationshipExists(String clientId, String noticeId);
 
+    @Query("MATCH (c:Client) OPTIONAL MATCH (c)-[rel:PUBLISHED]-(n:Notice) " +
+            "RETURN c, collect(rel), collect(n) AS NOTICES")
+    List<ClientNode> getClientsWithRels();
 }

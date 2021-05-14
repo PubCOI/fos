@@ -19,7 +19,7 @@ package org.pubcoi.fos.svc.services;
 
 import org.pubcoi.cdm.cf.AwardDetailType;
 import org.pubcoi.cdm.cf.FullNotice;
-import org.pubcoi.fos.svc.exceptions.ItemNotFoundResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.CFAward;
 import org.pubcoi.fos.svc.models.dto.NoticeNodeDTO;
 import org.pubcoi.fos.svc.repos.gdb.jpa.NoticesGraphRepo;
@@ -61,7 +61,7 @@ public class NoticesSvcImpl implements NoticesSvc {
 
     @Override
     public NoticeNodeDTO getNoticeDTO(String noticeId) {
-        return new NoticeNodeDTO(noticesMDBRepo.findById(noticeId).orElseThrow(ItemNotFoundResponseStatusException::new));
+        return new NoticeNodeDTO(noticesMDBRepo.findById(noticeId).orElseThrow(FosEndpointRecordNotFoundException::new));
     }
 
     @Override

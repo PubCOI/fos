@@ -19,8 +19,10 @@ package org.pubcoi.fos.svc.transactions;
 
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
+import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
+import org.pubcoi.fos.svc.repos.gdb.jpa.PersonsGraphRepo;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,10 +30,12 @@ public class TransactionFactory {
 
     final ClientsGraphRepo clientsGraphRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
+    final PersonsGraphRepo personsGraphRepo;
 
-    public TransactionFactory(ClientsGraphRepo clientsGraphRepo, OrganisationsGraphRepo organisationsGraphRepo) {
+    public TransactionFactory(ClientsGraphRepo clientsGraphRepo, OrganisationsGraphRepo organisationsGraphRepo, PersonsGraphRepo personsGraphRepo) {
         this.clientsGraphRepo = clientsGraphRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
+        this.personsGraphRepo = personsGraphRepo;
     }
 
     public LinkSourceToParentClient linkClientToParent(ClientNode source, ClientNode target, FosTransaction parentTransaction) {
@@ -52,5 +56,9 @@ public class TransactionFactory {
 
     public LinkOrganisationToParent linkOrgToParent(OrganisationNode o2c_fromNode, OrganisationNode o2c_toNode, FosTransaction parentTransaction) {
         return new LinkOrganisationToParent(organisationsGraphRepo, o2c_fromNode, o2c_toNode, parentTransaction);
+    }
+
+    public LinkPersonToOrg linkPersonToOrg(PersonNode source, OrganisationNode target, FosTransaction parentTransaction) {
+        return new LinkPersonToOrg(personsGraphRepo, organisationsGraphRepo, source, target, parentTransaction);
     }
 }

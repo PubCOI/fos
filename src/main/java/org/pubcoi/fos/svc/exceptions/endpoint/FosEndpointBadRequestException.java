@@ -15,14 +15,25 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.exceptions;
+package org.pubcoi.fos.svc.exceptions.endpoint;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-public class ItemNotFoundResponseStatusException extends FosResponseStatusException {
+public class FosEndpointBadRequestException extends FosEndpointException {
+    private static final Logger logger = LoggerFactory.getLogger(FosEndpointBadRequestException.class);
 
-    public ItemNotFoundResponseStatusException() {
-        super(HttpStatus.NOT_FOUND);
+    public FosEndpointBadRequestException(String message) {
+        super(HttpStatus.BAD_REQUEST, message);
     }
 
+    public FosEndpointBadRequestException(String message, Throwable e) {
+        super(HttpStatus.BAD_REQUEST, message);
+        logger.error(message, e);
+    }
+
+    public FosEndpointBadRequestException() {
+        super(HttpStatus.BAD_REQUEST);
+    }
 }

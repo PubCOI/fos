@@ -17,7 +17,7 @@
 
 package org.pubcoi.fos.svc.services;
 
-import org.pubcoi.fos.svc.exceptions.ItemNotFoundResponseStatusException;
+import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointRecordNotFoundException;
 import org.pubcoi.fos.svc.models.dto.ClientNodeDTO;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
@@ -40,7 +40,7 @@ public class ClientsSvcImpl implements ClientsSvc {
 
     @Override
     public ClientNode getClientNode(String clientID) {
-        return clientsGraphRepo.findClientHydratingNotices(clientID).orElseThrow(ItemNotFoundResponseStatusException::new);
+        return clientsGraphRepo.findClientHydratingNotices(clientID).orElseThrow(FosEndpointRecordNotFoundException::new);
     }
 
     @Override

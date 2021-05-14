@@ -18,14 +18,16 @@
 package org.pubcoi.fos.svc.services;
 
 import com.opencorporates.schemas.OCCompanySchema;
-import org.pubcoi.fos.svc.exceptions.FosCoreException;
-import org.pubcoi.fos.svc.exceptions.FosRecordNotFoundException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreRecordNotFoundException;
 import org.pubcoi.fos.svc.models.core.JurisdictionEnum;
 
 public interface ScheduledSvc {
+    void flagPotentialConflicts() throws FosCoreException;
+
     void populateFosOrgsMDBFromAwards();
 
     OCCompanySchema getCompany(String companyReference, JurisdictionEnum jurisdiction) throws FosCoreException;
 
-    OCCompanySchema getCompany(String objectId) throws FosRecordNotFoundException;
+    OCCompanySchema getCompany(String objectId) throws FosCoreRecordNotFoundException;
 }

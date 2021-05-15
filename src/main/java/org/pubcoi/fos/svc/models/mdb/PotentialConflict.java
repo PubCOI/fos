@@ -19,8 +19,10 @@ package org.pubcoi.fos.svc.models.mdb;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.pubcoi.fos.svc.models.core.DRResolvePotentialCOITask;
 import org.pubcoi.fos.svc.models.dto.tasks.ResolveCOIActionEnum;
+import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.OffsetDateTime;
@@ -32,18 +34,21 @@ public class PotentialConflict {
     String sourceId;
     String targetId;
     String resolvedByUid;
+    String interestId;
     OffsetDateTime resolutionDT;
     PotentialConflictTypeEnum conflictType;
 
     PotentialConflict() {
     }
 
-    public PotentialConflict(DRResolvePotentialCOITask task, ResolveCOIActionEnum action) {
+    public PotentialConflict(DRResolvePotentialCOITask task, MemberInterest memberInterest, ResolveCOIActionEnum action) {
         this.id = task.getId();
-        this.resolvedByUid = task.getCompletedBy().getUid();
+        this.resolvedByUid = task.getCompletedByUid();
         this.resolutionDT = task.getCompletedDT();
-        this.sourceId = task.getEntity().getFosId();
-        this.targetId = task.getLinkedId();
+        // direction is person->org so linkedId must be source
+        this.sourceId = memberInterest.getPersonNodeId();
+        this.targetId = task.getEntity().getFosId();
+        this.interestId = memberInterest.getId();
         this.conflictType = action.equals(ResolveCOIActionEnum.flag) ? PotentialConflictTypeEnum.flagged : PotentialConflictTypeEnum.false_positive;
     }
 
@@ -85,5 +90,22 @@ public class PotentialConflict {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37).append(id).toHashCode();
+    }
+
+    public String getInterestId() {
+        return interestId;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("sourceId", sourceId)
+                .append("targetId", targetId)
+                .append("resolvedByUid", resolvedByUid)
+                .append("interestId", interestId)
+                .append("resolutionDT", resolutionDT)
+                .append("conflictType", conflictType)
+                .toString();
     }
 }

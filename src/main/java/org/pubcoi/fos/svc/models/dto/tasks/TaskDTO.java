@@ -21,6 +21,8 @@ import org.pubcoi.fos.svc.models.core.DRResolvePotentialCOITask;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosTaskType;
 
+import java.time.OffsetDateTime;
+
 public class TaskDTO {
 
     String taskId;
@@ -28,6 +30,8 @@ public class TaskDTO {
     String entity;
     String description;
     String linkedEntity;
+    OffsetDateTime completedDT;
+    boolean completed;
 
     public TaskDTO() {}
 
@@ -38,6 +42,8 @@ public class TaskDTO {
         if (task instanceof DRResolvePotentialCOITask) {
             this.linkedEntity = ((DRResolvePotentialCOITask) task).getLinkedId();
         }
+        this.completedDT = task.getCompletedDT();
+        this.completed = task.getCompleted();
     }
 
     public FosTaskType getTaskType() {
@@ -83,5 +89,13 @@ public class TaskDTO {
     public TaskDTO setLinkedEntity(String linkedEntity) {
         this.linkedEntity = linkedEntity;
         return this;
+    }
+
+    public OffsetDateTime getCompletedDT() {
+        return completedDT;
+    }
+
+    public boolean isCompleted() {
+        return completed;
     }
 }

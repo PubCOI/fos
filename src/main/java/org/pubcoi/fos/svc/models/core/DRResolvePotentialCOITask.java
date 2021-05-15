@@ -33,7 +33,7 @@ public class DRResolvePotentialCOITask extends DRTask {
 
     public DRResolvePotentialCOITask(OrganisationNode organisationNode, ResultAndScore result) {
         this.taskType = FosTaskType.resolve_potential_coi;
-        this.id = DigestUtils.sha1Hex(String.format("%s_%s_%s", this.taskType.toString(), organisationNode.getFosId(), result.getId()));
+        this.id = DigestUtils.sha1Hex(String.format("%s_%s_%s", this.taskType, organisationNode.getFosId(), result.getId()));
         this.entity = organisationNode;
         this.linkedId = result.getId();
         this.score = result.getScore();

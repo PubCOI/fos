@@ -35,6 +35,7 @@ import org.pubcoi.fos.svc.transactions.FosTransactionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 
@@ -73,6 +74,7 @@ public class TasksSvcImpl implements TasksSvc {
     }
 
     @Override
+    @Transactional
     public void resolvePotentialConflict(String taskId, ResolveCOIActionEnum action, FosUser currentUser) {
         DRTask task = tasksMDBRepo.findById(taskId).orElseThrow();
         if (!(task instanceof DRResolvePotentialCOITask)) {
@@ -86,7 +88,10 @@ public class TasksSvcImpl implements TasksSvc {
         if (action.equals(ResolveCOIActionEnum.flag)) {
             transactionOrchestrationSvc.exec(FosTransactionBuilder.markPotentialCOI(personNode, organisationNode, currentUser));
         }
-        tasksMDBRepo.save(task.setCompleted(true).setCompletedBy(currentUser).setCompletedDT(OffsetDateTime.now()));
-        potentialConflictsRepo.save(new PotentialConflict((DRResolvePotentialCOITask) task, action));
+        task.setCompleted(true).setCompletedByUid(currentUser.getUid()).setCompletedDT(OffsetDateTime.now());
+        PotentialConflict pc = new PotentialConflict((DRResolvePotentialCOITask) task, membersInterestsESRepo.findById(((DRResolvePotentialCOITask) task).getLinkedId()).orElseThrow(), action);
+        logger.debug("Saving potential conflict {}", pc);
+        potentialConflictsRepo.save(pc);
+        tasksMDBRepo.save(task);
     }
 }

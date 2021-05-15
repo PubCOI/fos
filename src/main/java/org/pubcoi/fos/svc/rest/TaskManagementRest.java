@@ -274,7 +274,7 @@ public class TaskManagementRest {
     }
 
     private void markTaskCompleted(String taskId, FosUser user) {
-        tasksMDBRepo.save(tasksMDBRepo.getById(taskId).setCompleted(true).setCompletedBy(user).setCompletedDT(OffsetDateTime.now()));
+        tasksMDBRepo.save(tasksMDBRepo.getById(taskId).setCompleted(true).setCompletedByUid(user.getUid()).setCompletedDT(OffsetDateTime.now()));
     }
 
 }

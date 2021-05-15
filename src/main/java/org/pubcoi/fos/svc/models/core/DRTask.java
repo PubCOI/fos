@@ -34,7 +34,7 @@ public class DRTask {
     FosTaskType taskType;
     FosEntity entity;
     Boolean completed = false;
-    FosUser completedBy;
+    String completedByUid;
     OffsetDateTime completedDT;
 
     DRTask() {}
@@ -76,15 +76,6 @@ public class DRTask {
         return this;
     }
 
-    public FosUser getCompletedBy() {
-        return completedBy;
-    }
-
-    public DRTask setCompletedBy(FosUser completedBy) {
-        this.completedBy = completedBy;
-        return this;
-    }
-
     public OffsetDateTime getCompletedDT() {
         return completedDT;
     }
@@ -96,6 +87,15 @@ public class DRTask {
 
     private DRTask setId(String id) {
         this.id = id;
+        return this;
+    }
+
+    public String getCompletedByUid() {
+        return completedByUid;
+    }
+
+    public DRTask setCompletedByUid(String completedByUid) {
+        this.completedByUid = completedByUid;
         return this;
     }
 }

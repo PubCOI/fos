@@ -33,7 +33,6 @@ import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
 import org.pubcoi.fos.svc.repos.mdb.OCCompaniesRepo;
 import org.pubcoi.fos.svc.repos.mdb.UserObjectFlagRepo;
-import org.pubcoi.fos.svc.services.ApplicationStatusBean;
 import org.pubcoi.fos.svc.services.ScheduledSvc;
 import org.pubcoi.fos.svc.services.auth.FosAuthProvider;
 import org.slf4j.Logger;
@@ -51,19 +50,17 @@ public class UserAdminRest {
     final OCCompaniesRepo ocCompaniesRepo;
     final OrganisationsGraphRepo organisationsGraphRepo;
     final ScheduledSvc scheduledSvc;
-    final ApplicationStatusBean applicationStatus;
 
     public UserAdminRest(FosAuthProvider authProvider,
                          UserObjectFlagRepo userObjectFlagRepo,
                          OCCompaniesRepo ocCompaniesRepo,
                          OrganisationsGraphRepo organisationsGraphRepo,
-                         ScheduledSvc scheduledSvc, ApplicationStatusBean applicationStatus) {
+                         ScheduledSvc scheduledSvc) {
         this.authProvider = authProvider;
         this.userObjectFlagRepo = userObjectFlagRepo;
         this.ocCompaniesRepo = ocCompaniesRepo;
         this.organisationsGraphRepo = organisationsGraphRepo;
         this.scheduledSvc = scheduledSvc;
-        this.applicationStatus = applicationStatus;
     }
 
     @PostMapping("/api/login")
@@ -150,11 +147,6 @@ public class UserAdminRest {
         FosUser user = authProvider.getByUid(uid);
         userObjectFlagRepo.delete(new UserObjectFlag(objectId, user));
         return String.format("Removed flag on item %s", objectId);
-    }
-
-    @GetMapping("/api/status")
-    public ApplicationStatusBean getApplicationStatus() {
-        return applicationStatus;
     }
 
 }

@@ -78,6 +78,7 @@ public class Debug {
     final DeclaredInterestRepo declaredInterestRepo;
     final XslSvc xslSvc;
     final RestTemplate restTemplate;
+    final BatchExecutorSvc batchExecutorSvc;
 
     public Debug(
             AttachmentMDBRepo attachmentMDBRepo,
@@ -95,7 +96,8 @@ public class Debug {
             MnisSvc mnisSvc,
             DeclaredInterestRepo declaredInterestRepo,
             XslSvc xslSvc,
-            RestTemplate restTemplate) {
+            RestTemplate restTemplate,
+            BatchExecutorSvc batchExecutorSvc) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.noticesMDBRepo = noticesMDBRepo;
         this.ocCompanies = ocCompanies;
@@ -112,6 +114,7 @@ public class Debug {
         this.declaredInterestRepo = declaredInterestRepo;
         this.xslSvc = xslSvc;
         this.restTemplate = restTemplate;
+        this.batchExecutorSvc = batchExecutorSvc;
     }
 
     @Value("${pubcoi.fos.apis.parliament.commons-list}")
@@ -166,6 +169,22 @@ public class Debug {
         } catch (FosCoreException e) {
             throw new FosEndpointException(e.getMessage(), e);
         }
+    }
+
+    @GetMapping("/api/debug/run-batch")
+    public void runBatchJobs() {
+        attachmentMDBRepo.findAll().stream()
+                .filter(a -> {
+                    return null != a.getS3Locations() && a.getS3Locations().size() > 0;
+                })
+                .limit(1)
+                .forEach(attachment -> {
+                    try {
+                        batchExecutorSvc.runBatch(attachment);
+                    } catch (Exception e) {
+                        logger.error(e.getMessage(), e);
+                    }
+                });
     }
 
     @PostMapping("/api/datasets/members-interests/reindex")

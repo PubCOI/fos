@@ -179,6 +179,7 @@
                                 <class>org.pubcoi.fos.svc.models.dto.tasks.ResolvePotentialCOIDTO</class>
                                 <class>org.pubcoi.fos.svc.models.dto.tasks.ResolvedCOIDTOResponse</class>
                                 <class>org.pubcoi.fos.svc.models.dto.PotentialConflictDTO</class>
+                                <class>org.pubcoi.fos.svc.models.dto.ApplicationStatsDTO</class>
                             </classes>
                             <noFileComment>true</noFileComment>
                             <outputFile>fos-ui/src/generated/FosTypes.ts</outputFile>

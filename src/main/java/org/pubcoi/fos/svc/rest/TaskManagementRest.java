@@ -24,14 +24,10 @@ import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
 import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
 import org.pubcoi.fos.svc.models.core.*;
 import org.pubcoi.fos.svc.models.dto.*;
-import org.pubcoi.fos.svc.models.dto.tasks.ResolvePotentialCOIDTO;
-import org.pubcoi.fos.svc.models.dto.tasks.ResolvedCOIDTOResponse;
-import org.pubcoi.fos.svc.models.dto.tasks.TaskDTO;
-import org.pubcoi.fos.svc.models.dto.tasks.UpdateNodeDTO;
+import org.pubcoi.fos.svc.models.dto.tasks.*;
 import org.pubcoi.fos.svc.models.es.MemberInterest;
 import org.pubcoi.fos.svc.models.neo.nodes.ClientNode;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
-import org.pubcoi.fos.svc.models.neo.nodes.PersonNode;
 import org.pubcoi.fos.svc.models.oc.OCWrapper;
 import org.pubcoi.fos.svc.repos.es.MembersInterestsESRepo;
 import org.pubcoi.fos.svc.repos.gdb.jpa.ClientsGraphRepo;
@@ -54,8 +50,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-public class Tasks {
-    private static final Logger logger = LoggerFactory.getLogger(Tasks.class);
+public class TaskManagementRest {
+    private static final Logger logger = LoggerFactory.getLogger(TaskManagementRest.class);
 
     final FosAuthProvider authProvider;
     final TasksMDBRepo tasksMDBRepo;
@@ -68,8 +64,9 @@ public class Tasks {
     final ScheduledSvc scheduledSvc;
     final MembersInterestsESRepo membersInterestsESRepo;
     final PersonsGraphRepo personsGraphRepo;
+    final TasksSvc tasksSvc;
 
-    public Tasks(
+    public TaskManagementRest(
             FosAuthProvider authProvider,
             TasksMDBRepo tasksMDBRepo,
             TransactionOrchestrationSvc transactionOrch,
@@ -80,7 +77,7 @@ public class Tasks {
             UserObjectFlagRepo objectFlagsRepo,
             ScheduledSvc scheduledSvc,
             MembersInterestsESRepo membersInterestsESRepo,
-            PersonsGraphRepo personsGraphRepo) {
+            PersonsGraphRepo personsGraphRepo, TasksSvc tasksSvc) {
         this.authProvider = authProvider;
         this.tasksMDBRepo = tasksMDBRepo;
         this.transactionOrch = transactionOrch;
@@ -92,6 +89,7 @@ public class Tasks {
         this.scheduledSvc = scheduledSvc;
         this.membersInterestsESRepo = membersInterestsESRepo;
         this.personsGraphRepo = personsGraphRepo;
+        this.tasksSvc = tasksSvc;
     }
 
     /**
@@ -184,18 +182,11 @@ public class Tasks {
     }
 
     @PutMapping("/api/ui/tasks/resolve_potential_coi/{taskId}/{action}")
-    public ResolvedCOIDTOResponse ignorePotentialCOI(@PathVariable("taskId") String taskId, @PathVariable String action, @RequestHeader("authToken") String authToken) {
+    public ResolvedCOIDTOResponse ignorePotentialCOI(@PathVariable("taskId") String taskId, @PathVariable ResolveCOIActionEnum action, @RequestHeader("authToken") String authToken) {
         FosUser currentUser = authProvider.getByUid(authProvider.getUid(authToken));
-        DRTask task = tasksMDBRepo.findById(taskId).orElseThrow();
-        if (!(task instanceof DRResolvePotentialCOITask))
-            throw new FosEndpointBadRequestException("Not correct task type");
-        OrganisationNode organisationNode = organisationsGraphRepo.findByFosId(task.getEntity().getFosId()).orElseThrow();
-        MemberInterest interest = membersInterestsESRepo.findById(((DRResolvePotentialCOITask) task).getLinkedId()).orElseThrow();
-        PersonNode personNode = personsGraphRepo.findByFosId(interest.getPersonNodeId()).orElseThrow();
-        if (action.equals("flag")) {
-            transactionOrch.exec(FosTransactionBuilder.markPotentialCOI(personNode, organisationNode, currentUser));
-        }
-        tasksMDBRepo.save(task.setCompleted(true).setCompletedBy(currentUser).setCompletedDT(OffsetDateTime.now()));
+
+        tasksSvc.resolvePotentialConflict(taskId, action, currentUser);
+
         Optional<DRTask> nextTask = tasksMDBRepo.findAllByTaskType(FosTaskType.resolve_potential_coi).stream().filter(c -> !c.getCompleted()).findFirst();
         return new ResolvedCOIDTOResponse(nextTask.orElse(null));
     }

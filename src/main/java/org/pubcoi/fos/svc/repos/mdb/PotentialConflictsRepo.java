@@ -15,14 +15,10 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.repos.mdb;
 
-import org.pubcoi.fos.svc.models.core.DRTask;
-import org.pubcoi.fos.svc.models.core.FosUser;
-import org.pubcoi.fos.svc.models.dto.tasks.ResolveCOIActionEnum;
+import org.pubcoi.fos.svc.models.mdb.PotentialConflict;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface TasksSvc {
-    void createTask(DRTask drTask);
-
-    void resolvePotentialConflict(String taskId, ResolveCOIActionEnum action, FosUser currentUser);
+public interface PotentialConflictsRepo extends MongoRepository<PotentialConflict, String> {
 }

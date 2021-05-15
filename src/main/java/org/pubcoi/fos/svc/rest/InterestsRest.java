@@ -15,14 +15,26 @@
  * along with Fos@PubCOI.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.pubcoi.fos.svc.services;
+package org.pubcoi.fos.svc.rest;
 
-import org.pubcoi.fos.svc.models.core.DRTask;
-import org.pubcoi.fos.svc.models.core.FosUser;
-import org.pubcoi.fos.svc.models.dto.tasks.ResolveCOIActionEnum;
+import org.pubcoi.fos.svc.models.dto.es.MemberInterestsDTO;
+import org.pubcoi.fos.svc.services.MnisSvc;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
-public interface TasksSvc {
-    void createTask(DRTask drTask);
+@RestController
+public class InterestsRest {
 
-    void resolvePotentialConflict(String taskId, ResolveCOIActionEnum action, FosUser currentUser);
+    final MnisSvc mnisSvc;
+
+    public InterestsRest(MnisSvc mnisSvc) {
+        this.mnisSvc = mnisSvc;
+    }
+
+    @GetMapping("/api/interests/{mnisMemberId}")
+    public MemberInterestsDTO getInterests(@PathVariable Integer mnisMemberId) {
+        return mnisSvc.getInterestsDTOForMember(mnisMemberId);
+    }
+
 }

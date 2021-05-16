@@ -34,10 +34,11 @@ services:
         volumes:
             - ./config:/root/config:ro
             - ./target:/root
+            - ../fos-batch/target:/batch:ro
         working_dir: /root
         entrypoint: ["java", "-jar", "/root/fos-svc.jar"]
         environment:
-            SPRING_PROFILES_ACTIVE: docker
+            SPRING_PROFILES_ACTIVE: docker,production,batch
         ports:
             - "8099:8084"
        

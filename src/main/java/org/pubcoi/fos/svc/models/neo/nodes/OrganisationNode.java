@@ -43,8 +43,8 @@ public class OrganisationNode implements FosEntity {
     String jurisdiction;
     String reference;
     String name;
-    boolean verified = false;
-    boolean hidden = false;
+    Boolean verified = false;
+    Boolean hidden = false;
 
     @DynamicLabels
     Set<String> labels = new HashSet<>();
@@ -115,17 +115,17 @@ public class OrganisationNode implements FosEntity {
         return this;
     }
 
-    public boolean isVerified() {
+    public Boolean isVerified() {
         return verified;
     }
 
     @Override
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public OrganisationNode setHidden(boolean hidden) {
+    public OrganisationNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }
@@ -134,7 +134,7 @@ public class OrganisationNode implements FosEntity {
         return verified;
     }
 
-    public OrganisationNode setVerified(boolean verified) {
+    public OrganisationNode setVerified(Boolean verified) {
         this.verified = verified;
         if (verified) {
             labels.add("Verified");

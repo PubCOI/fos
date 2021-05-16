@@ -41,8 +41,8 @@ public class AwardNode implements FosEntity {
     String fosId;
     Long value;
     String noticeId;
-    boolean groupAward = false;
-    boolean hidden = false;
+    Boolean groupAward = false;
+    Boolean hidden = false;
 
     public AwardNode() {
     }
@@ -74,11 +74,11 @@ public class AwardNode implements FosEntity {
         return this;
     }
 
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return hidden;
     }
 
-    public AwardNode setHidden(boolean hidden) {
+    public AwardNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }
@@ -129,11 +129,11 @@ public class AwardNode implements FosEntity {
         return this;
     }
 
-    public boolean isGroupAward() {
+    public Boolean isGroupAward() {
         return groupAward;
     }
 
-    public AwardNode setGroupAward(boolean groupAward) {
+    public AwardNode setGroupAward(Boolean groupAward) {
         this.groupAward = groupAward;
         return this;
     }

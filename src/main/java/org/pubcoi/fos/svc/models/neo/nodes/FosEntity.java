@@ -21,7 +21,7 @@ public interface FosEntity {
 
     String getFosId();
 
-    boolean isHidden();
+    Boolean isHidden();
 
-    FosEntity setHidden(boolean hidden);
+    FosEntity setHidden(Boolean hidden);
 }

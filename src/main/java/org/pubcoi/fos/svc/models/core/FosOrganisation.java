@@ -45,12 +45,12 @@ public abstract class FosOrganisation implements FosEntity {
     }
 
     @Override
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public FosOrganisation setHidden(boolean hidden) {
+    public FosOrganisation setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }

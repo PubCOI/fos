@@ -45,7 +45,7 @@ public class PersonNode implements FosEntity {
     @GeneratedValue
     Long graphId;
     String fosId;
-    boolean hidden = false;
+    Boolean hidden = false;
     String ocId;
     Integer parliamentaryId;
     String commonName;
@@ -110,12 +110,12 @@ public class PersonNode implements FosEntity {
     }
 
     @Override
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public FosEntity setHidden(boolean hidden) {
+    public FosEntity setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }

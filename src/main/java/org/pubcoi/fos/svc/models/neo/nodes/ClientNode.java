@@ -130,7 +130,7 @@ public class ClientNode implements FosEntity {
         return this;
     }
 
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return hidden;
     }
 
@@ -139,7 +139,7 @@ public class ClientNode implements FosEntity {
     }
 
     @Override
-    public ClientNode setHidden(boolean hidden) {
+    public ClientNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }

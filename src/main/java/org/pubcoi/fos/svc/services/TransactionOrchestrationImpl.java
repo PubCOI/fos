@@ -104,7 +104,7 @@ public class TransactionOrchestrationImpl implements TransactionOrchestrationSvc
                         .findByFosId(metaTransaction.getTarget().getFosId()).orElseThrow();
 
                 if (!o2c_toNode.isVerified()) {
-                    throw new FosEndpointBadRequestException("Target node must be verified");
+                    transactionRepo.save(tcf.verifyOrg(o2c_toNode, metaTransaction).exec().withMeta(metaTransaction));
                 }
 
                 transactionRepo.save(tcf.linkOrgToParent(o2c_fromNode, o2c_toNode, metaTransaction).exec().withMeta(metaTransaction));

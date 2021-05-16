@@ -19,50 +19,35 @@ package org.pubcoi.fos.svc.transactions;
 
 import org.pubcoi.fos.svc.models.core.NodeReference;
 import org.pubcoi.fos.svc.models.neo.nodes.OrganisationNode;
-import org.pubcoi.fos.svc.models.neo.relationships.OrgLELink;
 import org.pubcoi.fos.svc.repos.gdb.jpa.OrganisationsGraphRepo;
-import org.pubcoi.fos.svc.services.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LinkOrganisationToParent implements IFosTransaction {
-    private static final Logger logger = LoggerFactory.getLogger(LinkOrganisationToParent.class);
+public class VerifyOrg implements IFosTransaction {
+    private static final Logger logger = LoggerFactory.getLogger(VerifyOrg.class);
 
-    final OrganisationsGraphRepo orgGraphRepo;
-    OrganisationNode source;
+    final OrganisationsGraphRepo organisationsGraphRepo;
+    final FosTransaction fosTransaction;
     OrganisationNode target;
-    final FosTransaction transaction;
 
-    public LinkOrganisationToParent(
-            OrganisationsGraphRepo orgGraphRepo,
-            OrganisationNode source,
-            OrganisationNode target,
-            FosTransaction transaction
-    ) {
-        this.orgGraphRepo = orgGraphRepo;
-        this.source = orgGraphRepo.findByFosId(source.getFosId()).orElseThrow();
-        this.target = orgGraphRepo.findByFosId(target.getFosId()).orElseThrow();
-        this.transaction = transaction;
+    public VerifyOrg(OrganisationsGraphRepo organisationsGraphRepo,
+                     OrganisationNode target,
+                     FosTransaction fosTransaction) {
+        this.organisationsGraphRepo = organisationsGraphRepo;
+        this.target = target;
+        this.fosTransaction = fosTransaction;
     }
 
     @Override
     public FosTransaction exec() {
-        logger.debug(Ansi.Blue.format("Linking %s to parent %s", source.getFosId(), target.getFosId()));
-        if (source.equals(target)) {
-            logger.info("Source and target are the same, skipping");
-        }
-        else {
-            source.setLegalEntity(new OrgLELink(
-                    source, target, transaction.id
-            ));
-            orgGraphRepo.save(source);
-        }
+        logger.info("Verifying OrganisationNode {}", target);
+        target.setVerified(true);
+        organisationsGraphRepo.save(target);
         return getTransaction();
     }
 
     @Override
     public IFosTransaction fromTransaction(FosTransaction transaction) {
-        this.source = new OrganisationNode(transaction.getSource());
         this.target = new OrganisationNode(transaction.getTarget());
         return this;
     }
@@ -71,8 +56,6 @@ public class LinkOrganisationToParent implements IFosTransaction {
     public FosTransaction getTransaction() {
         return new FosTransaction()
                 .setTransactionImpl(this.getClass())
-                .setSource(new NodeReference(source))
-                .setTarget(new NodeReference(target))
-                .setUid(transaction.getUid());
+                .setTarget(new NodeReference(target));
     }
 }

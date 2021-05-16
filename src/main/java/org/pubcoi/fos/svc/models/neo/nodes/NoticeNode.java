@@ -40,7 +40,7 @@ public class NoticeNode implements FosEntity {
     @Relationship(Constants.Neo4J.REL_AWARDED)
     List<AwardNode> awards = new ArrayList<>();
 
-    boolean hidden = false;
+    Boolean hidden = false;
 
     public NoticeNode() {
     }
@@ -70,12 +70,12 @@ public class NoticeNode implements FosEntity {
     }
 
     @Override
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return hidden;
     }
 
     @Override
-    public NoticeNode setHidden(boolean hidden) {
+    public NoticeNode setHidden(Boolean hidden) {
         this.hidden = hidden;
         return this;
     }

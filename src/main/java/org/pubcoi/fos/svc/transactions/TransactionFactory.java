@@ -61,4 +61,8 @@ public class TransactionFactory {
     public LinkPersonToOrg linkPersonToOrg(PersonNode source, OrganisationNode target, FosTransaction parentTransaction) {
         return new LinkPersonToOrg(personsGraphRepo, organisationsGraphRepo, source, target, parentTransaction);
     }
+
+    public VerifyOrg verifyOrg(OrganisationNode target, FosTransaction metaTransaction) {
+        return new VerifyOrg(organisationsGraphRepo, target, metaTransaction);
+    }
 }

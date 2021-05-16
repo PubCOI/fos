@@ -48,11 +48,11 @@ public class ProductionEndpoints {
      * @return Result of adding notice
      */
     @PutMapping("/api/notices/{noticeId}")
-    public String putNotice(@PathVariable String noticeId, @RequestHeader("authToken") String authToken) {
+    public FullNotice putNotice(@PathVariable String noticeId, @RequestHeader("authToken") String authToken) {
         authProvider.checkAuth(authToken);
         FullNotice notice = contractsFinderSvc.addNotice(noticeId);
         graphSvc.populateGraphFromMDB(noticeId);
-        return String.format("%s added", notice.getId());
+        return notice;
     }
 
 }

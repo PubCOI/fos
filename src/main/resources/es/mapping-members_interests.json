@@ -10,17 +10,14 @@
         },
         "donorName": {
           "type": "text",
-          "analyzer": "names_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"
             }
-          }
+          },
+          "analyzer": "names_analyzer"
         },
         "id": {
-          "type": "keyword"
-        },
-        "pwInterestId": {
           "type": "keyword"
         },
         "mnisCategory": {
@@ -37,12 +34,12 @@
         },
         "personFullName": {
           "type": "text",
-          "analyzer": "names_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"
             }
-          }
+          },
+          "analyzer": "names_analyzer"
         },
         "personNodeId": {
           "type": "keyword"
@@ -51,6 +48,9 @@
           "type": "long"
         },
         "pwCategoryDescription": {
+          "type": "keyword"
+        },
+        "pwInterestId": {
           "type": "keyword"
         },
         "pwPersonId": {

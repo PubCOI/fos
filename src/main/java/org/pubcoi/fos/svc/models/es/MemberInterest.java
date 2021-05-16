@@ -33,34 +33,46 @@ import java.util.Set;
 @Setting(settingPath = "es/members_interests.json")
 public class MemberInterest {
 
-    @Id
-    String id;
     @Field(type = FieldType.Keyword)
-    String personNodeId;
+    String _class;
+    @Field(type = FieldType.Boolean)
+    Boolean donation;
+    @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "names_analyzer"), otherFields = {
+            @InnerField(suffix = "keyword", type = FieldType.Keyword)
+    })
+    String donorName;
+    @Id
+    @Field(type = FieldType.Keyword)
+    String id;
+    @Field(type = FieldType.Long)
+    Integer mnisCategory;
+    @Field(type = FieldType.Keyword)
+    String mnisCategoryDescription;
     @Field(type = FieldType.Keyword)
     Integer mnisInterestId;
+    @Field(type = FieldType.Keyword)
+    Integer mnisPersonId;
+    String personFullName;
+    @Field(type = FieldType.Keyword)
+    String personNodeId;
+    Integer pwCategory;
+    @Field(type = FieldType.Keyword)
+    String pwCategoryDescription;
     @Field(type = FieldType.Keyword)
     String pwInterestId;
     @Field(type = FieldType.Keyword)
     String pwPersonId;
-    @Field(type = FieldType.Keyword)
-    Integer mnisPersonId;
-    String personFullName;
-    String text;
     @Field(type = FieldType.Date, format = DateFormat.date)
     LocalDate registeredDate;
-    Integer pwCategory;
     @Field(type = FieldType.Keyword)
-    String pwCategoryDescription;
-    Integer mnisCategory;
-    @Field(type = FieldType.Keyword)
-    String mnisCategoryDescription;
-    Boolean donation;
-    @Field(type = FieldType.Text, analyzer = "names_analyzer")
-    String donorName;
-    Set<String> datasets = new HashSet<>();
-    Float valueSum;
     SourceEnum source;
+    @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "interests_analyzer", searchAnalyzer = "autocomplete_search"), otherFields = {
+            @InnerField(suffix = "keyword", type = FieldType.Keyword)
+    })
+    String text;
+    Set<String> datasets = new HashSet<>();
+    @Field(type = FieldType.Float)
+    Float valueSum;
 
     MemberInterest() {
     }
@@ -261,5 +273,9 @@ public class MemberInterest {
     public MemberInterest setPwInterestId(String pwInterestId) {
         this.pwInterestId = pwInterestId;
         return this;
+    }
+
+    public String get_class() {
+        return _class;
     }
 }

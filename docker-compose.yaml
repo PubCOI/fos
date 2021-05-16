@@ -4,7 +4,7 @@ services:
         image: mongo:4.2.12
         container_name: mongodb
         environment:
-            - MONGO_INITDB_DATABASE=docker-fos
+            - MONGO_INITDB_DATABASE=fos-docker
             - MONGO_INITDB_ROOT_USERNAME=fos-root
             - MONGO_INITDB_ROOT_PASSWORD=fos-pass
         volumes:

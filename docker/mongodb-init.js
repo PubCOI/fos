@@ -1,8 +1,8 @@
 db.createUser({
-    user: "fos-docker-runtime",
-    pwd: "fos-docker-runtime-pass",
+    user: "fos-runtime",
+    pwd: "fos-pass",
     roles: [
-        {role: "readWrite", db: "docker-fos"}
+        {role: "readWrite", db: "fos-docker"}
     ]
 })
 ;

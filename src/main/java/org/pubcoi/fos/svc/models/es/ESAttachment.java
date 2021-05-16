@@ -17,12 +17,14 @@
 
 package org.pubcoi.fos.svc.models.es;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 
 @Document(indexName = "attachments", createIndex = false)
 public class ESAttachment {
 
+    @Id
     String id;
 
     @Field(name = "file_size")

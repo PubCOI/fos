@@ -69,7 +69,7 @@ public class BatchExecutorSvcImpl implements BatchExecutorSvc {
             logger.warn("application-local.properties does not exist, but will not halt execution...");
         }
         if (!javaJar.exists() || !batchProperties.exists()) {
-            logger.error("Found files: jar:{} batchProperties:{}", javaJar.exists(), batchProperties.exists());
+            logger.error(Ansi.Red.format("Found files: jar:%s batchProperties:%s", javaJar.exists(), batchProperties.exists()));
             throw new RuntimeException("Unable to find required resources");
         }
     }

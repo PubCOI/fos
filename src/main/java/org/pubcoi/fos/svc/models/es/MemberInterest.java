@@ -22,10 +22,7 @@ import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.fos.svc.services.Utils;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.*;
 import org.springframework.data.neo4j.core.schema.Id;
 
 import java.time.LocalDate;
@@ -33,6 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Document(indexName = "members_interests")
+@Setting(settingPath = "es/members_interests.json")
 public class MemberInterest {
 
     @Id
@@ -58,6 +56,7 @@ public class MemberInterest {
     @Field(type = FieldType.Keyword)
     String mnisCategoryDescription;
     Boolean donation;
+    @Field(type = FieldType.Text, analyzer = "names_analyzer")
     String donorName;
     Set<String> datasets = new HashSet<>();
     Float valueSum;

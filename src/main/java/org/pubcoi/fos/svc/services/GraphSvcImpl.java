@@ -229,34 +229,4 @@ public class GraphSvcImpl implements GraphSvc {
         });
     }
 
-    @Override
-    public void createAndUpdateAttachmentObjects() {
-        logger.info("Extracting all attachment metadata from notices");
-        noticesMDBRepo.findAll().forEach(this::addAttachmentsToMDB);
-        logger.info("Creating default batch jobs for attachment processing");
-        attachmentMDBRepo.findAll().forEach(this::createDefaultBatchJobs);
-    }
-
-    private void createDefaultBatchJobs(Attachment attachment) {
-        BatchJob dl = null;
-        if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.DOWNLOAD)) {
-            dl = batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.DOWNLOAD));
-        }
-        if (!batchJobMDBRepo.existsByTargetIdAndType(attachment.getId(), BatchJobTypeEnum.PROCESS_OCR)) {
-            batchJobMDBRepo.save(BatchJobFactory.build(attachment, BatchJobTypeEnum.PROCESS_OCR).withDepends((null != dl ? dl.getId() : null)));
-        }
-    }
-
-    private void addAttachmentsToMDB(FullNotice notice) {
-        for (AdditionalDetailType additionalDetail : notice.getAdditionalDetails().getDetailsList()) {
-            // note that each notice will have an "additional details" object that is exactly the
-            // same as the description on the notice
-            // helpfully, the ID and notice ID on these objects is the same
-            if (additionalDetail.getId().equals(additionalDetail.getNoticeId())) continue;
-            if (!attachmentMDBRepo.existsById(additionalDetail.getId())) {
-                attachmentMDBRepo.save(AttachmentFactory.build(additionalDetail));
-            }
-        }
-    }
-
 }

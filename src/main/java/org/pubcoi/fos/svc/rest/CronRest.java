@@ -28,6 +28,7 @@ import org.pubcoi.fos.svc.repos.mdb.AttachmentMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.BatchJobMDBRepo;
 import org.pubcoi.fos.svc.repos.mdb.NoticesMDBRepo;
 import org.pubcoi.fos.svc.services.BatchExecutorSvc;
+import org.pubcoi.fos.svc.services.BatchRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 @Profile("batch")
 @RestController
@@ -46,6 +50,7 @@ public class CronRest {
     final BatchExecutorSvc batchExecutorSvc;
     final NoticesMDBRepo noticesMDBRepo;
     final BatchJobMDBRepo batchJobMDBRepo;
+    final BatchRepo batchRepo;
 
     @Value("${fos.cron.key:DEFAULT}")
     String cronKey;
@@ -53,11 +58,12 @@ public class CronRest {
     public CronRest(AttachmentMDBRepo attachmentMDBRepo,
                     BatchExecutorSvc batchExecutorSvc,
                     NoticesMDBRepo noticesMDBRepo,
-                    BatchJobMDBRepo batchJobMDBRepo) {
+                    BatchJobMDBRepo batchJobMDBRepo, BatchRepo batchRepo) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.batchExecutorSvc = batchExecutorSvc;
         this.noticesMDBRepo = noticesMDBRepo;
         this.batchJobMDBRepo = batchJobMDBRepo;
+        this.batchRepo = batchRepo;
     }
 
     @GetMapping("/api/cron/execute-batch")
@@ -72,6 +78,10 @@ public class CronRest {
         }
         attachmentMDBRepo.findAll().stream()
                 .filter(a -> null == a.getS3Locations() || a.getS3Locations().size() == 0)
+                .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {
+                    Collections.shuffle(collected);
+                    return collected.stream();
+                }))
                 .limit(1)
                 .forEach(attachment -> {
                     try {

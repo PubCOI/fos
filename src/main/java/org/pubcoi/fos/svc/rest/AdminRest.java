@@ -43,13 +43,14 @@ import java.util.Collections;
 public class AdminRest {
     private static final Logger logger = LoggerFactory.getLogger(AdminRest.class);
     public static final String AUTH_HEADER = "api-token";
+    public static final String API_KEY_VAR = "fos.api.key";
 
     final XslSvc xslSvc;
     final MnisSvc mnisSvc;
     final RestTemplate restTemplate;
     final MnisMembersRepo mnisMembersRepo;
 
-    @Value("${fos.api.key:DEFAULT}")
+    @Value("${" + API_KEY_VAR + ":DEFAULT}")
     String apiKey;
 
     @Value("${pubcoi.fos.apis.parliament.commons-list}")

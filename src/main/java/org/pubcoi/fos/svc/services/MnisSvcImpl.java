@@ -149,6 +149,7 @@ public class MnisSvcImpl implements MnisSvc {
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_XML));
             HttpEntity<String> entity = new HttpEntity<>(headers);
+            logger.debug("Fetching interests for member {}", memberId);
             ResponseEntity<MnisMembersType> membersResponse = restTemplate.exchange(String.format(interestsEndpoint, memberId), HttpMethod.GET, entity, MnisMembersType.class);
             if (null != membersResponse.getBody()) {
                 if (null == membersResponse.getBody().getMembers() || membersResponse.getBody().getMembers().size() != 1) {

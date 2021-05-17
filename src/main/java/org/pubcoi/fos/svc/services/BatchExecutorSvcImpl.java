@@ -43,10 +43,10 @@ public class BatchExecutorSvcImpl implements BatchExecutorSvc {
     @Value("${fos.batch.paths.jar:fos-batch-1.0-SNAPSHOT.jar}")
     Resource javaJar;
 
-    @Value("${fos.batch.paths.application-config:classpath:application-batch-runtime.properties}")
+    @Value("${fos.batch.paths.application-batch-config:classpath:application-batch-runtime.properties}")
     Resource batchProperties;
 
-    @Value("${fos.batch.paths.application-config:file:config/application-local.properties}")
+    @Value("${fos.batch.paths.application-local-config:file:config/application-local.properties}")
     Resource localProperties;
 
     @PostConstruct

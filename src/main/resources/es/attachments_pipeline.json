@@ -1,0 +1,52 @@
+{
+  "description": "Extract attachment data",
+  "processors": [
+    {
+      "attachment": {
+        "field": "data",
+        "indexed_chars": 1000000
+      }
+    },
+    {
+      "remove": {
+        "field": ["attachment.author", "attachment.date", "data"],
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "attachment.content",
+        "target_field": "content",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "attachment.content_length",
+        "target_field": "content_length",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "attachment.content_type",
+        "target_field": "content_type",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "attachment.language",
+        "target_field": "file_lang",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "attachment.title",
+        "target_field": "file_title",
+        "ignore_missing": true
+      }
+    }
+  ]
+}

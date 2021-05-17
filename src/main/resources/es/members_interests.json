@@ -1,0 +1,83 @@
+{
+  "index": {
+    "number_of_shards": "1",
+    "number_of_replicas": "1",
+    "analysis": {
+      "filter": {
+        "general_stop_words": {
+          "type": "stop",
+          "stopwords": [
+            "a",
+            "an",
+            "and",
+            "as",
+            "at",
+            "be",
+            "but",
+            "by",
+            "for",
+            "had",
+            "has",
+            "have",
+            "he",
+            "her",
+            "him",
+            "his",
+            "how",
+            "i",
+            "if",
+            "in",
+            "is",
+            "it",
+            "me",
+            "my",
+            "no",
+            "of",
+            "on",
+            "or",
+            "so",
+            "some",
+            "such",
+            "than",
+            "that",
+            "the",
+            "then",
+            "these",
+            "this",
+            "those",
+            "to",
+            "we",
+            "who",
+            "''s"
+          ]
+        }
+      },
+      "analyzer": {
+        "interests_analyzer": {
+          "tokenizer": "autocomplete",
+          "filter": [
+            "asciifolding",
+            "lowercase",
+            "general_stop_words"
+          ]
+        },
+        "autocomplete_search": {
+          "tokenizer": "lowercase"
+        },
+        "names_analyzer": {
+          "tokenizer": "autocomplete"
+        }
+      },
+      "tokenizer": {
+        "autocomplete": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 12,
+          "token_chars": [
+            "letter"
+          ]
+        }
+      }
+    }
+  }
+}

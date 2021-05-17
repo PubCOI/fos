@@ -22,8 +22,6 @@ import org.pubcoi.cdm.mnis.MnisInterestCategoryType;
 import org.pubcoi.cdm.mnis.MnisInterestType;
 import org.pubcoi.cdm.mnis.MnisMemberType;
 import org.pubcoi.cdm.mnis.MnisMembersType;
-import org.pubcoi.cdm.pw.PWRootType;
-import org.pubcoi.cdm.pw.RegisterEntryType;
 import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointBadRequestException;
 import org.pubcoi.fos.svc.exceptions.endpoint.FosEndpointException;
@@ -39,10 +37,11 @@ import org.pubcoi.fos.svc.repos.mdb.*;
 import org.pubcoi.fos.svc.services.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -52,7 +51,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import static org.pubcoi.fos.svc.services.Utils.mnisIdHash;
@@ -117,12 +115,6 @@ public class Debug {
         this.batchExecutorSvc = batchExecutorSvc;
     }
 
-    @Value("${pubcoi.fos.apis.parliament.commons-list}")
-    String commonsDataURL;
-
-    @Value("${pubcoi.fos.apis.parliament.lords-list}")
-    String lordsDataURL;
-
     @GetMapping("/api/oc-companies")
     public List<OCCompanySchema> getCompanies() {
         return ocCompanies.findAll();
@@ -143,23 +135,6 @@ public class Debug {
     @GetMapping("/api/debug/populate-graph")
     public void populateGraph() {
         graphSvc.populateGraphFromMDB();
-    }
-
-    /**
-     * This is taking data from PublicWhip data dumps
-     * @return OK if successful
-     */
-    @PostMapping("/api/datasets/members-interests")
-    public String uploadMembersInterests(@RequestBody String input, @RequestParam("dataset") String dataset) {
-        PWRootType cleaned = xslSvc.cleanPWData(input);
-        for (RegisterEntryType register : cleaned.getRegisters()) {
-            try {
-                mnisSvc.addInterestsToMDB(register, dataset);
-            } catch (FosCoreException e) {
-                throw new FosEndpointException();
-            }
-        }
-        return "ok";
     }
 
     @GetMapping("/api/debug/run-coi-check")
@@ -187,16 +162,6 @@ public class Debug {
                 });
     }
 
-    @PostMapping("/api/datasets/members-interests/reindex")
-    public void reindexInterests() {
-        mnisSvc.reindex();
-    }
-
-    @PostMapping("/api/datasets/members-interests/reanalyse")
-    public void reanalyseInterests() {
-        mnisSvc.reanalyse();
-    }
-
     @PostMapping("/api/datasets/politicians")
     public String uploadMnisData(MultipartHttpServletRequest request) {
         MultipartFile file = request.getFile("file");
@@ -214,45 +179,6 @@ public class Debug {
         } catch (IOException | JAXBException e) {
             throw new FosEndpointException("Unable to read file stream");
         }
-        return "ok";
-    }
-
-    /**
-     *
-     * Used to do an initial load of politician data (names etc)
-     */
-    @PostMapping("/api/datasets/politicians/bootstrap")
-    public void bootstrapPolData() {
-
-        logger.info("Loading data from commons endpoint");
-        loadMembersData(commonsDataURL);
-
-        logger.info("Loading data from lords endpoint");
-        loadMembersData(lordsDataURL);
-
-        logger.info("Done");
-    }
-
-    private void loadMembersData(String dataUrl) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_XML));
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<MnisMembersType> commonsResponse = restTemplate
-                .exchange(dataUrl, HttpMethod.GET, entity, MnisMembersType.class);
-        if (null != commonsResponse.getBody()) {
-            for (MnisMemberType member : commonsResponse.getBody().getMembers()) {
-                if (!mnisMembersRepo.existsById(member.getMemberId())) {
-                    mnisMembersRepo.save(member);
-                }
-            }
-        }
-    }
-
-    @GetMapping("/api/datasets/politicians/populate-interests")
-    public String populateOnePolitician() {
-        mnisMembersRepo.findAll().stream()
-                .filter(p -> null == p.getInterests())
-                .forEach(m -> mnisSvc.populateInterestsForMember(m.getMemberId()));
         return "ok";
     }
 

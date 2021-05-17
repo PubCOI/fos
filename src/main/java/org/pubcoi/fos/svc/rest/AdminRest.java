@@ -42,15 +42,15 @@ import java.util.Collections;
 @RestController
 public class AdminRest {
     private static final Logger logger = LoggerFactory.getLogger(AdminRest.class);
-    public static final String AUTH_HEADER = "api-token";
-    public static final String API_KEY_VAR = "fos.api.key";
+    public static final String AUTH_HEADER = "admin-api-key";
+    public static final String ADMIN_API_KEY_VAR = "fos.api.admin-key";
 
     final XslSvc xslSvc;
     final MnisSvc mnisSvc;
     final RestTemplate restTemplate;
     final MnisMembersRepo mnisMembersRepo;
 
-    @Value("${" + API_KEY_VAR + ":DEFAULT}")
+    @Value("${" + ADMIN_API_KEY_VAR + ":DEFAULT}")
     String apiKey;
 
     @Value("${pubcoi.fos.apis.parliament.commons-list}")
@@ -71,9 +71,9 @@ public class AdminRest {
      */
     @PutMapping("/api/admin/interests/bootstrap")
     public void bootstrapPolData(
-            @RequestHeader(AUTH_HEADER) String apiToken
+            @RequestHeader(AUTH_HEADER) String adminApiKey
     ) {
-        checkAuth(apiToken);
+        checkAuth(adminApiKey);
 
         logger.info("Loading data from commons endpoint");
         loadMembersData(commonsDataURL);
@@ -81,7 +81,20 @@ public class AdminRest {
         logger.info("Loading data from lords endpoint");
         loadMembersData(lordsDataURL);
 
+        fetchAllRemoteInterests();
+
         logger.info("Done");
+    }
+
+    /**
+     * Runs through all members and fetches any interests that are declared on the MNIS endpoint
+     * Note that - at the moment - this only includes members in Lords; commons need loaded
+     * in via the PublicWhip data (see bottom of README)
+     */
+    private void fetchAllRemoteInterests() {
+        mnisMembersRepo.findAll().stream()
+                .filter(p -> null == p.getInterests())
+                .forEach(m -> mnisSvc.populateInterestsForMember(m.getMemberId()));
     }
 
     /**
@@ -95,10 +108,10 @@ public class AdminRest {
      */
     @PostMapping("/api/admin/interests/upload")
     public String uploadMembersInterests(
-            @RequestHeader(AUTH_HEADER) String apiToken,
+            @RequestHeader(AUTH_HEADER) String apiAdminKey,
             @RequestBody String input,
             @RequestParam("dataset") String dataset) {
-        checkAuth(apiToken);
+        checkAuth(apiAdminKey);
         PWRootType cleaned = xslSvc.cleanPWData(input);
         for (RegisterEntryType register : cleaned.getRegisters()) {
             try {
@@ -113,18 +126,18 @@ public class AdminRest {
     /**
      * Responsible for extracting data from the text eg whether it's a donation etc
      */
-    @PostMapping("/api/admin/interests/reanalyse")
+    @PutMapping("/api/admin/interests/reanalyse")
     public void reanalyseInterests(
-            @RequestHeader(AUTH_HEADER) String apiToken
+            @RequestHeader(AUTH_HEADER) String apiAdminKey
     ) {
-        checkAuth(apiToken);
+        checkAuth(apiAdminKey);
         mnisSvc.reanalyse();
     }
 
     /**
      * Responsible for writing analysed interests onto the ES instance
      */
-    @PostMapping("/api/admin/interests/reindex")
+    @PutMapping("/api/admin/interests/reindex")
     public void reindexInterests(
             @RequestHeader(AUTH_HEADER) String apiToken
     ) {
@@ -154,7 +167,7 @@ public class AdminRest {
 
     public void checkAuth(String apiToken) {
         if (apiKey.equals("DEFAULT")) {
-            logger.error("fos.cron.key must be set to something other than default");
+            logger.error("fos.api.admin-key must be set to something other than default");
             throw new FosEndpointUnauthException();
         }
         if (!apiToken.equals(apiKey)) {

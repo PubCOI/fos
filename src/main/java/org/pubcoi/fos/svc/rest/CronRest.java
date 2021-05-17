@@ -73,9 +73,9 @@ public class CronRest {
 
     @GetMapping("/api/cron/execute-batch")
     public void runBatchJobs(
-            @RequestHeader(AUTH_HEADER) String apiToken,
+            @RequestHeader(AUTH_HEADER) String adminApiKey,
             @RequestHeader(value = "count", required = false, defaultValue = "1") String count) {
-        adminRest.checkAuth(apiToken);
+        adminRest.checkAuth(adminApiKey);
         attachmentMDBRepo.findAll().stream()
                 .filter(a -> null == a.getS3Locations() || a.getS3Locations().size() == 0)
                 .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {

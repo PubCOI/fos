@@ -96,7 +96,8 @@ for file in `find . -type f -name *.xml` ; do
 done
 
 # now post ...
-for file in *.xml ; do curl \
+# note that the api token must be set under application.properties (fos.api.key)
+for file in `find . -type f -name *.xml` ; do curl \
     "http://127.0.0.1:8084/api/admin/interests/upload?dataset=$file" -XPOST -d@"$file" \
-    -v -H "Content-Type: application/xml" ; done
+    -v -H "Content-Type: application/xml" -H "admin-api-key: <token>" ; done
 ```

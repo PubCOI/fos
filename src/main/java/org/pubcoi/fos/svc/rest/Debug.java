@@ -182,14 +182,6 @@ public class Debug {
         return "ok";
     }
 
-    @GetMapping("/api/datasets/politicians/populate-interests")
-    public String populateOnePolitician() {
-        mnisMembersRepo.findAll().stream()
-                .filter(p -> null == p.getInterests())
-                .forEach(m -> mnisSvc.populateInterestsForMember(m.getMemberId()));
-        return "ok";
-    }
-
     @GetMapping("/api/datasets/politicians/populate-graph")
     public void populatePolGraph() {
         mnisMembersRepo.findAll()

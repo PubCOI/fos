@@ -71,7 +71,7 @@ public class CronRest {
             return;
         }
         attachmentMDBRepo.findAll().stream()
-                .filter(a -> null != a.getS3Locations() && a.getS3Locations().size() > 0)
+                .filter(a -> null == a.getS3Locations() || a.getS3Locations().size() == 0)
                 .limit(1)
                 .forEach(attachment -> {
                     try {

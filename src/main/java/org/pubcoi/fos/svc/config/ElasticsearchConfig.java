@@ -30,9 +30,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 @Component
@@ -48,16 +45,14 @@ public class ElasticsearchConfig {
     @PostConstruct
     public void setup() {
         try {
-            byte[] pipeline = Files.readAllBytes(Paths.get(
-                    Objects.requireNonNull(this.getClass().getClassLoader().getResource("es/attachments_pipeline.json")).toURI()
-            ));
+            byte[] pipeline = Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream("es/attachments_pipeline.json")).readAllBytes();
             PutPipelineRequest request = new PutPipelineRequest("attachment", new BytesArray(pipeline), XContentType.JSON);
             AcknowledgedResponse response = highLevelClient.ingest().putPipeline(request, RequestOptions.DEFAULT);
             logger.info("PUT attachments_pipeline ack: {}", response.isAcknowledged());
             if (!response.isAcknowledged()) {
                 throw new FosCoreRuntimeException("Unable to PUT attachments pipeline");
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             throw new FosCoreRuntimeException("Unable to open attachments pipeline file");
         }
     }

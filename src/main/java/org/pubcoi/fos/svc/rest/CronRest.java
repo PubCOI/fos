@@ -78,6 +78,8 @@ public class CronRest {
             @RequestHeader(value = "count", required = false, defaultValue = "1") String count) {
         adminRest.checkAuth(adminApiKey);
         attachmentMDBRepo.findAll().stream()
+                // fixme - temporary fix, external resolution of attachments broken
+                .filter(a -> null != a.getMimeType() && a.getMimeType().equals("application/pdf"))
                 .filter(a -> null == a.getS3Locations() || a.getS3Locations().size() == 0)
                 .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {
                     Collections.shuffle(collected);

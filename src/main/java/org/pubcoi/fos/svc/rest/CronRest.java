@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -77,7 +78,6 @@ public class CronRest {
             @RequestHeader(value = "count", required = false, defaultValue = "1") String count) {
         adminRest.checkAuth(adminApiKey);
         attachmentMDBRepo.findAll().stream()
-                .filter(a -> null != a.getDataType() && a.getDataType().equals("Attachment"))
                 .filter(a -> null == a.getS3Locations() || a.getS3Locations().size() == 0)
                 .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {
                     Collections.shuffle(collected);
@@ -85,12 +85,23 @@ public class CronRest {
                 }))
                 .limit(Integer.parseInt(count))
                 .forEach(attachment -> {
-                    try {
-                        batchExecutorSvc.runBatch(attachment);
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    }
+                    runBatchJob(adminApiKey, attachment.getId());
                 });
+    }
+
+    @GetMapping("/api/cron/execute-batch/{attachmentId}")
+    public void runBatchJob(
+            @RequestHeader(AUTH_HEADER) String adminApiKey,
+            @PathVariable String attachmentId) {
+        //todo needs refactored
+        adminRest.checkAuth(adminApiKey);
+        attachmentMDBRepo.findById(attachmentId).ifPresent(attachment -> {
+            try {
+                batchExecutorSvc.runBatch(attachment);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
     }
 
     @GetMapping("/api/cron/update-attachments")
@@ -111,7 +122,7 @@ public class CronRest {
         }
     }
 
-    private void addAttachmentsToMDB(FullNotice notice) {
+    public void addAttachmentsToMDB(FullNotice notice) {
         for (AdditionalDetailType additionalDetail : notice.getAdditionalDetails().getDetailsList()) {
             // note that each notice will have an "additional details" object that is exactly the
             // same as the description on the notice

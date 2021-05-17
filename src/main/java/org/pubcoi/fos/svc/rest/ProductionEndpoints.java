@@ -34,11 +34,16 @@ public class ProductionEndpoints {
     final FosAuthProvider authProvider;
     final ContractsFinderSvc contractsFinderSvc;
     final GraphSvc graphSvc;
+    final CronRest cronRest;
 
-    public ProductionEndpoints(FosAuthProvider authProvider, ContractsFinderSvc contractsFinderSvc, GraphSvc graphSvc) {
+    public ProductionEndpoints(FosAuthProvider authProvider,
+                               ContractsFinderSvc contractsFinderSvc,
+                               GraphSvc graphSvc,
+                               CronRest cronRest) {
         this.authProvider = authProvider;
         this.contractsFinderSvc = contractsFinderSvc;
         this.graphSvc = graphSvc;
+        this.cronRest = cronRest;
     }
 
     /**
@@ -51,6 +56,7 @@ public class ProductionEndpoints {
     public FullNotice putNotice(@PathVariable String noticeId, @RequestHeader("authToken") String authToken) {
         authProvider.checkAuth(authToken);
         FullNotice notice = contractsFinderSvc.addNotice(noticeId);
+        cronRest.addAttachmentsToMDB(notice);
         graphSvc.populateGraphFromMDB(noticeId);
         return notice;
     }

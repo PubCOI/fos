@@ -67,7 +67,7 @@ public class CronRest {
     }
 
     @GetMapping("/api/cron/execute-batch")
-    public void runBatchJobs(@RequestHeader("api-token") String apiToken) {
+    public void runBatchJobs(@RequestHeader("api-token") String apiToken, @RequestHeader(value = "count", required = false, defaultValue = "1") String count) {
         if (cronKey.equals("DEFAULT")) {
             logger.error("fos.cron.key must be set to something other than default");
             return;
@@ -82,7 +82,7 @@ public class CronRest {
                     Collections.shuffle(collected);
                     return collected.stream();
                 }))
-                .limit(1)
+                .limit(Integer.parseInt(count))
                 .forEach(attachment -> {
                     try {
                         batchExecutorSvc.runBatch(attachment);

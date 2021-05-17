@@ -40,10 +40,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import static org.pubcoi.fos.svc.rest.AdminRest.AUTH_HEADER;
+
 @Profile("batch")
 @RestController
 public class CronRest {
-
     private static final Logger logger = LoggerFactory.getLogger(CronRest.class);
 
     final AttachmentMDBRepo attachmentMDBRepo;
@@ -51,31 +52,30 @@ public class CronRest {
     final NoticesMDBRepo noticesMDBRepo;
     final BatchJobMDBRepo batchJobMDBRepo;
     final BatchRepo batchRepo;
+    final AdminRest adminRest;
 
-    @Value("${fos.cron.key:DEFAULT}")
-    String cronKey;
+    @Value("${fos.api.key:DEFAULT}")
+    String apiKey;
 
     public CronRest(AttachmentMDBRepo attachmentMDBRepo,
                     BatchExecutorSvc batchExecutorSvc,
                     NoticesMDBRepo noticesMDBRepo,
-                    BatchJobMDBRepo batchJobMDBRepo, BatchRepo batchRepo) {
+                    BatchJobMDBRepo batchJobMDBRepo,
+                    BatchRepo batchRepo,
+                    AdminRest adminRest) {
         this.attachmentMDBRepo = attachmentMDBRepo;
         this.batchExecutorSvc = batchExecutorSvc;
         this.noticesMDBRepo = noticesMDBRepo;
         this.batchJobMDBRepo = batchJobMDBRepo;
         this.batchRepo = batchRepo;
+        this.adminRest = adminRest;
     }
 
     @GetMapping("/api/cron/execute-batch")
-    public void runBatchJobs(@RequestHeader("api-token") String apiToken, @RequestHeader(value = "count", required = false, defaultValue = "1") String count) {
-        if (cronKey.equals("DEFAULT")) {
-            logger.error("fos.cron.key must be set to something other than default");
-            return;
-        }
-        if (!apiToken.equals(cronKey)) {
-            logger.error("key is incorrect");
-            return;
-        }
+    public void runBatchJobs(
+            @RequestHeader(AUTH_HEADER) String apiToken,
+            @RequestHeader(value = "count", required = false, defaultValue = "1") String count) {
+        adminRest.checkAuth(apiToken);
         attachmentMDBRepo.findAll().stream()
                 .filter(a -> null == a.getS3Locations() || a.getS3Locations().size() == 0)
                 .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {

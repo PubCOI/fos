@@ -17,19 +17,24 @@
 
 package org.pubcoi.fos.svc.config;
 
+import com.google.common.io.ByteStreams;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.pubcoi.fos.svc.exceptions.core.FosCoreException;
 import org.pubcoi.fos.svc.exceptions.core.FosCoreRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.ConnectException;
 import java.util.Objects;
 
 @Component
@@ -44,14 +49,16 @@ public class ElasticsearchConfig {
 
     @PostConstruct
     public void setup() {
-        try {
-            byte[] pipeline = Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream("es/attachments_pipeline.json")).readAllBytes();
+        try (InputStream pipelineInputStream = new ClassPathResource("es/attachments_pipeline.json").getInputStream()) {
+            byte[] pipeline = ByteStreams.toByteArray(pipelineInputStream);
             PutPipelineRequest request = new PutPipelineRequest("attachment", new BytesArray(pipeline), XContentType.JSON);
             AcknowledgedResponse response = highLevelClient.ingest().putPipeline(request, RequestOptions.DEFAULT);
             logger.info("PUT attachments_pipeline ack: {}", response.isAcknowledged());
             if (!response.isAcknowledged()) {
                 throw new FosCoreRuntimeException("Unable to PUT attachments pipeline");
             }
+        } catch (ConnectException e) {
+            throw new FosCoreRuntimeException(String.format("Unable to create pipeline: %s", e.getMessage()));
         } catch (IOException e) {
             throw new FosCoreRuntimeException("Unable to open attachments pipeline file");
         }

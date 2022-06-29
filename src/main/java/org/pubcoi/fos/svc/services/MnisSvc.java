@@ -25,6 +25,8 @@ import org.pubcoi.fos.svc.models.queries.ResultAndScore;
 import java.util.List;
 
 public interface MnisSvc {
+    void bootstrapPwMemberIds();
+
     void populateInterestsForMember(Integer memberId);
 
     void addInterestsToMDB(RegisterEntryType entryType, String datasetName) throws FosCoreException;

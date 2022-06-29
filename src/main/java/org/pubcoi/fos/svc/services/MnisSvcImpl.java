@@ -57,7 +57,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
@@ -105,8 +104,11 @@ public class MnisSvcImpl implements MnisSvc {
         this.esClient = esClient;
     }
 
-    @PostConstruct
-    public void populateMap() {
+    /**
+     * Must be run after members are bootstrapped ... this generates pwIds for any items with missing Ids
+     */
+    @Override
+    public void bootstrapPwMemberIds() {
         // we don't need any models in this case
         // see https://gist.github.com/rmacd/7ee7c5a781f50e5984f9bad2a2dda0ff
         ClassPathResource mapInputResource = new ClassPathResource(mnisMapInput);
@@ -122,9 +124,15 @@ public class MnisSvcImpl implements MnisSvc {
             }
             // todo this should probably happen some place else ... as it stands bootstraping currently
             // requires restart
+            logger.trace("Running setPwId for any member objects missing pwId");
+            AtomicInteger count = new AtomicInteger(0);
             for (Map.Entry<Integer, String> integerStringEntry : memberToPwLookup.entrySet()) {
                 mnisMembersRepo.findById(integerStringEntry.getKey())
                         .ifPresent(m -> {
+                            int currentCount = count.incrementAndGet();
+                            if (currentCount % 100 == 0) {
+                                logger.debug("Updating member pwIds: Updated {} records", currentCount);
+                            }
                             if (null == m.getPwId()) {
                                 logger.debug("pwId for {} is null: populating entry", m.getMemberId());
                                 String pwId = memberToPwLookup.get(m.getMemberId());
@@ -136,6 +144,7 @@ public class MnisSvcImpl implements MnisSvc {
                             }
                         });
             }
+            logger.trace("Completed setPwId");
         } catch (IOException | JSONException e) {
             throw new FosCoreRuntimeException("Unable to construct member ID lookup map");
         }

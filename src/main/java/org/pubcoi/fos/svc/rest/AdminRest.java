@@ -83,6 +83,8 @@ public class AdminRest {
 
         fetchAllRemoteInterests();
 
+        mnisSvc.bootstrapPwMemberIds();
+
         logger.info("Done");
     }
 

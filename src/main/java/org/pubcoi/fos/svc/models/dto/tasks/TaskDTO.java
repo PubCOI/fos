@@ -17,6 +17,7 @@
 
 package org.pubcoi.fos.svc.models.dto.tasks;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.pubcoi.fos.svc.models.core.DRResolvePotentialCOITask;
 import org.pubcoi.fos.svc.models.core.DRTask;
 import org.pubcoi.fos.svc.models.core.FosTaskType;
@@ -97,5 +98,15 @@ public class TaskDTO {
 
     public boolean isCompleted() {
         return completed;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("taskId", taskId)
+                .append("taskType", taskType)
+                .append("entity", entity)
+                .append("completed", completed)
+                .toString();
     }
 }

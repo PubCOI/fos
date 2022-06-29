@@ -127,6 +127,7 @@ public class TaskManagementRest {
                 .map(TaskDTO::new)
                 .peek(task -> {
                     if (task.getTaskType().equals(FosTaskType.resolve_client)) {
+                        logger.trace("Looking up task {}", task);
                         Optional<ClientNode> clientNode = clientGRepo.findByFosId(task.getEntity());
                         if (!clientNode.isPresent()) {
                             logger.error("Unable to find ClientNode {}", task.getEntity());

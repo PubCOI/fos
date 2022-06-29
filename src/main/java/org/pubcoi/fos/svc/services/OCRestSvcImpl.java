@@ -29,12 +29,17 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class OCRestSvcImpl implements OCRestSvc {
     private static final Logger logger = LoggerFactory.getLogger(OCRestSvcImpl.class);
 
     final OCCachedQuerySvc cachedQuerySvc;
+
+    final Pattern ltdPattern = Pattern.compile("(.+) Ltd(\\.?)$", Pattern.CASE_INSENSITIVE);
+    final Pattern limitedPattern = Pattern.compile("(.+) Limited(\\.?)$", Pattern.CASE_INSENSITIVE);
 
     @Value("${pubcoi.fos.opencorporates.api-key}")
     String apiToken;
@@ -54,8 +59,30 @@ public class OCRestSvcImpl implements OCRestSvc {
 
     @Override
     public OCWrapper doCompanySearch(String companyReference) throws FosCoreException {
+        return doCompanySearch(companyReference, 0);
+    }
+
+    private OCWrapper doCompanySearch(String companyReference, int previousSearches) throws FosCoreException {
         String queryURL = String.format(companySearchURL, URLEncoder.encode(companyReference, StandardCharsets.UTF_8));
-        return cachedQuerySvc.doRequest(queryURL);
+        OCWrapper wrapper = cachedQuerySvc.doRequest(queryURL);
+        if (previousSearches < 2 && null == wrapper.getResults().getCompany() && wrapper.getResults().getCompanies().isEmpty()) {
+            // consider alternatives ...
+            // ltd > limited > (no ltd / limited)
+            Matcher ltdMatcher = ltdPattern.matcher(companyReference);
+            if (ltdMatcher.matches()) {
+                String rootName = ltdMatcher.group(1);
+                logger.debug("'{}' matched Ltd pattern: re-searching with 'Limited' instead", rootName);
+                return doCompanySearch(String.format("%s Limited", rootName), previousSearches + 1);
+            }
+            Matcher limitedMatcher = limitedPattern.matcher(companyReference);
+            if (limitedMatcher.matches()) {
+                String rootName = limitedMatcher.group(1);
+                logger.debug("'{}' matched Limited pattern: re-searching with no Ltd / Limited", rootName);
+                // todo we should first go back and search by Ltd if we've not already done so
+                return doCompanySearch(rootName, previousSearches + 1);
+            }
+        }
+        return wrapper;
     }
 
     @Override

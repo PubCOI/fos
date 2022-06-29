@@ -6,6 +6,15 @@ For running locally, you will need to create a `.properties` file under `./confi
 tend to name mine `application-local.properties`: you can then use the Spring `local`
 profile on start.
 
+You will need:
+
+- Elasticsearch 7.x running somewhere
+  - Ensure it's listening globally
+  - Elasticsearch attachments processor installed (ingest-attachment)
+- Mariadb running somewhere
+  - Again ensure it's listening globally
+- non-docker install of neo4j (preferred ... but a docker config is provided) - community version
+
 You will need to be running a local Neo4j instance. Fos is developed to run on the 
 Community edition of Neo4j.
 

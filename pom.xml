@@ -37,7 +37,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <frontend-src-dir>fos-ui</frontend-src-dir>
 
-        <version.commons-text>1.9</version.commons-text>
+        <version.commons-text>1.10.0</version.commons-text>
         <version.jetbrains-annotations>17.0.0</version.jetbrains-annotations>
 
         <maven.compiler.source>1.8</maven.compiler.source>
